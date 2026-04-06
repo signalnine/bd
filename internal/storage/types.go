@@ -1,4 +1,4 @@
-// Package storage provides shared types for issue storage.
+// Package storage provides shared value types for issue storage.
 package storage
 
 import (
@@ -37,6 +37,43 @@ type RemoteInfo struct {
 	URL  string // Remote URL (e.g., "dolthub://org/repo")
 }
 
+// CommitInfo represents a version control commit.
+type CommitInfo struct {
+	Hash    string
+	Author  string
+	Email   string
+	Date    time.Time
+	Message string
+}
+
+// StatusEntry represents a changed table in the working set.
+type StatusEntry struct {
+	Table  string
+	Status string // "new", "modified", "deleted"
+}
+
+// Status represents the current repository status.
+type Status struct {
+	Staged   []StatusEntry
+	Unstaged []StatusEntry
+}
+
+// SyncResult contains the outcome of a Sync operation.
+type SyncResult struct {
+	Peer              string
+	StartTime         time.Time
+	EndTime           time.Time
+	Fetched           bool
+	Merged            bool
+	Pushed            bool
+	PulledCommits     int
+	PushedCommits     int
+	Conflicts         []Conflict
+	ConflictsResolved bool
+	Error             error
+	PushError         error // Non-fatal push error
+}
+
 // SyncStatus describes the synchronization state with a peer.
 type SyncStatus struct {
 	Peer         string    // Peer name
@@ -47,7 +84,6 @@ type SyncStatus struct {
 }
 
 // FederationPeer represents a remote peer with authentication credentials.
-// Used for peer-to-peer Dolt remotes between workspaces with SQL user auth.
 type FederationPeer struct {
 	Name        string     // Unique name for this peer (used as remote name)
 	RemoteURL   string     // Dolt remote URL (e.g., http://host:port/org/db)

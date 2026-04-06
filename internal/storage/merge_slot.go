@@ -12,6 +12,15 @@ import (
 	"github.com/steveyegge/beads/internal/types"
 )
 
+// MergeSlotStore defines the minimal interface needed by merge slot operations.
+type MergeSlotStore interface {
+	GetConfig(ctx context.Context, key string) (string, error)
+	GetIssue(ctx context.Context, id string) (*types.Issue, error)
+	CreateIssue(ctx context.Context, issue *types.Issue, actor string) error
+	AddLabel(ctx context.Context, issueID, label, actor string) error
+	RunInTransaction(ctx context.Context, commitMsg string, fn func(tx Transaction) error) error
+}
+
 // mergeSlotLabel is the label attached to every merge slot bead so that
 // tooling can find it without knowing the exact ID.
 const mergeSlotLabel = "gt:slot"
@@ -25,7 +34,7 @@ type slotMeta struct {
 // MergeSlotID returns the canonical merge slot bead ID for the store,
 // derived from the issue_prefix config key (e.g. "gt" → "gt-merge-slot").
 // Falls back to "bd-merge-slot" when the prefix is not configured.
-func MergeSlotID(ctx context.Context, s Storage) string {
+func MergeSlotID(ctx context.Context, s MergeSlotStore) string {
 	prefix := "bd"
 	if p, err := s.GetConfig(ctx, "issue_prefix"); err == nil && p != "" {
 		prefix = strings.TrimSuffix(p, "-")
@@ -34,7 +43,7 @@ func MergeSlotID(ctx context.Context, s Storage) string {
 }
 
 // MergeSlotCreateImpl is the shared implementation of Storage.MergeSlotCreate.
-func MergeSlotCreateImpl(ctx context.Context, s Storage, actor string) (*types.Issue, error) {
+func MergeSlotCreateImpl(ctx context.Context, s MergeSlotStore, actor string) (*types.Issue, error) {
 	slotID := MergeSlotID(ctx, s)
 
 	// Idempotent: return existing slot without error.
@@ -61,7 +70,7 @@ func MergeSlotCreateImpl(ctx context.Context, s Storage, actor string) (*types.I
 }
 
 // MergeSlotCheckImpl is the shared implementation of Storage.MergeSlotCheck.
-func MergeSlotCheckImpl(ctx context.Context, s Storage) (*MergeSlotStatus, error) {
+func MergeSlotCheckImpl(ctx context.Context, s MergeSlotStore) (*MergeSlotStatus, error) {
 	slotID := MergeSlotID(ctx, s)
 	slot, err := s.GetIssue(ctx, slotID)
 	if err != nil || slot == nil {
@@ -80,7 +89,7 @@ func MergeSlotCheckImpl(ctx context.Context, s Storage) (*MergeSlotStatus, error
 // MergeSlotAcquireImpl is the shared implementation of Storage.MergeSlotAcquire.
 // It uses RunInTransaction to ensure atomic check-and-set, preventing two
 // agents from simultaneously acquiring the slot.
-func MergeSlotAcquireImpl(ctx context.Context, s Storage, holder, actor string, wait bool) (*MergeSlotResult, error) {
+func MergeSlotAcquireImpl(ctx context.Context, s MergeSlotStore, holder, actor string, wait bool) (*MergeSlotResult, error) {
 	if holder == "" {
 		return nil, fmt.Errorf("merge-slot acquire: holder must not be empty")
 	}
@@ -150,7 +159,7 @@ func MergeSlotAcquireImpl(ctx context.Context, s Storage, holder, actor string, 
 }
 
 // MergeSlotReleaseImpl is the shared implementation of Storage.MergeSlotRelease.
-func MergeSlotReleaseImpl(ctx context.Context, s Storage, holder, actor string) error {
+func MergeSlotReleaseImpl(ctx context.Context, s MergeSlotStore, holder, actor string) error {
 	slotID := MergeSlotID(ctx, s)
 
 	return s.RunInTransaction(ctx,

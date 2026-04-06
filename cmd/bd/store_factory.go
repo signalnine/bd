@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 
 	"github.com/steveyegge/beads/internal/configfile"
-	"github.com/steveyegge/beads/internal/storage"
 	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
 )
 
@@ -15,7 +14,7 @@ func isEmbeddedMode() bool {
 }
 
 // newDoltStore creates an embedded Dolt storage backend.
-func newDoltStore(ctx context.Context, beadsDir, database string, opts ...embeddeddolt.Option) (storage.DoltStorage, error) {
+func newDoltStore(ctx context.Context, beadsDir, database string, opts ...embeddeddolt.Option) (*embeddeddolt.EmbeddedDoltStore, error) {
 	return embeddeddolt.New(ctx, beadsDir, database, "main", opts...)
 }
 
@@ -28,7 +27,7 @@ func acquireEmbeddedLock(beadsDir string) (embeddeddolt.Unlocker, error) {
 
 // newDoltStoreFromConfig creates an embedded storage backend from the beads
 // directory's persisted metadata.json configuration.
-func newDoltStoreFromConfig(ctx context.Context, beadsDir string) (storage.DoltStorage, error) {
+func newDoltStoreFromConfig(ctx context.Context, beadsDir string) (*embeddeddolt.EmbeddedDoltStore, error) {
 	cfg, err := configfile.Load(beadsDir)
 	database := configfile.DefaultDoltDatabase
 	if err == nil && cfg != nil {
@@ -39,7 +38,7 @@ func newDoltStoreFromConfig(ctx context.Context, beadsDir string) (storage.DoltS
 
 // newReadOnlyStoreFromConfig creates a read-only storage backend from the beads
 // directory's persisted metadata.json configuration.
-func newReadOnlyStoreFromConfig(ctx context.Context, beadsDir string) (storage.DoltStorage, error) {
+func newReadOnlyStoreFromConfig(ctx context.Context, beadsDir string) (*embeddeddolt.EmbeddedDoltStore, error) {
 	// Embedded dolt is single-process so read-only is not enforced at the engine level.
 	return newDoltStoreFromConfig(ctx, beadsDir)
 }

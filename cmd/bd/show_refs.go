@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/steveyegge/beads/internal/storage"
+	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
 	"github.com/steveyegge/beads/internal/types"
 	"github.com/steveyegge/beads/internal/ui"
 )
@@ -16,7 +16,7 @@ func showIssueRefs(ctx context.Context, args []string, jsonOut bool) {
 	allRefs := make(map[string][]*types.IssueWithDependencyMetadata)
 
 	// Process each issue
-	processIssue := func(issueID string, issueStore storage.DoltStorage) error {
+	processIssue := func(issueID string, issueStore *embeddeddolt.EmbeddedDoltStore) error {
 		refs, err := issueStore.GetDependentsWithMetadata(ctx, issueID)
 		if err != nil {
 			return err

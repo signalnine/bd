@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/steveyegge/beads/internal/beads"
 	"github.com/steveyegge/beads/internal/configfile"
-	"github.com/steveyegge/beads/internal/storage"
+	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
 	"github.com/steveyegge/beads/internal/ui"
 )
 
@@ -64,17 +64,12 @@ func init() {
 }
 
 // runBackupRestore restores the database from a Dolt-native backup.
-func runBackupRestore(ctx context.Context, s storage.DoltStorage, dir string, force bool) error {
+func runBackupRestore(ctx context.Context, s *embeddeddolt.EmbeddedDoltStore, dir string, force bool) error {
 	if s == nil {
 		return fmt.Errorf("database is not initialized. Run 'bd init' first")
 	}
 
-	bs, ok := storage.UnwrapStore(s).(storage.BackupStore)
-	if !ok {
-		return fmt.Errorf("storage backend does not support backup operations")
-	}
-
-	if err := bs.RestoreDatabase(ctx, dir, force); err != nil {
+	if err := s.RestoreDatabase(ctx, dir, force); err != nil {
 		return err
 	}
 
@@ -90,7 +85,7 @@ func runBackupRestore(ctx context.Context, s storage.DoltStorage, dir string, fo
 
 	// Register the restore source as the backup destination so
 	// `bd backup sync` works immediately without a separate `bd backup add`.
-	registerBackupRemote(ctx, bs, dir)
+	registerBackupRemote(ctx, s, dir)
 
 	if err := s.Commit(ctx, "bd backup restore"); err != nil {
 		if !strings.Contains(err.Error(), "nothing to commit") {
@@ -103,12 +98,12 @@ func runBackupRestore(ctx context.Context, s storage.DoltStorage, dir string, fo
 
 // registerBackupRemote registers dir as the default backup remote and saves
 // the local backup config. Errors are non-fatal warnings.
-func registerBackupRemote(ctx context.Context, bs storage.BackupStore, dir string) {
+func registerBackupRemote(ctx context.Context, s *embeddeddolt.EmbeddedDoltStore, dir string) {
 	backupURL := resolveDoltBackupURL(dir)
 
 	// Remove + re-add to handle the case where a remote already exists.
-	_ = bs.BackupRemove(ctx, defaultDoltBackupName)
-	if err := bs.BackupAdd(ctx, defaultDoltBackupName, backupURL); err != nil {
+	_ = s.BackupRemove(ctx, defaultDoltBackupName)
+	if err := s.BackupAdd(ctx, defaultDoltBackupName, backupURL); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: failed to register backup remote: %v\n", err)
 		return
 	}
@@ -119,7 +114,7 @@ func registerBackupRemote(ctx context.Context, bs storage.BackupStore, dir strin
 
 // syncProjectIDFromDB reads _project_id from the restored database and
 // updates metadata.json to match, preventing identity mismatch errors.
-func syncProjectIDFromDB(ctx context.Context, s storage.DoltStorage) error {
+func syncProjectIDFromDB(ctx context.Context, s *embeddeddolt.EmbeddedDoltStore) error {
 	dbID, err := s.GetMetadata(ctx, "_project_id")
 	if err != nil || dbID == "" {
 		return err

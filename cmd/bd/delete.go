@@ -11,6 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/steveyegge/beads/internal/storage"
+	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
 	"github.com/steveyegge/beads/internal/types"
 	"github.com/steveyegge/beads/internal/ui"
 )
@@ -255,7 +256,7 @@ func deleteBatch(_ *cobra.Command, issueIDs []string, force bool, dryRun bool, c
 	// Verify all issues exist (using routing for prefix resolution)
 	issues := make(map[string]*types.Issue)
 	notFound := []string{}
-	var routedStore storage.DoltStorage
+	var routedStore *embeddeddolt.EmbeddedDoltStore
 	for _, id := range issueIDs {
 		result, err := resolveAndGetIssueWithRouting(ctx, store, id)
 		if err != nil {

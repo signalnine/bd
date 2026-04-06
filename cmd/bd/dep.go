@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/beads/internal/storage"
+	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
 	"github.com/steveyegge/beads/internal/types"
 	"github.com/steveyegge/beads/internal/ui"
 )
@@ -18,7 +18,7 @@ import (
 // If the issue routes to a different database, a routed store is returned
 // and must be closed by the caller via the returned cleanup function.
 // If the issue is in the local store, cleanup is a no-op.
-func resolveIDWithRouting(ctx context.Context, localStore storage.DoltStorage, id string) (resolvedID string, targetStore storage.DoltStorage, cleanup func(), err error) {
+func resolveIDWithRouting(ctx context.Context, localStore *embeddeddolt.EmbeddedDoltStore, id string) (resolvedID string, targetStore *embeddeddolt.EmbeddedDoltStore, cleanup func(), err error) {
 	result, err := resolveAndGetIssueWithRouting(ctx, localStore, id)
 	if err != nil {
 		return "", nil, func() {}, fmt.Errorf("resolving issue ID %s: %w", id, err)
@@ -51,7 +51,7 @@ func isChildOf(childID, parentID string) bool {
 }
 
 // warnIfCyclesExist checks for dependency cycles and prints a warning if found.
-func warnIfCyclesExist(s storage.DoltStorage) {
+func warnIfCyclesExist(s *embeddeddolt.EmbeddedDoltStore) {
 	if s == nil {
 		return // Skip cycle check if store is not available
 	}
@@ -350,7 +350,7 @@ Examples:
 		// Resolve all IDs and group by store.
 		type resolvedID struct {
 			fullID string
-			store  storage.DoltStorage
+			store  *embeddeddolt.EmbeddedDoltStore
 			result *RoutedResult
 		}
 		var resolved []resolvedID

@@ -10,7 +10,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/steveyegge/beads/internal/beads"
-	"github.com/steveyegge/beads/internal/storage"
 	"github.com/steveyegge/beads/internal/storage/versioncontrolops"
 )
 
@@ -55,23 +54,18 @@ After adding, run 'bd backup sync' to push your data.`,
 		// DoltHub URLs are passed through as-is.
 		backupURL := resolveDoltBackupURL(rawPath)
 
-		bs, ok := storage.UnwrapStore(store).(storage.BackupStore)
-		if !ok {
-			return fmt.Errorf("storage backend does not support backup operations")
-		}
-
 		// Register the backup with Dolt
-		if err := bs.BackupAdd(ctx, defaultDoltBackupName, backupURL); err != nil {
+		if err := store.BackupAdd(ctx, defaultDoltBackupName, backupURL); err != nil {
 			if strings.Contains(err.Error(), "already exists") {
 				// Same name, different URL — remove and re-add to update
-				_ = bs.BackupRemove(ctx, defaultDoltBackupName)
-				if err := bs.BackupAdd(ctx, defaultDoltBackupName, backupURL); err != nil {
+				_ = store.BackupRemove(ctx, defaultDoltBackupName)
+				if err := store.BackupAdd(ctx, defaultDoltBackupName, backupURL); err != nil {
 					return fmt.Errorf("failed to update backup destination: %w", err)
 				}
 			} else if conflict := versioncontrolops.ExtractAddressConflictName(err); conflict != "" {
 				// Different name (e.g. "backup_export") points at same URL — remove it, re-add as "default"
-				_ = bs.BackupRemove(ctx, conflict)
-				if err := bs.BackupAdd(ctx, defaultDoltBackupName, backupURL); err != nil {
+				_ = store.BackupRemove(ctx, conflict)
+				if err := store.BackupAdd(ctx, defaultDoltBackupName, backupURL); err != nil {
 					return fmt.Errorf("failed to add backup destination: %w", err)
 				}
 			} else {
@@ -118,17 +112,8 @@ Run 'bd backup init <path>' first to configure a destination.`,
 			return fmt.Errorf("no store available")
 		}
 
-		bs, ok := storage.UnwrapStore(store).(storage.BackupStore)
-		if !ok {
-			return fmt.Errorf("storage backend does not support backup operations")
-		}
-
 		// First, commit any pending changes so they're included in the backup
-		committer, ok := storage.UnwrapStore(store).(storage.PendingCommitter)
-		if !ok {
-			return fmt.Errorf("storage backend does not support pending commits")
-		}
-		committed, err := committer.CommitPending(ctx, getActor())
+		committed, err := store.CommitPending(ctx, getActor())
 		if err != nil && !strings.Contains(err.Error(), "nothing to commit") {
 			fmt.Fprintf(os.Stderr, "Warning: failed to commit pending changes: %v\n", err)
 		}
@@ -139,7 +124,7 @@ Run 'bd backup init <path>' first to configure a destination.`,
 		start := time.Now()
 
 		// Sync to the configured backup
-		if err := bs.BackupSync(ctx, defaultDoltBackupName); err != nil {
+		if err := store.BackupSync(ctx, defaultDoltBackupName); err != nil {
 			if strings.Contains(err.Error(), "no backup") ||
 				strings.Contains(err.Error(), "not found") {
 				return fmt.Errorf("no backup destination configured. Run 'bd backup init <path>' first")
@@ -401,12 +386,7 @@ backup configuration. The backup data at the destination is not deleted.`,
 			return fmt.Errorf("no store available")
 		}
 
-		bs, ok := storage.UnwrapStore(store).(storage.BackupStore)
-		if !ok {
-			return fmt.Errorf("storage backend does not support backup operations")
-		}
-
-		if err := bs.BackupRemove(ctx, defaultDoltBackupName); err != nil {
+		if err := store.BackupRemove(ctx, defaultDoltBackupName); err != nil {
 			if strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "no backup") {
 				return fmt.Errorf("no backup destination configured")
 			}
@@ -414,7 +394,7 @@ backup configuration. The backup data at the destination is not deleted.`,
 		}
 
 		// Also remove backup_export if it exists (auto-export may have created it at same URL)
-		_ = bs.BackupRemove(ctx, "backup_export")
+		_ = store.BackupRemove(ctx, "backup_export")
 
 		// Remove local config
 		if path, err := doltBackupConfigPath(); err == nil {

@@ -12,31 +12,17 @@ import (
 
 	"github.com/steveyegge/beads/internal/beads"
 	"github.com/steveyegge/beads/internal/storage"
-	"github.com/steveyegge/beads/internal/storage/dolt"
+	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
 	"github.com/steveyegge/beads/internal/types"
 )
 
-// Storage is the interface for beads storage operations
-type Storage = beads.Storage
+// Store is the concrete embedded Dolt storage backend.
+type Store = embeddeddolt.EmbeddedDoltStore
 
 // Transaction provides atomic multi-operation support within a database transaction.
-// Use Storage.RunInTransaction() to obtain a Transaction instance.
-type Transaction = beads.Transaction
-
-// RemoteStore provides dolt remote management and replication operations.
-// Use type assertion on a Storage value to access these methods:
-//
-//	if rs, ok := store.(beads.RemoteStore); ok {
-//	    rs.Push(ctx)
-//	}
-type RemoteStore = storage.RemoteStore
-
-// SyncStore provides high-level sync operations with peers.
-type SyncStore = storage.SyncStore
+type Transaction = storage.Transaction
 
 // VersionControlReader provides read-only version control operations.
-// Write operations (Branch, Checkout, Merge, DeleteBranch) are not yet
-// part of the public API. If you need them, please open an issue.
 type VersionControlReader interface {
 	CurrentBranch(ctx context.Context) (string, error)
 	ListBranches(ctx context.Context) ([]string, error)
@@ -57,19 +43,9 @@ type (
 	StatusEntry = storage.StatusEntry
 )
 
-// Open opens a Dolt-backed beads database at the given path.
-// This always opens in embedded mode. Use OpenFromConfig to respect
-// server mode settings from metadata.json.
-func Open(ctx context.Context, dbPath string) (Storage, error) {
-	return dolt.New(ctx, &dolt.Config{Path: dbPath, CreateIfMissing: true})
-}
-
-// OpenFromConfig opens a beads database using configuration from metadata.json.
-// Unlike Open, this respects Dolt server mode settings and database name
-// configuration, connecting to the Dolt SQL server when dolt_mode is "server".
-// beadsDir is the path to the .beads directory.
-func OpenFromConfig(ctx context.Context, beadsDir string) (Storage, error) {
-	return dolt.NewFromConfigWithOptions(ctx, beadsDir, &dolt.Config{CreateIfMissing: true})
+// Open opens an embedded Dolt beads database at the given path.
+func Open(ctx context.Context, beadsDir string) (*Store, error) {
+	return embeddeddolt.New(ctx, beadsDir, "beads", "main")
 }
 
 // FindDatabasePath finds the beads database in the current directory tree
@@ -148,7 +124,7 @@ const (
 	DepRelated           = types.DepRelated
 	DepParentChild       = types.DepParentChild
 	DepDiscoveredFrom    = types.DepDiscoveredFrom
-	DepConditionalBlocks = types.DepConditionalBlocks // B runs only if A fails (bd-kzda)
+	DepConditionalBlocks = types.DepConditionalBlocks
 )
 
 // SortPolicy constants

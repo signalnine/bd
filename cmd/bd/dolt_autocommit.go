@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/steveyegge/beads/internal/storage"
+	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
 	"github.com/steveyegge/beads/internal/storage/issueops"
 )
 
@@ -14,7 +15,7 @@ import (
 // DOLT_COMMIT occurred, preventing the redundant maybeAutoCommit in
 // PersistentPostRun. Use this instead of calling store.RunInTransaction
 // directly from command handlers.
-func transact(ctx context.Context, s storage.DoltStorage, commitMsg string, fn func(tx storage.Transaction) error) error {
+func transact(ctx context.Context, s *embeddeddolt.EmbeddedDoltStore, commitMsg string, fn func(tx storage.Transaction) error) error {
 	err := s.RunInTransaction(ctx, commitMsg, fn)
 	if err == nil {
 		commandDidExplicitDoltCommit = true
@@ -54,7 +55,7 @@ func maybeAutoCommit(ctx context.Context, p doltAutoCommitParams) error {
 	if st == nil {
 		return nil
 	}
-	if lm, ok := storage.UnwrapStore(st).(storage.LifecycleManager); ok && lm.IsClosed() {
+	if st.IsClosed() {
 		return nil
 	}
 

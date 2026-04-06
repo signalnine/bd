@@ -459,11 +459,7 @@ func findDatabaseInBeadsDir(beadsDir string, _ bool) string {
 	return ""
 }
 
-// Storage provides the minimal interface for extension orchestration
-type Storage = storage.Storage
-
 // Transaction provides atomic multi-operation support within a database transaction.
-// Use Storage.RunInTransaction() to obtain a Transaction instance.
 type Transaction = storage.Transaction
 
 // FindDatabasePath discovers the bd database path using bd's standard search order:

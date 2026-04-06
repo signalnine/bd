@@ -8,7 +8,7 @@ import (
 
 	"github.com/steveyegge/beads/internal/beads"
 	"github.com/steveyegge/beads/internal/configfile"
-	"github.com/steveyegge/beads/internal/storage"
+	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
 	"github.com/steveyegge/beads/internal/utils"
 )
 
@@ -16,7 +16,7 @@ import (
 // while preserving repo-local metadata such as dolt_database and the resolved
 // Dolt server port. Falls back to deriving the beads directory from the dbPath
 // parent when no matching metadata.json can be found.
-func openReadOnlyStoreForDBPath(ctx context.Context, dbPath string) (storage.DoltStorage, error) {
+func openReadOnlyStoreForDBPath(ctx context.Context, dbPath string) (*embeddeddolt.EmbeddedDoltStore, error) {
 	if dbPath == "" {
 		return nil, fmt.Errorf("no database path available")
 	}

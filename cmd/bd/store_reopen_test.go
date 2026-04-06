@@ -10,7 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/steveyegge/beads/internal/configfile"
-	"github.com/steveyegge/beads/internal/storage"
+	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
 	"github.com/steveyegge/beads/internal/types"
 	"github.com/steveyegge/beads/internal/utils"
 )
@@ -21,7 +21,7 @@ func TestWithStorage_ReopensUsingMetadata(t *testing.T) {
 	newTestStoreIsolatedDB(t, testDBPath, "cfg")
 
 	var gotPrefix string
-	err := withStorage(ctx, nil, testDBPath, func(s storage.DoltStorage) error {
+	err := withStorage(ctx, nil, testDBPath, func(s *embeddeddolt.EmbeddedDoltStore) error {
 		var err error
 		gotPrefix, err = s.GetConfig(ctx, "issue_prefix")
 		return err
@@ -149,4 +149,3 @@ func TestResolveCommandBeadsDir_NoCWDFallbackForExplicitPath(t *testing.T) {
 		t.Fatalf("resolveCommandBeadsDir(%q) = %q, want %q", dbPathB, got, beadsDirB)
 	}
 }
-

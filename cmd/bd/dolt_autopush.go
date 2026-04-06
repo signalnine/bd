@@ -11,7 +11,6 @@ import (
 	"github.com/steveyegge/beads/internal/beads"
 	"github.com/steveyegge/beads/internal/config"
 	"github.com/steveyegge/beads/internal/debug"
-	"github.com/steveyegge/beads/internal/storage"
 )
 
 // pushState tracks auto-push state in a local file (.beads/push-state.json)
@@ -73,7 +72,7 @@ func isDoltAutoPushEnabled(ctx context.Context) bool {
 	if st == nil {
 		return false
 	}
-	if lm, ok := storage.UnwrapStore(st).(storage.LifecycleManager); ok && lm.IsClosed() {
+	if st.IsClosed() {
 		return false
 	}
 	has, err := st.HasRemote(ctx, "origin")
@@ -99,7 +98,7 @@ func maybeAutoPush(ctx context.Context) {
 	if st == nil {
 		return
 	}
-	if lm, ok := storage.UnwrapStore(st).(storage.LifecycleManager); ok && lm.IsClosed() {
+	if st.IsClosed() {
 		return
 	}
 

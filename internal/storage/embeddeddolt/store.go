@@ -20,14 +20,7 @@ import (
 	"github.com/steveyegge/beads/internal/types"
 )
 
-// Compile-time interface checks.
-var _ storage.DoltStorage = (*EmbeddedDoltStore)(nil)
-var _ storage.StoreLocator = (*EmbeddedDoltStore)(nil)
-var _ storage.GarbageCollector = (*EmbeddedDoltStore)(nil)
-var _ storage.Flattener = (*EmbeddedDoltStore)(nil)
-var _ storage.Compactor = (*EmbeddedDoltStore)(nil)
-
-// EmbeddedDoltStore implements storage.DoltStorage backed by the embedded Dolt engine.
+// EmbeddedDoltStore is the concrete storage backend backed by the embedded Dolt engine.
 // Each method call opens a short-lived connection, executes within an explicit
 // SQL transaction, and closes the connection immediately. This minimizes the
 // time the embedded engine's write lock is held, reducing contention when
@@ -416,6 +409,11 @@ func (s *EmbeddedDoltStore) Close() error {
 		}
 	}
 	return nil
+}
+
+// IsClosed returns true if the store has been closed.
+func (s *EmbeddedDoltStore) IsClosed() bool {
+	return s.closed.Load()
 }
 
 // DoltGC runs Dolt garbage collection to reclaim disk space.

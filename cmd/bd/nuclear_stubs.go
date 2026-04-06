@@ -16,6 +16,7 @@ import (
 	"github.com/steveyegge/beads/internal/beads"
 	"github.com/steveyegge/beads/internal/config"
 	"github.com/steveyegge/beads/internal/storage"
+	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
 	"github.com/steveyegge/beads/internal/types"
 	"github.com/steveyegge/beads/internal/utils"
 )
@@ -126,7 +127,7 @@ func ClearLastTouched() {
 // RoutedResult contains the result of a routed issue lookup.
 type RoutedResult struct {
 	Issue      *types.Issue
-	Store      storage.DoltStorage
+	Store      *embeddeddolt.EmbeddedDoltStore
 	Routed     bool
 	ResolvedID string
 	closeFn    func()
@@ -151,7 +152,7 @@ func isNotFoundErr(err error) bool {
 }
 
 // resolveAndGetIssueWithRouting resolves a partial ID and gets the issue.
-func resolveAndGetIssueWithRouting(ctx context.Context, localStore storage.DoltStorage, id string) (*RoutedResult, error) {
+func resolveAndGetIssueWithRouting(ctx context.Context, localStore *embeddeddolt.EmbeddedDoltStore, id string) (*RoutedResult, error) {
 	result, err := resolveAndGetFromStore(ctx, localStore, id, false)
 	if err == nil {
 		return result, nil
@@ -164,7 +165,7 @@ func resolveAndGetIssueWithRouting(ctx context.Context, localStore storage.DoltS
 	return nil, err
 }
 
-func resolveAndGetFromStore(ctx context.Context, s storage.DoltStorage, id string, routed bool) (*RoutedResult, error) {
+func resolveAndGetFromStore(ctx context.Context, s *embeddeddolt.EmbeddedDoltStore, id string, routed bool) (*RoutedResult, error) {
 	resolvedID, err := utils.ResolvePartialID(ctx, s, id)
 	if err != nil {
 		return nil, err
@@ -181,7 +182,7 @@ func resolveAndGetFromStore(ctx context.Context, s storage.DoltStorage, id strin
 	}, nil
 }
 
-func resolveViaAutoRouting(ctx context.Context, localStore storage.DoltStorage, id string) (*RoutedResult, error) {
+func resolveViaAutoRouting(ctx context.Context, localStore *embeddeddolt.EmbeddedDoltStore, id string) (*RoutedResult, error) {
 	routedStore, routed, err := openRoutedReadStore(ctx, localStore)
 	if err != nil || !routed {
 		return nil, fmt.Errorf("no auto-routed store available")
@@ -196,7 +197,7 @@ func resolveViaAutoRouting(ctx context.Context, localStore storage.DoltStorage, 
 }
 
 // getIssueWithRouting gets an issue by exact ID.
-func getIssueWithRouting(ctx context.Context, localStore storage.DoltStorage, id string) (*RoutedResult, error) {
+func getIssueWithRouting(ctx context.Context, localStore *embeddeddolt.EmbeddedDoltStore, id string) (*RoutedResult, error) {
 	issue, err := localStore.GetIssue(ctx, id)
 	if err == nil {
 		return &RoutedResult{
@@ -353,7 +354,7 @@ func isTestIssue(title string) bool {
 // ---------------------------------------------------------------------------
 
 // maybeShowTip is a no-op stub (tips functionality removed in nuclear simplification).
-func maybeShowTip(_ storage.DoltStorage) {}
+func maybeShowTip(_ *embeddeddolt.EmbeddedDoltStore) {}
 
 // ---------------------------------------------------------------------------
 // diff.go / joinStrings replacement

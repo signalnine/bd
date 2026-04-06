@@ -9,13 +9,13 @@ import (
 	"github.com/steveyegge/beads/internal/config"
 	"github.com/steveyegge/beads/internal/debug"
 	"github.com/steveyegge/beads/internal/routing"
-	"github.com/steveyegge/beads/internal/storage"
+	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
 )
 
 // getRoutingConfigValue resolves routing config from YAML/env first, then DB config.
 // Only uses the YAML value if it was explicitly set (not a Viper default), so that
 // DB-stored values aren't shadowed by defaults like "~/.beads-planning".
-func getRoutingConfigValue(ctx context.Context, store storage.DoltStorage, key string) string {
+func getRoutingConfigValue(ctx context.Context, store *embeddeddolt.EmbeddedDoltStore, key string) string {
 	// Only trust YAML/env values that were explicitly set, not Viper defaults.
 	if src := config.GetValueSource(key); src != config.SourceDefault {
 		value := strings.TrimSpace(config.GetString(key))
@@ -38,7 +38,7 @@ func getRoutingConfigValue(ctx context.Context, store storage.DoltStorage, key s
 
 // determineAutoRoutedRepoPath returns the repository path that should be used for
 // issue reads when contributor auto-routing is enabled.
-func determineAutoRoutedRepoPath(ctx context.Context, store storage.DoltStorage) string {
+func determineAutoRoutedRepoPath(ctx context.Context, store *embeddeddolt.EmbeddedDoltStore) string {
 	userRole, err := routing.DetectUserRole(".")
 	if err != nil {
 		debug.Logf("Warning: failed to detect user role: %v\n", err)
@@ -71,7 +71,7 @@ func determineAutoRoutedRepoPath(ctx context.Context, store storage.DoltStorage)
 
 // openRoutedReadStore opens the auto-routed target store for read commands.
 // Returns routed=false when reads should stay in the current store.
-func openRoutedReadStore(ctx context.Context, store storage.DoltStorage) (storage.DoltStorage, bool, error) {
+func openRoutedReadStore(ctx context.Context, store *embeddeddolt.EmbeddedDoltStore) (*embeddeddolt.EmbeddedDoltStore, bool, error) {
 	repoPath := determineAutoRoutedRepoPath(ctx, store)
 	if repoPath == "" || repoPath == "." {
 		return nil, false, nil

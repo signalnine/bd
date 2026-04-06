@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/steveyegge/beads/internal/config"
 	"github.com/steveyegge/beads/internal/storage"
+	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
 	"github.com/steveyegge/beads/internal/types"
 	"github.com/steveyegge/beads/internal/ui"
 	"github.com/steveyegge/beads/internal/utils"
@@ -21,10 +22,10 @@ import (
 )
 
 // storageExecutor handles operations that need a store connection
-type storageExecutor func(store storage.DoltStorage) error
+type storageExecutor func(store *embeddeddolt.EmbeddedDoltStore) error
 
 // withStorage executes an operation with either the direct store or a read-only store
-func withStorage(ctx context.Context, store storage.DoltStorage, dbPath string, fn storageExecutor) error {
+func withStorage(ctx context.Context, store *embeddeddolt.EmbeddedDoltStore, dbPath string, fn storageExecutor) error {
 	if store != nil {
 		return fn(store)
 	} else if dbPath != "" {
@@ -41,10 +42,10 @@ func withStorage(ctx context.Context, store storage.DoltStorage, dbPath string, 
 }
 
 // getHierarchicalChildren handles the --tree --parent combination logic
-func getHierarchicalChildren(ctx context.Context, store storage.DoltStorage, dbPath string, parentID string) ([]*types.Issue, error) {
+func getHierarchicalChildren(ctx context.Context, store *embeddeddolt.EmbeddedDoltStore, dbPath string, parentID string) ([]*types.Issue, error) {
 	// First verify that the parent issue exists
 	var parentIssue *types.Issue
-	err := withStorage(ctx, store, dbPath, func(s storage.DoltStorage) error {
+	err := withStorage(ctx, store, dbPath, func(s *embeddeddolt.EmbeddedDoltStore) error {
 		var err error
 		parentIssue, err = s.GetIssue(ctx, parentID)
 		return err
@@ -79,14 +80,14 @@ func getHierarchicalChildren(ctx context.Context, store storage.DoltStorage, dbP
 }
 
 // findAllDescendants recursively finds all descendants using parent filtering
-func findAllDescendants(ctx context.Context, store storage.DoltStorage, dbPath string, parentID string, result map[string]*types.Issue, currentDepth, maxDepth int) error {
+func findAllDescendants(ctx context.Context, store *embeddeddolt.EmbeddedDoltStore, dbPath string, parentID string, result map[string]*types.Issue, currentDepth, maxDepth int) error {
 	if currentDepth >= maxDepth {
 		return nil // Prevent infinite recursion
 	}
 
 	// Get direct children using the same filter logic as regular --parent
 	var children []*types.Issue
-	err := withStorage(ctx, store, dbPath, func(s storage.DoltStorage) error {
+	err := withStorage(ctx, store, dbPath, func(s *embeddeddolt.EmbeddedDoltStore) error {
 		filter := types.IssueFilter{
 			ParentID: &parentID,
 		}
@@ -116,7 +117,7 @@ func findAllDescendants(ctx context.Context, store storage.DoltStorage, dbPath s
 // watchIssues polls for changes and re-displays (GH#654)
 // Uses polling instead of fsnotify because Dolt stores data in a server-side
 // database, not files — file watchers never fire.
-func watchIssues(ctx context.Context, store storage.DoltStorage, filter types.IssueFilter, sortBy string, reverse bool) {
+func watchIssues(ctx context.Context, store *embeddeddolt.EmbeddedDoltStore, filter types.IssueFilter, sortBy string, reverse bool) {
 	// Initial display
 	issues, err := store.SearchIssues(ctx, "", filter)
 	if err != nil {

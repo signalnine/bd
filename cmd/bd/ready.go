@@ -10,6 +10,7 @@ import (
 	"github.com/steveyegge/beads/internal/config"
 	"github.com/steveyegge/beads/internal/debug"
 	"github.com/steveyegge/beads/internal/storage"
+	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
 	"github.com/steveyegge/beads/internal/types"
 	"github.com/steveyegge/beads/internal/ui"
 	"github.com/steveyegge/beads/internal/utils"
@@ -320,7 +321,7 @@ var blockedCmd = &cobra.Command{
 
 // buildParentEpicMap builds a map from child issue ID to parent epic title.
 // Only includes parents that are epics.
-func buildParentEpicMap(ctx context.Context, s storage.DoltStorage, issues []*types.Issue) map[string]string {
+func buildParentEpicMap(ctx context.Context, s *embeddeddolt.EmbeddedDoltStore, issues []*types.Issue) map[string]string {
 	if len(issues) == 0 {
 		return nil
 	}

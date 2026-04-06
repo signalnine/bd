@@ -12,7 +12,6 @@ import (
 	"github.com/steveyegge/beads/internal/beads"
 	"github.com/steveyegge/beads/internal/config"
 	"github.com/steveyegge/beads/internal/debug"
-	"github.com/steveyegge/beads/internal/storage"
 )
 
 // backupState tracks watermarks for backup change detection.
@@ -133,12 +132,7 @@ func runBackupExport(ctx context.Context, force bool) (*backupState, error) {
 		}
 	}
 
-	bs, ok := storage.UnwrapStore(store).(storage.BackupStore)
-	if !ok {
-		return nil, fmt.Errorf("storage backend does not support backup operations")
-	}
-
-	if err := bs.BackupDatabase(ctx, dir); err != nil {
+	if err := store.BackupDatabase(ctx, dir); err != nil {
 		return nil, err
 	}
 

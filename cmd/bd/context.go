@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/steveyegge/beads/internal/hooks"
-	"github.com/steveyegge/beads/internal/storage"
+	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
 )
 
 // CommandContext holds all runtime state for command execution.
@@ -33,7 +33,7 @@ type CommandContext struct {
 	ServerMode bool
 
 	// Runtime state
-	Store      storage.DoltStorage
+	Store      *embeddeddolt.EmbeddedDoltStore
 	RootCtx    context.Context
 	RootCancel context.CancelFunc
 	HookRunner *hooks.Runner
@@ -94,7 +94,7 @@ func shouldUseGlobals() bool {
 
 // getStore returns the current storage backend.
 // This is the primary way commands should access storage.
-func getStore() storage.DoltStorage {
+func getStore() *embeddeddolt.EmbeddedDoltStore {
 	if shouldUseGlobals() {
 		return store // fallback to legacy global during transition
 	}
@@ -102,7 +102,7 @@ func getStore() storage.DoltStorage {
 }
 
 // setStore updates the storage backend in the CommandContext.
-func setStore(s storage.DoltStorage) {
+func setStore(s *embeddeddolt.EmbeddedDoltStore) {
 	if cmdCtx != nil {
 		cmdCtx.Store = s
 	}
