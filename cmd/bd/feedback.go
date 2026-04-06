@@ -46,6 +46,17 @@ func issueTitleOrEmpty(issue *types.Issue) string {
 	return issue.Title
 }
 
+// truncateTitle truncates a title to maxLen characters, appending "..." if truncated.
+func truncateTitle(title string, maxLen int) string {
+	if len(title) <= maxLen {
+		return title
+	}
+	if maxLen <= 3 {
+		return title[:maxLen]
+	}
+	return title[:maxLen-3] + "..."
+}
+
 // lookupTitle returns the title for an issue ID, or empty string on failure.
 // Best-effort lookup for feedback messages — never fails the command.
 func lookupTitle(id string) string {

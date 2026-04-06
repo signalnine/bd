@@ -451,7 +451,6 @@ func executeJSONLImportAction(ctx context.Context, plan BootstrapPlan, cfg *conf
 	}
 
 	return fmt.Errorf("JSONL import is no longer supported")
-	return nil
 }
 
 func executeSyncAction(ctx context.Context, plan BootstrapPlan, cfg *configfile.Config) error {

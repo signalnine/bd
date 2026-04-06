@@ -4,13 +4,10 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/steveyegge/beads/internal/audit"
 	"github.com/steveyegge/beads/internal/config"
-	"github.com/steveyegge/beads/internal/storage"
 	"github.com/steveyegge/beads/internal/types"
 	"github.com/steveyegge/beads/internal/ui"
 	"github.com/steveyegge/beads/internal/utils"
@@ -76,8 +73,6 @@ create, update, show, or close operation).`,
 		}
 
 		force, _ := cmd.Flags().GetBool("force")
-		continueFlag, _ := cmd.Flags().GetBool("continue")
-		noAuto, _ := cmd.Flags().GetBool("no-auto")
 		suggestNext, _ := cmd.Flags().GetBool("suggest-next")
 
 		claimNext, _ := cmd.Flags().GetBool("claim-next")
@@ -89,11 +84,6 @@ create, update, show, or close operation).`,
 		}
 
 		ctx := rootCtx
-
-		// --continue only works with a single issue
-		if continueFlag && len(args) > 1 {
-			FatalErrorRespectJSON("--continue only works when closing a single issue")
-		}
 
 		// --suggest-next only works with a single issue
 		if suggestNext && len(args) > 1 {
@@ -132,14 +122,6 @@ create, update, show, or close operation).`,
 				}
 			}
 
-			// Check gate satisfaction for machine-checkable gates (GH#1467)
-			if !force {
-				if err := checkGateSatisfaction(issue); err != nil {
-					fmt.Fprintf(os.Stderr, "cannot close %s: %s\n", id, err)
-					continue
-				}
-			}
-
 			// Check if issue has open blockers (GH#962)
 			if !force {
 				blocked, blockers, err := store.IsBlocked(ctx, id)
@@ -166,9 +148,6 @@ create, update, show, or close operation).`,
 			audit.LogFieldChange(id, "status", oldStatus, "closed", actor, reason)
 
 			closedCount++
-
-			// Auto-close parent molecule if all steps are now complete
-			autoCloseCompletedMolecule(ctx, store, id, actor, session)
 
 			// Re-fetch for display
 			closedIssue, _ := store.GetIssue(ctx, id)
@@ -200,28 +179,9 @@ create, update, show, or close operation).`,
 			}
 		}
 
-		// Handle --continue flag
-		if continueFlag && len(resolvedIDs) == 1 && closedCount > 0 {
-			autoClaim := !noAuto
-			result, err := AdvanceToNextStep(ctx, store, resolvedIDs[0], autoClaim, actor)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Warning: could not advance to next step: %v\n", err)
-			} else if result != nil {
-				if jsonOutput {
-					// Include continue result in JSON output
-					outputJSON(map[string]interface{}{
-						"closed":   closedIssues,
-						"continue": result,
-					})
-					return
-				}
-				PrintContinueResult(result)
-			}
-		}
-
 		// Handle --claim-next flag
 		var claimedNextIssue *types.Issue
-		if claimNext && closedCount > 0 && !continueFlag {
+		if claimNext && closedCount > 0 {
 			readyIssues, err := store.GetReadyWork(ctx, types.WorkFilter{
 				Status:     "open",
 				Limit:      1,
@@ -284,113 +244,12 @@ func init() {
 	_ = closeCmd.Flags().MarkHidden("message") // Hidden alias for agent/CLI ergonomics
 	closeCmd.Flags().String("comment", "", "Alias for --reason")
 	_ = closeCmd.Flags().MarkHidden("comment") // Hidden alias for agent/CLI ergonomics
-	closeCmd.Flags().BoolP("force", "f", false, "Force close pinned issues or unsatisfied gates")
-	closeCmd.Flags().Bool("continue", false, "Auto-advance to next step in molecule")
-	closeCmd.Flags().Bool("no-auto", false, "With --continue, show next step but don't claim it")
+	closeCmd.Flags().BoolP("force", "f", false, "Force close pinned issues")
 	closeCmd.Flags().Bool("suggest-next", false, "Show newly unblocked issues after closing")
 	closeCmd.Flags().Bool("claim-next", false, "Automatically claim the next highest priority available issue")
 	closeCmd.Flags().String("session", "", "Claude Code session ID (or set CLAUDE_SESSION_ID env var)")
 	closeCmd.ValidArgsFunction = issueIDCompletion
 	rootCmd.AddCommand(closeCmd)
-}
-
-// isMachineCheckableGate returns true if the issue is a gate with a machine-checkable await type.
-func isMachineCheckableGate(issue *types.Issue) bool {
-	if issue == nil || issue.IssueType != "gate" {
-		return false
-	}
-	switch {
-	case strings.HasPrefix(issue.AwaitType, "gh:pr"):
-		return true
-	case strings.HasPrefix(issue.AwaitType, "gh:run"):
-		return true
-	case issue.AwaitType == "timer":
-		return true
-	case issue.AwaitType == "bead":
-		return true
-	default:
-		return false
-	}
-}
-
-// checkGateSatisfaction checks whether a gate issue's condition is satisfied.
-// Returns nil if the gate is satisfied (or not a machine-checkable gate), or an error describing why it cannot be closed.
-func checkGateSatisfaction(issue *types.Issue) error {
-	if !isMachineCheckableGate(issue) {
-		return nil
-	}
-
-	var resolved bool
-	var escalated bool
-	var reason string
-	var err error
-
-	switch {
-	case strings.HasPrefix(issue.AwaitType, "gh:run"):
-		resolved, escalated, reason, err = checkGHRun(issue)
-	case strings.HasPrefix(issue.AwaitType, "gh:pr"):
-		resolved, escalated, reason, err = checkGHPR(issue)
-	case issue.AwaitType == "timer":
-		resolved, escalated, reason, err = checkTimer(issue, time.Now())
-	case issue.AwaitType == "bead":
-		resolved, reason = checkBeadGate(rootCtx, issue.AwaitID)
-		if resolved {
-			return nil
-		}
-		return fmt.Errorf("gate condition not satisfied: %s (use --force to override)", reason)
-	}
-
-	if err != nil {
-		// If we can't check the condition, allow close with a warning
-		fmt.Fprintf(os.Stderr, "Warning: could not evaluate gate condition: %v\n", err)
-		return nil
-	}
-
-	if resolved {
-		return nil
-	}
-
-	if escalated {
-		return fmt.Errorf("gate condition not satisfied: %s (use --force to override)", reason)
-	}
-
-	return fmt.Errorf("gate condition not satisfied: %s (use --force to override)", reason)
-}
-
-// autoCloseCompletedMolecule checks if closing a step completed a parent molecule,
-// and if so, auto-closes the molecule root. This prevents stale wisps that are
-// complete but never explicitly closed (e.g., deacon patrol wisps).
-func autoCloseCompletedMolecule(ctx context.Context, s storage.DoltStorage, closedStepID, actorName, session string) {
-	moleculeID := findParentMolecule(ctx, s, closedStepID)
-	if moleculeID == "" {
-		return // Not part of a molecule
-	}
-
-	// Check if molecule root is already closed
-	root, err := s.GetIssue(ctx, moleculeID)
-	if err != nil || root == nil || root.Status == types.StatusClosed {
-		return
-	}
-
-	// Load progress to check completion
-	progress, err := getMoleculeProgress(ctx, s, moleculeID)
-	if err != nil {
-		return // Best effort — don't fail the close
-	}
-
-	if progress.Completed < progress.Total {
-		return // Not all steps complete yet
-	}
-
-	// All steps complete — auto-close the molecule root
-	if err := s.CloseIssue(ctx, moleculeID, "all steps complete", actorName, session); err != nil {
-		fmt.Fprintf(os.Stderr, "Warning: could not auto-close completed molecule %s: %v\n", moleculeID, err)
-		return
-	}
-
-	if !jsonOutput {
-		fmt.Printf("%s Auto-closed completed molecule %s\n", ui.RenderPass("✓"), formatFeedbackID(moleculeID, root.Title))
-	}
 }
 
 // countEpicOpenChildren returns the number of open (non-closed) children for an epic.

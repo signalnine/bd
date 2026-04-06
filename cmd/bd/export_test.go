@@ -509,29 +509,4 @@ func TestExportNoHistoryBeadRoundTrip(t *testing.T) {
 	if noHistoryLine["no_history"] != true {
 		t.Errorf("exported NoHistory bead has no_history=%v, want true", noHistoryLine["no_history"])
 	}
-
-	// Import the exported JSONL into a fresh store and verify no_history survives.
-	tmpDir2 := t.TempDir()
-	dbPath2 := filepath.Join(tmpDir2, "dolt")
-	store2 := newTestStore(t, dbPath2)
-
-	count, err := importFromLocalJSONL(ctx, store2, exportFile)
-	if err != nil {
-		t.Fatalf("importFromLocalJSONL: %v", err)
-	}
-	if count < 2 {
-		t.Errorf("expected at least 2 issues imported, got %d", count)
-	}
-
-	// Retrieve the NoHistory bead from the new store and check the flag.
-	imported, err := store2.GetIssue(ctx, noHistoryBead.ID)
-	if err != nil {
-		t.Fatalf("GetIssue(%s) after import: %v", noHistoryBead.ID, err)
-	}
-	if !imported.NoHistory {
-		t.Error("no_history=true was lost during export→import roundtrip: bead is now GC-eligible")
-	}
-	if imported.Ephemeral {
-		t.Error("NoHistory bead must not become ephemeral=true after roundtrip")
-	}
 }

@@ -6,27 +6,6 @@ import (
 	"github.com/steveyegge/beads/internal/utils"
 )
 
-func TestIsNumericID_EdgeCases(t *testing.T) {
-	tests := []struct {
-		input    string
-		expected bool
-	}{
-		{"0", true},
-		{"123", true},
-		{"999", true},
-		{"abc", false},
-		{"", false},
-		{"12a", false},
-	}
-
-	for _, tt := range tests {
-		result := isNumericID(tt.input)
-		if result != tt.expected {
-			t.Errorf("isNumericID(%q) = %v, want %v", tt.input, result, tt.expected)
-		}
-	}
-}
-
 func TestGetWorktreeGitDir(_ *testing.T) {
 	gitDir := getWorktreeGitDir()
 	// Just verify it doesn't panic and returns a string

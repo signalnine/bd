@@ -33,20 +33,6 @@ Use --gated to find molecules ready for gate-resume dispatch:
 
 This is useful for agents executing molecules to see which steps can run next.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// Handle --gated flag (gate-resume discovery)
-		gated, _ := cmd.Flags().GetBool("gated")
-		if gated {
-			runMolReadyGated(cmd, args)
-			return
-		}
-
-		// Handle molecule-specific ready query
-		molID, _ := cmd.Flags().GetString("mol")
-		if molID != "" {
-			runMoleculeReady(cmd, molID)
-			return
-		}
-
 		// Handle --explain flag (dependency-aware reasoning)
 		explain, _ := cmd.Flags().GetBool("explain")
 		if explain {
@@ -534,131 +520,6 @@ func runReadyExplain(_ *cobra.Command) {
 	fmt.Printf("\n\n")
 }
 
-// runMoleculeReady shows ready steps within a specific molecule
-func runMoleculeReady(_ *cobra.Command, molIDArg string) {
-	ctx := rootCtx
-
-	// Molecule-ready requires direct store access for subgraph loading
-	if store == nil {
-		FatalError("no database connection")
-	}
-
-	// Resolve molecule ID
-	moleculeID, err := utils.ResolvePartialID(ctx, store, molIDArg)
-	if err != nil {
-		FatalError("molecule '%s' not found", molIDArg)
-	}
-
-	// Load molecule subgraph
-	subgraph, err := loadTemplateSubgraph(ctx, store, moleculeID)
-	if err != nil {
-		FatalError("loading molecule: %v", err)
-	}
-
-	// Get parallel analysis to find ready steps
-	analysis := analyzeMoleculeParallel(subgraph)
-
-	// Collect ready steps
-	var readySteps []*MoleculeReadyStep
-	for _, issue := range subgraph.Issues {
-		info := analysis.Steps[issue.ID]
-		if info != nil && info.IsReady {
-			readySteps = append(readySteps, &MoleculeReadyStep{
-				Issue:         issue,
-				ParallelInfo:  info,
-				ParallelGroup: info.ParallelGroup,
-			})
-		}
-	}
-
-	if jsonOutput {
-		output := MoleculeReadyOutput{
-			MoleculeID:     moleculeID,
-			MoleculeTitle:  subgraph.Root.Title,
-			TotalSteps:     analysis.TotalSteps,
-			ReadySteps:     len(readySteps),
-			Steps:          readySteps,
-			ParallelGroups: analysis.ParallelGroups,
-		}
-		outputJSON(output)
-		return
-	}
-
-	// Human-readable output
-	fmt.Printf("\n%s Ready steps in molecule: %s\n", ui.RenderAccent("🧪"), subgraph.Root.Title)
-	fmt.Printf("   ID: %s\n", moleculeID)
-	fmt.Printf("   Total: %d steps, %d ready\n", analysis.TotalSteps, len(readySteps))
-
-	if len(readySteps) == 0 {
-		fmt.Printf("\n%s No ready steps (all blocked or completed)\n\n", ui.RenderWarn("✨"))
-		return
-	}
-
-	// Show parallel groups if any
-	if len(analysis.ParallelGroups) > 0 {
-		fmt.Printf("\n%s Parallel Groups:\n", ui.RenderPass("⚡"))
-		for groupName, members := range analysis.ParallelGroups {
-			// Check if any members are ready
-			readyInGroup := 0
-			for _, id := range members {
-				if info := analysis.Steps[id]; info != nil && info.IsReady {
-					readyInGroup++
-				}
-			}
-			if readyInGroup > 0 {
-				fmt.Printf("   %s: %d ready\n", groupName, readyInGroup)
-			}
-		}
-	}
-
-	fmt.Printf("\n%s Ready steps:\n\n", ui.RenderPass("📋"))
-	for i, step := range readySteps {
-		// Show parallel group if in one
-		groupAnnotation := ""
-		if step.ParallelGroup != "" {
-			groupAnnotation = fmt.Sprintf(" [%s]", ui.RenderAccent(step.ParallelGroup))
-		}
-
-		fmt.Printf("%d. [%s] [%s] %s: %s%s\n", i+1,
-			ui.RenderPriority(step.Issue.Priority),
-			ui.RenderType(string(step.Issue.IssueType)),
-			ui.RenderID(step.Issue.ID),
-			step.Issue.Title,
-			groupAnnotation)
-
-		// Show what this step can parallelize with
-		if len(step.ParallelInfo.CanParallel) > 0 {
-			readyParallel := []string{}
-			for _, pID := range step.ParallelInfo.CanParallel {
-				if pInfo := analysis.Steps[pID]; pInfo != nil && pInfo.IsReady {
-					readyParallel = append(readyParallel, pID)
-				}
-			}
-			if len(readyParallel) > 0 {
-				fmt.Printf("   Can run with: %v\n", readyParallel)
-			}
-		}
-	}
-	fmt.Println()
-}
-
-// MoleculeReadyStep holds a ready step with its parallel info
-type MoleculeReadyStep struct {
-	Issue         *types.Issue  `json:"issue"`
-	ParallelInfo  *ParallelInfo `json:"parallel_info"`
-	ParallelGroup string        `json:"parallel_group,omitempty"`
-}
-
-// MoleculeReadyOutput is the JSON output for bd ready --mol
-type MoleculeReadyOutput struct {
-	MoleculeID     string               `json:"molecule_id"`
-	MoleculeTitle  string               `json:"molecule_title"`
-	TotalSteps     int                  `json:"total_steps"`
-	ReadySteps     int                  `json:"ready_steps"`
-	Steps          []*MoleculeReadyStep `json:"steps"`
-	ParallelGroups map[string][]string  `json:"parallel_groups"`
-}
-
 func init() {
 	readyCmd.Flags().IntP("limit", "n", 10, "Maximum issues to show")
 	readyCmd.Flags().IntP("priority", "p", 0, "Filter by priority")
@@ -668,14 +529,10 @@ func init() {
 	readyCmd.Flags().StringSliceP("label", "l", []string{}, "Filter by labels (AND: must have ALL). Can combine with --label-any")
 	readyCmd.Flags().StringSlice("label-any", []string{}, "Filter by labels (OR: must have AT LEAST ONE). Can combine with --label")
 	readyCmd.Flags().StringP("type", "t", "", "Filter by issue type (task, bug, feature, epic, decision, merge-request). Aliases: mr→merge-request, feat→feature, mol→molecule, dec/adr→decision")
-	readyCmd.Flags().String("mol", "", "Filter to steps within a specific molecule")
 	readyCmd.Flags().String("parent", "", "Filter to descendants of this bead/epic")
-	readyCmd.Flags().String("mol-type", "", "Filter by molecule type: swarm, patrol, or work")
 	readyCmd.Flags().Bool("pretty", true, "Display issues in a tree format with status/priority symbols")
 	readyCmd.Flags().Bool("plain", false, "Display issues as a plain numbered list")
 	readyCmd.Flags().Bool("include-deferred", false, "Include issues with future defer_until timestamps")
-	readyCmd.Flags().Bool("include-ephemeral", false, "Include ephemeral issues (wisps) in results")
-	readyCmd.Flags().Bool("gated", false, "Find molecules ready for gate-resume dispatch")
 	readyCmd.Flags().StringSlice("exclude-type", nil, "Exclude issue types from results (comma-separated or repeatable, e.g., --exclude-type=convoy,epic)")
 	readyCmd.Flags().Bool("explain", false, "Show dependency-aware reasoning for why issues are ready or blocked")
 	// Metadata filtering (GH#1406)
