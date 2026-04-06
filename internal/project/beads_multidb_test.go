@@ -1,7 +1,7 @@
 //go:build integration
 // +build integration
 
-package beads
+package project
 
 import (
 	"os"
@@ -25,14 +25,14 @@ func TestFindAllDatabases(t *testing.T) {
 
 	// Create nested directory structure:
 	// tmpDir/
-	//   .beads/test.db
+	//   .bd/test.db
 	//   project1/
-	//     .beads/project1.db
+	//     .bd/project1.db
 	//     subdir/
 	//       (working directory here)
 
 	// Root .beads
-	rootBeads := filepath.Join(tmpDir, ".beads")
+	rootBeads := filepath.Join(tmpDir, ".bd")
 	if err := os.MkdirAll(rootBeads, 0750); err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +43,7 @@ func TestFindAllDatabases(t *testing.T) {
 
 	// Project1 .beads
 	project1Dir := filepath.Join(tmpDir, "project1")
-	project1Beads := filepath.Join(project1Dir, ".beads")
+	project1Beads := filepath.Join(project1Dir, ".bd")
 	if err := os.MkdirAll(project1Beads, 0750); err != nil {
 		t.Fatal(err)
 	}
@@ -73,8 +73,8 @@ func TestFindAllDatabases(t *testing.T) {
 	if databases[0].Path != project1DB {
 		t.Errorf("expected database to be %s, got %s", project1DB, databases[0].Path)
 	}
-	if databases[0].BeadsDir != project1Beads {
-		t.Errorf("expected beads dir to be %s, got %s", project1Beads, databases[0].BeadsDir)
+	if databases[0].BdDir != project1Beads {
+		t.Errorf("expected beads dir to be %s, got %s", project1Beads, databases[0].BdDir)
 	}
 
 	// Root database should NOT be found - it's out of scope (parent of closest .beads)
@@ -97,11 +97,11 @@ func TestFindAllDatabases_Single(t *testing.T) {
 	}
 
 	// Create .beads directory with database
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0750); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0750); err != nil {
 		t.Fatal(err)
 	}
-	dbPath := filepath.Join(beadsDir, "test.db")
+	dbPath := filepath.Join(bdDir, "test.db")
 	if err := os.WriteFile(dbPath, []byte("fake db"), 0600); err != nil {
 		t.Fatal(err)
 	}

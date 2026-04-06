@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 // GetAllDependencyRecordsInTx returns all dependency records from the dependencies table.

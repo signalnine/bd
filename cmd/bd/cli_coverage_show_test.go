@@ -14,8 +14,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/steveyegge/beads/internal/storage/dolt"
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/storage/dolt"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 var cliCoverageMutex sync.Mutex
@@ -41,36 +41,36 @@ func runBDForCoverage(t *testing.T, dir string, args ...string) (stdout string, 
 	os.Stderr = wErr
 
 	// Mark tests explicitly.
-	oldTestMode, testModeWasSet := os.LookupEnv("BEADS_TEST_MODE")
-	os.Setenv("BEADS_TEST_MODE", "1")
+	oldTestMode, testModeWasSet := os.LookupEnv("BD_TEST_MODE")
+	os.Setenv("BD_TEST_MODE", "1")
 	defer func() {
 		if testModeWasSet {
-			_ = os.Setenv("BEADS_TEST_MODE", oldTestMode)
+			_ = os.Setenv("BD_TEST_MODE", oldTestMode)
 		} else {
-			os.Unsetenv("BEADS_TEST_MODE")
+			os.Unsetenv("BD_TEST_MODE")
 		}
 	}()
 
 	// Ensure all commands (including init) operate on the temp workspace DB.
-	db := filepath.Join(dir, ".beads", "beads.db")
-	beadsDir := filepath.Join(dir, ".beads")
-	oldBeadsDir, beadsDirWasSet := os.LookupEnv("BEADS_DIR")
-	os.Setenv("BEADS_DIR", beadsDir)
+	db := filepath.Join(dir, ".bd", "bd.db")
+	bdDir := filepath.Join(dir, ".bd")
+	oldBeadsDir, beadsDirWasSet := os.LookupEnv("BD_DIR")
+	os.Setenv("BD_DIR", bdDir)
 	defer func() {
 		if beadsDirWasSet {
-			_ = os.Setenv("BEADS_DIR", oldBeadsDir)
+			_ = os.Setenv("BD_DIR", oldBeadsDir)
 		} else {
-			os.Unsetenv("BEADS_DIR")
+			os.Unsetenv("BD_DIR")
 		}
 	}()
 
-	oldDB, dbWasSet := os.LookupEnv("BEADS_DB")
-	os.Setenv("BEADS_DB", db)
+	oldDB, dbWasSet := os.LookupEnv("BD_DB")
+	os.Setenv("BD_DB", db)
 	defer func() {
 		if dbWasSet {
-			_ = os.Setenv("BEADS_DB", oldDB)
+			_ = os.Setenv("BD_DB", oldDB)
 		} else {
-			os.Unsetenv("BEADS_DB")
+			os.Unsetenv("BD_DB")
 		}
 	}()
 	oldBDDB, bdDBWasSet := os.LookupEnv("BD_DB")
@@ -93,13 +93,13 @@ func runBDForCoverage(t *testing.T, dir string, args ...string) (stdout string, 
 			os.Unsetenv("BD_ACTOR")
 		}
 	}()
-	oldBeadsActor, beadsActorWasSet := os.LookupEnv("BEADS_ACTOR")
-	os.Setenv("BEADS_ACTOR", "test-user")
+	oldBeadsActor, beadsActorWasSet := os.LookupEnv("BD_ACTOR")
+	os.Setenv("BD_ACTOR", "test-user")
 	defer func() {
 		if beadsActorWasSet {
-			_ = os.Setenv("BEADS_ACTOR", oldBeadsActor)
+			_ = os.Setenv("BD_ACTOR", oldBeadsActor)
 		} else {
-			os.Unsetenv("BEADS_ACTOR")
+			os.Unsetenv("BD_ACTOR")
 		}
 	}()
 
@@ -275,7 +275,7 @@ func TestCoverage_TemplateAndPinnedProtections(t *testing.T) {
 	}
 
 	// Insert a template issue directly and verify update/close protect it.
-	dbFile := filepath.Join(dir, ".beads", "beads.db")
+	dbFile := filepath.Join(dir, ".bd", "bd.db")
 	s, err := dolt.New(context.Background(), &dolt.Config{Path: dbFile})
 	if err != nil {
 		t.Skipf("skipping: Dolt server not available: %v", err)
@@ -351,7 +351,7 @@ func TestCoverage_ShowThread(t *testing.T) {
 	dir := t.TempDir()
 	runBDForCoverage(t, dir, "init", "--prefix", "test", "--quiet")
 
-	dbFile := filepath.Join(dir, ".beads", "beads.db")
+	dbFile := filepath.Join(dir, ".bd", "bd.db")
 	s, err := dolt.New(context.Background(), &dolt.Config{Path: dbFile})
 	if err != nil {
 		t.Skipf("skipping: Dolt server not available: %v", err)

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 // GetIssueCommentsInTx retrieves comments for an issue within an existing

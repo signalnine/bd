@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 // SearchIssuesInTx executes a filtered issue search within an existing transaction.

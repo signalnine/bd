@@ -10,7 +10,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
-	"github.com/steveyegge/beads/internal/ui"
+	"github.com/steveyegge/bd/internal/ui"
 )
 
 // initGuardDBCheck holds the result of checking whether a database exists on a
@@ -103,7 +103,7 @@ func initGuardServerMessage(dbName, host string, port int, prefix, syncGitRemote
 		b.WriteString("\nIf this is a brand-new project, create the database with:\n")
 		fmt.Fprintf(&b, "  bd init --prefix %s\n", prefix)
 		b.WriteString("\nIf bd bootstrap cannot find the expected remote automatically, set sync.git-remote\n")
-		b.WriteString("in .beads/config.yaml and re-run bd bootstrap.\n")
+		b.WriteString("in .bd/config.yaml and re-run bd bootstrap.\n")
 	}
 
 	b.WriteString("\n⚠  Caution: bd init --force destroys ALL existing issues. Do not\n")

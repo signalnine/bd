@@ -55,8 +55,8 @@ func TestSetupGitExclude_Worktree(t *testing.T) {
 		t.Fatalf("failed to read main exclude file: %v", err)
 	}
 
-	if !strings.Contains(string(content), ".beads/") {
-		t.Errorf("main repo exclude missing .beads/ pattern: %s", content)
+	if !strings.Contains(string(content), ".bd/") {
+		t.Errorf("main repo exclude missing .bd/ pattern: %s", content)
 	}
 	if !strings.Contains(string(content), ".claude/settings.local.json") {
 		t.Errorf("main repo exclude missing .claude/settings.local.json pattern: %s", content)
@@ -71,8 +71,8 @@ func TestSetupGitExclude_Worktree(t *testing.T) {
 	worktreeExcludePath := filepath.Join(strings.TrimSpace(string(worktreeGitDir)), "info", "exclude")
 	if worktreeContent, err := os.ReadFile(worktreeExcludePath); err == nil {
 		// If worktree exclude file exists, it should NOT have the beads patterns
-		if strings.Contains(string(worktreeContent), ".beads/") {
-			t.Errorf("worktree exclude should not have .beads/ pattern (it was written to wrong location)")
+		if strings.Contains(string(worktreeContent), ".bd/") {
+			t.Errorf("worktree exclude should not have .bd/ pattern (it was written to wrong location)")
 		}
 	}
 	// If the file doesn't exist, that's fine - we didn't create it
@@ -124,8 +124,8 @@ func TestSetupForkExclude_Worktree(t *testing.T) {
 		t.Fatalf("failed to read main exclude file: %v", err)
 	}
 
-	if !strings.Contains(string(content), ".beads/") {
-		t.Errorf("main repo exclude missing .beads/ pattern: %s", content)
+	if !strings.Contains(string(content), ".bd/") {
+		t.Errorf("main repo exclude missing .bd/ pattern: %s", content)
 	}
 
 	// Verify: worktree's .git/worktrees/<name>/info/exclude should NOT exist
@@ -137,8 +137,8 @@ func TestSetupForkExclude_Worktree(t *testing.T) {
 	worktreeExcludePath := filepath.Join(strings.TrimSpace(string(worktreeGitDir)), "info", "exclude")
 	if worktreeContent, err := os.ReadFile(worktreeExcludePath); err == nil {
 		// If worktree exclude file exists, it should NOT have the beads patterns
-		if strings.Contains(string(worktreeContent), ".beads/") {
-			t.Errorf("worktree exclude should not have .beads/ pattern (it was written to wrong location)")
+		if strings.Contains(string(worktreeContent), ".bd/") {
+			t.Errorf("worktree exclude should not have .bd/ pattern (it was written to wrong location)")
 		}
 	}
 }
@@ -164,8 +164,8 @@ func TestSetupGitExclude_RegularRepo(t *testing.T) {
 		t.Fatalf("failed to read exclude file: %v", err)
 	}
 
-	if !strings.Contains(string(content), ".beads/") {
-		t.Errorf("exclude file missing .beads/ pattern: %s", content)
+	if !strings.Contains(string(content), ".bd/") {
+		t.Errorf("exclude file missing .bd/ pattern: %s", content)
 	}
 	if !strings.Contains(string(content), ".claude/settings.local.json") {
 		t.Errorf("exclude file missing .claude/settings.local.json pattern: %s", content)

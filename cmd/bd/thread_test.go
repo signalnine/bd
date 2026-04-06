@@ -8,13 +8,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 func TestThreadTraversalSuite(t *testing.T) {
 	t.Parallel()
 	tmpDir := t.TempDir()
-	testStore := newTestStore(t, filepath.Join(tmpDir, ".beads", "beads.db"))
+	testStore := newTestStore(t, filepath.Join(tmpDir, ".bd", "bd.db"))
 	ctx := context.Background()
 	now := time.Now()
 

@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 // bdCreate runs "bd create" in the given dir with --json and extra args.
@@ -94,9 +94,9 @@ func bdShow(t *testing.T, bd, dir, id string) *types.Issue {
 }
 
 // openStore opens an EmbeddedDoltStore for direct verification queries.
-func openStore(t *testing.T, beadsDir, database string) *embeddeddolt.EmbeddedDoltStore {
+func openStore(t *testing.T, bdDir, database string) *embeddeddolt.EmbeddedDoltStore {
 	t.Helper()
-	store, err := embeddeddolt.New(t.Context(), beadsDir, database, "main")
+	store, err := embeddeddolt.New(t.Context(), bdDir, database, "main")
 	if err != nil {
 		t.Fatalf("openStore: %v", err)
 	}
@@ -105,9 +105,9 @@ func openStore(t *testing.T, beadsDir, database string) *embeddeddolt.EmbeddedDo
 }
 
 // assertDepExists verifies a dependency row exists via raw SQL.
-func assertDepExists(t *testing.T, beadsDir, database, issueID, dependsOnID string) {
+func assertDepExists(t *testing.T, bdDir, database, issueID, dependsOnID string) {
 	t.Helper()
-	dataDir := filepath.Join(beadsDir, "embeddeddolt")
+	dataDir := filepath.Join(bdDir, "embeddeddolt")
 	db, cleanup, err := embeddeddolt.OpenSQL(t.Context(), dataDir, database, "main")
 	if err != nil {
 		t.Fatalf("OpenSQL: %v", err)
@@ -126,8 +126,8 @@ func assertDepExists(t *testing.T, beadsDir, database, issueID, dependsOnID stri
 }
 
 func TestEmbeddedCreate(t *testing.T) {
-	if os.Getenv("BEADS_TEST_EMBEDDED_DOLT") != "1" {
-		t.Skip("set BEADS_TEST_EMBEDDED_DOLT=1 to run embedded dolt create tests")
+	if os.Getenv("BD_TEST_EMBEDDED_DOLT") != "1" {
+		t.Skip("set BD_TEST_EMBEDDED_DOLT=1 to run embedded dolt create tests")
 	}
 	t.Parallel()
 
@@ -238,10 +238,10 @@ func TestEmbeddedCreate(t *testing.T) {
 	})
 
 	t.Run("labels", func(t *testing.T) {
-		dir, beadsDir, _ := bdInit(t, bd, "--prefix", "lb")
+		dir, bdDir, _ := bdInit(t, bd, "--prefix", "lb")
 		issue := bdCreate(t, bd, dir, "Labeled issue", "-l", "bug,critical")
 
-		store := openStore(t, beadsDir, "lb")
+		store := openStore(t, bdDir, "lb")
 		labels, err := store.GetLabels(t.Context(), issue.ID)
 		if err != nil {
 			t.Fatalf("GetLabels: %v", err)
@@ -264,28 +264,28 @@ func TestEmbeddedCreate(t *testing.T) {
 	})
 
 	t.Run("dependencies", func(t *testing.T) {
-		dir, beadsDir, _ := bdInit(t, bd, "--prefix", "dp")
+		dir, bdDir, _ := bdInit(t, bd, "--prefix", "dp")
 		parent := bdCreate(t, bd, dir, "Parent issue")
 		child := bdCreate(t, bd, dir, "Child issue", "--deps", "blocks:"+parent.ID)
 
 		// "blocks:X" reverses direction: X depends on new issue (parent.ID -> child.ID)
-		assertDepExists(t, beadsDir, "dp", parent.ID, child.ID)
+		assertDepExists(t, bdDir, "dp", parent.ID, child.ID)
 	})
 
 	t.Run("multiple_dependencies", func(t *testing.T) {
-		dir, beadsDir, _ := bdInit(t, bd, "--prefix", "md")
+		dir, bdDir, _ := bdInit(t, bd, "--prefix", "md")
 		dep1 := bdCreate(t, bd, dir, "Dep 1")
 		dep2 := bdCreate(t, bd, dir, "Dep 2")
 		child := bdCreate(t, bd, dir, "Multi dep issue",
 			"--deps", fmt.Sprintf("blocks:%s,related:%s", dep1.ID, dep2.ID))
 
 		// blocks reverses direction; related keeps original direction
-		assertDepExists(t, beadsDir, "md", dep1.ID, child.ID)
-		assertDepExists(t, beadsDir, "md", child.ID, dep2.ID)
+		assertDepExists(t, bdDir, "md", dep1.ID, child.ID)
+		assertDepExists(t, bdDir, "md", child.ID, dep2.ID)
 	})
 
 	t.Run("parent_child", func(t *testing.T) {
-		dir, beadsDir, _ := bdInit(t, bd, "--prefix", "pc")
+		dir, bdDir, _ := bdInit(t, bd, "--prefix", "pc")
 		parent := bdCreate(t, bd, dir, "Parent epic", "-t", "epic")
 		child := bdCreate(t, bd, dir, "Child task", "--parent", parent.ID)
 
@@ -293,15 +293,15 @@ func TestEmbeddedCreate(t *testing.T) {
 			t.Errorf("child ID %q should start with %q.", child.ID, parent.ID)
 		}
 
-		assertDepExists(t, beadsDir, "pc", child.ID, parent.ID)
+		assertDepExists(t, bdDir, "pc", child.ID, parent.ID)
 	})
 
 	t.Run("parent_label_inheritance", func(t *testing.T) {
-		dir, beadsDir, _ := bdInit(t, bd, "--prefix", "pi")
+		dir, bdDir, _ := bdInit(t, bd, "--prefix", "pi")
 		parent := bdCreate(t, bd, dir, "Parent with labels", "-t", "epic", "-l", "team-a,priority:high")
 		child := bdCreate(t, bd, dir, "Child inherits", "--parent", parent.ID)
 
-		store := openStore(t, beadsDir, "pi")
+		store := openStore(t, bdDir, "pi")
 		childLabels, err := store.GetLabels(t.Context(), child.ID)
 		if err != nil {
 			t.Fatalf("GetLabels: %v", err)
@@ -316,11 +316,11 @@ func TestEmbeddedCreate(t *testing.T) {
 	})
 
 	t.Run("parent_no_inherit_labels", func(t *testing.T) {
-		dir, beadsDir, _ := bdInit(t, bd, "--prefix", "ni")
+		dir, bdDir, _ := bdInit(t, bd, "--prefix", "ni")
 		parent := bdCreate(t, bd, dir, "Parent", "-t", "epic", "-l", "inherited-label")
 		child := bdCreate(t, bd, dir, "Child no inherit", "--parent", parent.ID, "--no-inherit-labels", "-l", "own-label")
 
-		store := openStore(t, beadsDir, "ni")
+		store := openStore(t, bdDir, "ni")
 		childLabels, err := store.GetLabels(t.Context(), child.ID)
 		if err != nil {
 			t.Fatalf("GetLabels: %v", err)
@@ -364,11 +364,11 @@ func TestEmbeddedCreate(t *testing.T) {
 	})
 
 	t.Run("ephemeral", func(t *testing.T) {
-		dir, beadsDir, _ := bdInit(t, bd, "--prefix", "ep")
+		dir, bdDir, _ := bdInit(t, bd, "--prefix", "ep")
 		issue := bdCreate(t, bd, dir, "Ephemeral issue", "--ephemeral")
 
 		// Verify it went to wisps table
-		dataDir := filepath.Join(beadsDir, "embeddeddolt")
+		dataDir := filepath.Join(bdDir, "embeddeddolt")
 		db, cleanup, err := embeddeddolt.OpenSQL(t.Context(), dataDir, "ep", "main")
 		if err != nil {
 			t.Fatalf("OpenSQL: %v", err)
@@ -471,7 +471,7 @@ func TestEmbeddedCreate(t *testing.T) {
 	})
 
 	t.Run("discovered_from_dep", func(t *testing.T) {
-		dir, beadsDir, _ := bdInit(t, bd, "--prefix", "di")
+		dir, bdDir, _ := bdInit(t, bd, "--prefix", "di")
 
 		parent := bdCreate(t, bd, dir, "Parent work")
 		child := bdCreate(t, bd, dir, "Discovered bug",
@@ -481,11 +481,11 @@ func TestEmbeddedCreate(t *testing.T) {
 			t.Fatal("expected child issue ID")
 		}
 		// Verify discovered-from dependency was created (keeps original direction)
-		assertDepExists(t, beadsDir, "di", child.ID, parent.ID)
+		assertDepExists(t, bdDir, "di", child.ID, parent.ID)
 	})
 
 	t.Run("markdown_bulk_create", func(t *testing.T) {
-		dir, beadsDir, _ := bdInit(t, bd, "--prefix", "mk")
+		dir, bdDir, _ := bdInit(t, bd, "--prefix", "mk")
 
 		mdContent := `## First issue
 
@@ -526,7 +526,7 @@ A new feature
 		}
 
 		// Verify both issues were created
-		store := openStore(t, beadsDir, "mk")
+		store := openStore(t, bdDir, "mk")
 		stats, err := store.GetStatistics(t.Context())
 		if err != nil {
 			t.Fatalf("GetStatistics: %v", err)
@@ -548,12 +548,12 @@ A new feature
 	})
 
 	t.Run("parent_label_inheritance_merge", func(t *testing.T) {
-		dir, beadsDir, _ := bdInit(t, bd, "--prefix", "pm")
+		dir, bdDir, _ := bdInit(t, bd, "--prefix", "pm")
 		parent := bdCreate(t, bd, dir, "Parent with a,b", "-t", "epic", "-l", "a,b")
 		// Child with explicit label "c" and "a" (overlaps parent)
 		child := bdCreate(t, bd, dir, "Child with c,a", "--parent", parent.ID, "-l", "c,a")
 
-		store := openStore(t, beadsDir, "pm")
+		store := openStore(t, bdDir, "pm")
 		childLabels, err := store.GetLabels(t.Context(), child.ID)
 		if err != nil {
 			t.Fatalf("GetLabels: %v", err)
@@ -574,11 +574,11 @@ A new feature
 	})
 
 	t.Run("parent_no_labels", func(t *testing.T) {
-		dir, beadsDir, _ := bdInit(t, bd, "--prefix", "pn")
+		dir, bdDir, _ := bdInit(t, bd, "--prefix", "pn")
 		parent := bdCreate(t, bd, dir, "Labelless parent", "-t", "epic")
 		child := bdCreate(t, bd, dir, "Child of labelless", "--parent", parent.ID)
 
-		store := openStore(t, beadsDir, "pn")
+		store := openStore(t, bdDir, "pn")
 		childLabels, err := store.GetLabels(t.Context(), child.ID)
 		if err != nil {
 			t.Fatalf("GetLabels: %v", err)
@@ -589,10 +589,10 @@ A new feature
 	})
 
 	t.Run("discovered_from_inherits_source_repo", func(t *testing.T) {
-		dir, beadsDir, _ := bdInit(t, bd, "--prefix", "sr")
+		dir, bdDir, _ := bdInit(t, bd, "--prefix", "sr")
 
 		// Create parent with source_repo set via store API
-		store := openStore(t, beadsDir, "sr")
+		store := openStore(t, bdDir, "sr")
 		parent := &types.Issue{
 			Title:      "Parent with source repo",
 			Priority:   1,
@@ -611,7 +611,7 @@ A new feature
 		child := bdCreate(t, bd, dir, "Discovered bug", "--deps", "discovered-from:"+parent.ID)
 
 		// Verify via raw SQL since the JSON output may not include source_repo
-		dataDir := filepath.Join(beadsDir, "embeddeddolt")
+		dataDir := filepath.Join(bdDir, "embeddeddolt")
 		db, cleanup, err := embeddeddolt.OpenSQL(t.Context(), dataDir, "sr", "main")
 		if err != nil {
 			t.Fatalf("OpenSQL: %v", err)
@@ -640,16 +640,16 @@ A new feature
 // TestEmbeddedCreateCommitPending verifies that CommitPending works on EmbeddedDoltStore:
 // no-op when clean, commits when there are pending changes.
 func TestEmbeddedCreateCommitPending(t *testing.T) {
-	if os.Getenv("BEADS_TEST_EMBEDDED_DOLT") != "1" {
-		t.Skip("set BEADS_TEST_EMBEDDED_DOLT=1 to run embedded dolt create tests")
+	if os.Getenv("BD_TEST_EMBEDDED_DOLT") != "1" {
+		t.Skip("set BD_TEST_EMBEDDED_DOLT=1 to run embedded dolt create tests")
 	}
 	t.Parallel()
 
 	bd := buildEmbeddedBD(t)
 
 	t.Run("no_pending_changes", func(t *testing.T) {
-		_, beadsDir, _ := bdInit(t, bd, "--prefix", "cp1")
-		store := openStore(t, beadsDir, "cp1")
+		_, bdDir, _ := bdInit(t, bd, "--prefix", "cp1")
+		store := openStore(t, bdDir, "cp1")
 		committed, err := store.CommitPending(t.Context(), "test")
 		if err != nil {
 			t.Fatalf("CommitPending: %v", err)
@@ -660,8 +660,8 @@ func TestEmbeddedCreateCommitPending(t *testing.T) {
 	})
 
 	t.Run("with_pending_changes", func(t *testing.T) {
-		_, beadsDir, _ := bdInit(t, bd, "--prefix", "cp2")
-		store := openStore(t, beadsDir, "cp2")
+		_, bdDir, _ := bdInit(t, bd, "--prefix", "cp2")
+		store := openStore(t, bdDir, "cp2")
 		ctx := t.Context()
 
 		// Create an issue (writes to working set, no dolt commit in embedded mode)
@@ -697,8 +697,8 @@ func TestEmbeddedCreateCommitPending(t *testing.T) {
 // TestEmbeddedCreateCrossRepo verifies that bd create --repo routes to a different
 // repo's embedded dolt store, creates the issue there, and commits it.
 func TestEmbeddedCreateCrossRepo(t *testing.T) {
-	if os.Getenv("BEADS_TEST_EMBEDDED_DOLT") != "1" {
-		t.Skip("set BEADS_TEST_EMBEDDED_DOLT=1 to run embedded dolt create tests")
+	if os.Getenv("BD_TEST_EMBEDDED_DOLT") != "1" {
+		t.Skip("set BD_TEST_EMBEDDED_DOLT=1 to run embedded dolt create tests")
 	}
 	t.Parallel()
 
@@ -722,7 +722,7 @@ func TestEmbeddedCreateCrossRepo(t *testing.T) {
 	}
 
 	// Verify issue exists in the TARGET store, not the source
-	targetBeadsDir := filepath.Join(targetDir, ".beads")
+	targetBeadsDir := filepath.Join(targetDir, ".bd")
 	tgtStore := openStore(t, targetBeadsDir, "tgt")
 	got, err := tgtStore.GetIssue(t.Context(), issue.ID)
 	if err != nil {
@@ -739,8 +739,8 @@ func TestEmbeddedCreateCrossRepo(t *testing.T) {
 // After the multi-rig refactor (d7629204), --repo uses the same code path as
 // local create, so --parent is resolved against the target store.
 func TestEmbeddedCreateCrossRepoWithParent(t *testing.T) {
-	if os.Getenv("BEADS_TEST_EMBEDDED_DOLT") != "1" {
-		t.Skip("set BEADS_TEST_EMBEDDED_DOLT=1 to run embedded dolt create tests")
+	if os.Getenv("BD_TEST_EMBEDDED_DOLT") != "1" {
+		t.Skip("set BD_TEST_EMBEDDED_DOLT=1 to run embedded dolt create tests")
 	}
 	t.Parallel()
 
@@ -775,7 +775,7 @@ func TestEmbeddedCreateCrossRepoWithParent(t *testing.T) {
 	}
 
 	// Verify parent-child dependency exists in the target store
-	targetBeadsDir := filepath.Join(targetDir, ".beads")
+	targetBeadsDir := filepath.Join(targetDir, ".bd")
 	assertDepExists(t, targetBeadsDir, "tgt", child.ID, parent.ID)
 }
 
@@ -783,8 +783,8 @@ func TestEmbeddedCreateCrossRepoWithParent(t *testing.T) {
 // git remote exists (which enables auto-backup in PersistentPostRun). This
 // catches panics from unimplemented methods called after the create succeeds.
 func TestEmbeddedCreateWithGitRemote(t *testing.T) {
-	if os.Getenv("BEADS_TEST_EMBEDDED_DOLT") != "1" {
-		t.Skip("set BEADS_TEST_EMBEDDED_DOLT=1 to run embedded dolt create tests")
+	if os.Getenv("BD_TEST_EMBEDDED_DOLT") != "1" {
+		t.Skip("set BD_TEST_EMBEDDED_DOLT=1 to run embedded dolt create tests")
 	}
 	t.Parallel()
 
@@ -808,13 +808,13 @@ func TestEmbeddedCreateWithGitRemote(t *testing.T) {
 // TestEmbeddedCreateConcurrent verifies that 20 concurrent bd create processes
 // can each create 10 issues without data loss or corruption.
 func TestEmbeddedCreateConcurrent(t *testing.T) {
-	if os.Getenv("BEADS_TEST_EMBEDDED_DOLT") != "1" {
-		t.Skip("set BEADS_TEST_EMBEDDED_DOLT=1 to run embedded dolt create tests")
+	if os.Getenv("BD_TEST_EMBEDDED_DOLT") != "1" {
+		t.Skip("set BD_TEST_EMBEDDED_DOLT=1 to run embedded dolt create tests")
 	}
 	t.Parallel()
 
 	bd := buildEmbeddedBD(t)
-	dir, beadsDir, _ := bdInit(t, bd, "--prefix", "cc")
+	dir, bdDir, _ := bdInit(t, bd, "--prefix", "cc")
 
 	const (
 		numWorkers      = 20
@@ -886,7 +886,7 @@ func TestEmbeddedCreateConcurrent(t *testing.T) {
 	}
 
 	// Verify all successfully created issues exist in the database
-	store := openStore(t, beadsDir, "cc")
+	store := openStore(t, bdDir, "cc")
 	stats, err := store.GetStatistics(t.Context())
 	if err != nil {
 		t.Fatalf("GetStatistics: %v", err)

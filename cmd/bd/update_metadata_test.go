@@ -9,14 +9,14 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/steveyegge/beads/internal/storage/dolt"
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/storage/dolt"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 // TestUpdateMetadataInlineJSON tests inline JSON metadata update
 func TestUpdateMetadataInlineJSON(t *testing.T) {
 	tmpDir := t.TempDir()
-	dbPath := filepath.Join(tmpDir, ".beads", "beads.db")
+	dbPath := filepath.Join(tmpDir, ".bd", "bd.db")
 
 	// Create storage
 	ctx := context.Background()

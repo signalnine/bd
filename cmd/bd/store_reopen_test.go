@@ -9,10 +9,10 @@ import (
 	"testing"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/beads/internal/configfile"
-	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
-	"github.com/steveyegge/beads/internal/types"
-	"github.com/steveyegge/beads/internal/utils"
+	"github.com/steveyegge/bd/internal/configfile"
+	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
+	"github.com/steveyegge/bd/internal/types"
+	"github.com/steveyegge/bd/internal/utils"
 )
 
 func TestWithStorage_ReopensUsingMetadata(t *testing.T) {
@@ -36,11 +36,11 @@ func TestWithStorage_ReopensUsingMetadata(t *testing.T) {
 
 func TestResolveBeadsDirForDBPath_UsesRawBeadsDirForSymlinkedDBPath(t *testing.T) {
 	repoDir := t.TempDir()
-	beadsDir := filepath.Join(repoDir, ".beads")
+	bdDir := filepath.Join(repoDir, ".bd")
 	actualDBPath := filepath.Join(repoDir, "external-dolt")
-	linkDBPath := filepath.Join(beadsDir, "dolt")
+	linkDBPath := filepath.Join(bdDir, "dolt")
 
-	if err := os.MkdirAll(beadsDir, 0o755); err != nil {
+	if err := os.MkdirAll(bdDir, 0o755); err != nil {
 		t.Fatalf("mkdir beads dir: %v", err)
 	}
 	if err := os.MkdirAll(actualDBPath, 0o755); err != nil {
@@ -54,12 +54,12 @@ func TestResolveBeadsDirForDBPath_UsesRawBeadsDirForSymlinkedDBPath(t *testing.T
 		Database: "dolt",
 		Backend:  configfile.BackendDolt,
 	}
-	if err := cfg.Save(beadsDir); err != nil {
+	if err := cfg.Save(bdDir); err != nil {
 		t.Fatalf("save metadata: %v", err)
 	}
 
-	if got := resolveBeadsDirForDBPath(linkDBPath); !utils.PathsEqual(got, beadsDir) {
-		t.Fatalf("resolveBeadsDirForDBPath(%q) = %q, want %q", linkDBPath, got, beadsDir)
+	if got := resolveBeadsDirForDBPath(linkDBPath); !utils.PathsEqual(got, bdDir) {
+		t.Fatalf("resolveBeadsDirForDBPath(%q) = %q, want %q", linkDBPath, got, bdDir)
 	}
 }
 
@@ -104,9 +104,9 @@ func TestIssueIDCompletion_UsesMetadataWhenStoreNil(t *testing.T) {
 }
 
 func TestResolveCommandBeadsDir_NoCWDFallbackForExplicitPath(t *testing.T) {
-	// Set up project A with metadata so FindBeadsDir() discovers it from CWD.
+	// Set up project A with metadata so FindBdDir() discovers it from CWD.
 	projectA := t.TempDir()
-	beadsDirA := filepath.Join(projectA, ".beads")
+	beadsDirA := filepath.Join(projectA, ".bd")
 	if err := os.MkdirAll(filepath.Join(beadsDirA, "dolt"), 0o755); err != nil {
 		t.Fatalf("mkdir beads dir A: %v", err)
 	}
@@ -119,17 +119,17 @@ func TestResolveCommandBeadsDir_NoCWDFallbackForExplicitPath(t *testing.T) {
 		t.Fatalf("save metadata A: %v", err)
 	}
 
-	// Project B: .beads/dolt exists but metadata.json is missing.
+	// Project B: .bd/dolt exists but metadata.json is missing.
 	// This triggers the bug: filepath.Dir(dbPath) gives the correct
 	// .beads dir but configfile.Load returns nil, so the old code falls
-	// through to FindBeadsDir() which discovers project A instead.
+	// through to FindBdDir() which discovers project A instead.
 	projectB := t.TempDir()
-	beadsDirB := filepath.Join(projectB, ".beads")
+	beadsDirB := filepath.Join(projectB, ".bd")
 	if err := os.MkdirAll(filepath.Join(beadsDirB, "dolt"), 0o755); err != nil {
 		t.Fatalf("mkdir beads dir B: %v", err)
 	}
 
-	// CWD is inside project A so FindBeadsDir() discovers A
+	// CWD is inside project A so FindBdDir() discovers A
 	origDir, err := os.Getwd()
 	if err != nil {
 		t.Fatalf("getwd: %v", err)
@@ -144,7 +144,7 @@ func TestResolveCommandBeadsDir_NoCWDFallbackForExplicitPath(t *testing.T) {
 	got := resolveCommandBeadsDir(dbPathB)
 
 	// Must resolve to project B's .beads, NOT project A's.
-	// The old code falls back to FindBeadsDir() and returns beadsDirA.
+	// The old code falls back to FindBdDir() and returns beadsDirA.
 	if !utils.PathsEqual(got, beadsDirB) {
 		t.Fatalf("resolveCommandBeadsDir(%q) = %q, want %q", dbPathB, got, beadsDirB)
 	}

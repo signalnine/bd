@@ -132,13 +132,13 @@ actor: configuser
 	}
 
 	// Create .beads directory
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0750); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0750); err != nil {
 		t.Fatalf("failed to create .beads directory: %v", err)
 	}
 
 	// Move config to .beads directory
-	beadsConfigPath := filepath.Join(beadsDir, "config.yaml")
+	beadsConfigPath := filepath.Join(bdDir, "config.yaml")
 	if err := os.Rename(configPath, beadsConfigPath); err != nil {
 		t.Fatalf("failed to move config file: %v", err)
 	}
@@ -172,8 +172,8 @@ func TestLocalConfigOverride(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	// Create .beads directory
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0750); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0750); err != nil {
 		t.Fatalf("failed to create .beads directory: %v", err)
 	}
 
@@ -182,7 +182,7 @@ func TestLocalConfigOverride(t *testing.T) {
 json: false
 actor: project-user
 `
-	configPath := filepath.Join(beadsDir, "config.yaml")
+	configPath := filepath.Join(bdDir, "config.yaml")
 	if err := os.WriteFile(configPath, []byte(configContent), 0600); err != nil {
 		t.Fatalf("failed to write config file: %v", err)
 	}
@@ -191,7 +191,7 @@ actor: project-user
 	localConfigContent := `
 actor: local-user
 `
-	localConfigPath := filepath.Join(beadsDir, "config.local.yaml")
+	localConfigPath := filepath.Join(bdDir, "config.local.yaml")
 	if err := os.WriteFile(localConfigPath, []byte(localConfigContent), 0600); err != nil {
 		t.Fatalf("failed to write local config file: %v", err)
 	}
@@ -224,8 +224,8 @@ func TestLocalConfigMissing(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	// Create .beads directory
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0750); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0750); err != nil {
 		t.Fatalf("failed to create .beads directory: %v", err)
 	}
 
@@ -234,7 +234,7 @@ func TestLocalConfigMissing(t *testing.T) {
 json: true
 actor: project-user
 `
-	configPath := filepath.Join(beadsDir, "config.yaml")
+	configPath := filepath.Join(bdDir, "config.yaml")
 	if err := os.WriteFile(configPath, []byte(configContent), 0600); err != nil {
 		t.Fatalf("failed to write config file: %v", err)
 	}
@@ -263,12 +263,12 @@ func TestConfigPrecedence(t *testing.T) {
 
 	// Create a config file with json: false
 	configContent := `json: false`
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0750); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0750); err != nil {
 		t.Fatalf("failed to create .beads directory: %v", err)
 	}
 
-	configPath := filepath.Join(beadsDir, "config.yaml")
+	configPath := filepath.Join(bdDir, "config.yaml")
 	if err := os.WriteFile(configPath, []byte(configContent), 0600); err != nil {
 		t.Fatalf("failed to write config file: %v", err)
 	}
@@ -375,12 +375,12 @@ repos:
     - /path/to/repo1
     - /path/to/repo2
 `
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0750); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0750); err != nil {
 		t.Fatalf("failed to create .beads directory: %v", err)
 	}
 
-	configPath := filepath.Join(beadsDir, "config.yaml")
+	configPath := filepath.Join(bdDir, "config.yaml")
 	if err := os.WriteFile(configPath, []byte(configContent), 0600); err != nil {
 		t.Fatalf("failed to write config file: %v", err)
 	}
@@ -445,12 +445,12 @@ repos:
     - /extra/repo2
     - /extra/repo3
 `
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0750); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0750); err != nil {
 		t.Fatalf("failed to create .beads directory: %v", err)
 	}
 
-	configPath := filepath.Join(beadsDir, "config.yaml")
+	configPath := filepath.Join(bdDir, "config.yaml")
 	if err := os.WriteFile(configPath, []byte(configContent), 0600); err != nil {
 		t.Fatalf("failed to write config file: %v", err)
 	}
@@ -534,14 +534,14 @@ func TestGetIdentity(t *testing.T) {
 		t.Errorf("GetIdentity(flag-identity) = %q, want \"flag-identity\"", got)
 	}
 
-	// Test 2: Empty flag falls back to BEADS_IDENTITY env
-	oldEnv := os.Getenv("BEADS_IDENTITY")
-	_ = os.Setenv("BEADS_IDENTITY", "env-identity")
+	// Test 2: Empty flag falls back to BD_IDENTITY env
+	oldEnv := os.Getenv("BD_IDENTITY")
+	_ = os.Setenv("BD_IDENTITY", "env-identity")
 	defer func() {
 		if oldEnv == "" {
-			_ = os.Unsetenv("BEADS_IDENTITY")
+			_ = os.Unsetenv("BD_IDENTITY")
 		} else {
-			_ = os.Setenv("BEADS_IDENTITY", oldEnv)
+			_ = os.Setenv("BD_IDENTITY", oldEnv)
 		}
 	}()
 
@@ -549,11 +549,11 @@ func TestGetIdentity(t *testing.T) {
 	_ = Initialize()
 	got = GetIdentity("")
 	if got != "env-identity" {
-		t.Errorf("GetIdentity(\"\") with BEADS_IDENTITY = %q, want \"env-identity\"", got)
+		t.Errorf("GetIdentity(\"\") with BD_IDENTITY = %q, want \"env-identity\"", got)
 	}
 
 	// Test 3: Without flag or env, should fall back to git user.name or hostname
-	_ = os.Unsetenv("BEADS_IDENTITY")
+	_ = os.Unsetenv("BD_IDENTITY")
 	_ = Initialize()
 	got = GetIdentity("")
 	// We can't predict the exact value (depends on git config and hostname)
@@ -607,12 +607,12 @@ external_projects:
   other-project: /path/to/other-project
   other: ./relative/path
 `
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0750); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0750); err != nil {
 		t.Fatalf("failed to create .beads directory: %v", err)
 	}
 
-	configPath := filepath.Join(beadsDir, "config.yaml")
+	configPath := filepath.Join(bdDir, "config.yaml")
 	if err := os.WriteFile(configPath, []byte(configContent), 0600); err != nil {
 		t.Fatalf("failed to write config file: %v", err)
 	}
@@ -653,8 +653,8 @@ func TestResolveExternalProjectPath(t *testing.T) {
 	}
 
 	// Create config file
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0750); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0750); err != nil {
 		t.Fatalf("failed to create .beads directory: %v", err)
 	}
 
@@ -664,7 +664,7 @@ external_projects:
   missing: nonexistent-path
   absolute: ` + projectDir + `
 `
-	configPath := filepath.Join(beadsDir, "config.yaml")
+	configPath := filepath.Join(bdDir, "config.yaml")
 	if err := os.WriteFile(configPath, []byte(configContent), 0600); err != nil {
 		t.Fatalf("failed to write config file: %v", err)
 	}
@@ -709,22 +709,22 @@ func TestGetIdentityFromConfig(t *testing.T) {
 
 	// Create a config file with identity
 	configContent := `identity: config-identity`
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0750); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0750); err != nil {
 		t.Fatalf("failed to create .beads directory: %v", err)
 	}
 
-	configPath := filepath.Join(beadsDir, "config.yaml")
+	configPath := filepath.Join(bdDir, "config.yaml")
 	if err := os.WriteFile(configPath, []byte(configContent), 0600); err != nil {
 		t.Fatalf("failed to write config file: %v", err)
 	}
 
-	// Clear BEADS_IDENTITY env var
-	oldEnv := os.Getenv("BEADS_IDENTITY")
-	_ = os.Unsetenv("BEADS_IDENTITY")
+	// Clear BD_IDENTITY env var
+	oldEnv := os.Getenv("BD_IDENTITY")
+	_ = os.Unsetenv("BD_IDENTITY")
 	defer func() {
 		if oldEnv != "" {
-			_ = os.Setenv("BEADS_IDENTITY", oldEnv)
+			_ = os.Setenv("BD_IDENTITY", oldEnv)
 		}
 	}()
 
@@ -785,10 +785,10 @@ func TestGetValueSource(t *testing.T) {
 			name: "BEADS_ prefixed env var returns SourceEnvVar",
 			key:  "identity",
 			setup: func() {
-				os.Setenv("BEADS_IDENTITY", "test-identity")
+				os.Setenv("BD_IDENTITY", "test-identity")
 			},
 			cleanup: func() {
-				os.Unsetenv("BEADS_IDENTITY")
+				os.Unsetenv("BD_IDENTITY")
 			},
 			expected: SourceEnvVar,
 		},
@@ -863,7 +863,7 @@ func TestConfigSourceConstants(t *testing.T) {
 }
 
 // TestResolveExternalProjectPathFromRepoRoot tests that external_projects paths
-// are resolved from repo root (parent of .beads/), NOT from CWD.
+// are resolved from repo root (parent of .bd/), NOT from CWD.
 // This is the fix for oss-lbp (related to Bug 3 in the spec).
 func TestResolveExternalProjectPathFromRepoRoot(t *testing.T) {
 	// Helper to canonicalize paths for comparison (handles macOS /var -> /private/var symlink)
@@ -881,14 +881,14 @@ func TestResolveExternalProjectPathFromRepoRoot(t *testing.T) {
 	t.Run("relative path resolved from repo root not CWD", func(t *testing.T) {
 		// Create a repo structure:
 		// tmpDir/
-		//   .beads/
+		//   .bd/
 		//     config.yaml
 		//   beads-project/     <- relative path should resolve here
 		tmpDir := t.TempDir()
 
 		// Create .beads directory with config file
-		beadsDir := filepath.Join(tmpDir, ".beads")
-		if err := os.MkdirAll(beadsDir, 0750); err != nil {
+		bdDir := filepath.Join(tmpDir, ".bd")
+		if err := os.MkdirAll(bdDir, 0750); err != nil {
 			t.Fatalf("failed to create .beads dir: %v", err)
 		}
 
@@ -903,18 +903,18 @@ func TestResolveExternalProjectPathFromRepoRoot(t *testing.T) {
 external_projects:
   beads: beads-project
 `
-		configPath := filepath.Join(beadsDir, "config.yaml")
+		configPath := filepath.Join(bdDir, "config.yaml")
 		if err := os.WriteFile(configPath, []byte(configContent), 0600); err != nil {
 			t.Fatalf("failed to write config: %v", err)
 		}
 
 		// Change to a DIFFERENT directory (to test that CWD doesn't affect resolution)
-		// This simulates daemon context where CWD is .beads/
+		// This simulates daemon context where CWD is .bd/
 		origDir, err := os.Getwd()
 		if err != nil {
 			t.Fatalf("failed to get cwd: %v", err)
 		}
-		if err := os.Chdir(beadsDir); err != nil {
+		if err := os.Chdir(bdDir); err != nil {
 			t.Fatalf("failed to chdir: %v", err)
 		}
 		defer os.Chdir(origDir)
@@ -934,14 +934,14 @@ external_projects:
 		got := ResolveExternalProjectPath("beads")
 
 		// The path should resolve to tmpDir/beads-project (repo root + relative path)
-		// NOT to .beads/beads-project (CWD + relative path)
+		// NOT to .bd/beads-project (CWD + relative path)
 		// Use canonicalize to handle macOS /var -> /private/var symlink
 		if canonicalize(got) != canonicalize(projectDir) {
 			t.Errorf("ResolveExternalProjectPath(beads) = %q, want %q", got, projectDir)
 		}
 
 		// Verify the wrong path doesn't exist (CWD-based resolution)
-		wrongPath := filepath.Join(beadsDir, "beads-project")
+		wrongPath := filepath.Join(bdDir, "beads-project")
 		if canonicalize(got) == canonicalize(wrongPath) {
 			t.Errorf("path was incorrectly resolved from CWD: %s", wrongPath)
 		}
@@ -953,8 +953,8 @@ external_projects:
 
 		// Create main repo with .beads and target project
 		mainRepoDir := filepath.Join(tmpDir, "main-repo")
-		beadsDir := filepath.Join(mainRepoDir, ".beads")
-		if err := os.MkdirAll(beadsDir, 0750); err != nil {
+		bdDir := filepath.Join(mainRepoDir, ".bd")
+		if err := os.MkdirAll(bdDir, 0750); err != nil {
 			t.Fatalf("failed to create .beads dir: %v", err)
 		}
 
@@ -969,18 +969,18 @@ external_projects:
 external_projects:
   sibling: ../sibling-project
 `
-		configPath := filepath.Join(beadsDir, "config.yaml")
+		configPath := filepath.Join(bdDir, "config.yaml")
 		if err := os.WriteFile(configPath, []byte(configContent), 0600); err != nil {
 			t.Fatalf("failed to write config: %v", err)
 		}
 
 		// Test from multiple different CWDs
-		// Note: We only test from mainRepoDir and beadsDir, not from tmpDir
-		// because when CWD is tmpDir, the config file at mainRepoDir/.beads/config.yaml
+		// Note: We only test from mainRepoDir and bdDir, not from tmpDir
+		// because when CWD is tmpDir, the config file at mainRepoDir/.bd/config.yaml
 		// won't be discovered (viper searches from CWD upward)
 		testDirs := []string{
 			mainRepoDir, // From repo root
-			beadsDir,    // From .beads/ (daemon context)
+			bdDir,    // From .bd/ (daemon context)
 		}
 
 		for _, testDir := range testDirs {
@@ -1018,7 +1018,7 @@ external_projects:
 
 func TestRoutingModeDefaultIsEmpty(t *testing.T) {
 	// GH#1165: routing.mode must default to empty (disabled)
-	// to prevent unexpected auto-routing to ~/.beads-planning
+	// to prevent unexpected auto-routing to ~/.bd-planning
 	// Isolate from environment variables
 	restore := envSnapshot(t)
 	defer restore()
@@ -1040,8 +1040,8 @@ func TestRoutingModeDefaultIsEmpty(t *testing.T) {
 	if got := GetString("routing.maintainer"); got != "." {
 		t.Errorf("GetString(routing.maintainer) = %q, want \".\"", got)
 	}
-	if got := GetString("routing.contributor"); got != "~/.beads-planning" {
-		t.Errorf("GetString(routing.contributor) = %q, want \"~/.beads-planning\"", got)
+	if got := GetString("routing.contributor"); got != "~/.bd-planning" {
+		t.Errorf("GetString(routing.contributor) = %q, want \"~/.bd-planning\"", got)
 	}
 }
 
@@ -1076,12 +1076,12 @@ validation:
   on-create: error
   on-sync: warn
 `
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0750); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0750); err != nil {
 		t.Fatalf("failed to create .beads directory: %v", err)
 	}
 
-	configPath := filepath.Join(beadsDir, "config.yaml")
+	configPath := filepath.Join(bdDir, "config.yaml")
 	if err := os.WriteFile(configPath, []byte(configContent), 0600); err != nil {
 		t.Fatalf("failed to write config file: %v", err)
 	}
@@ -1149,12 +1149,12 @@ federation:
   remote: dolthub://myorg/beads
   sovereignty: T2
 `
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0750); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0750); err != nil {
 		t.Fatalf("failed to create .beads directory: %v", err)
 	}
 
-	configPath := filepath.Join(beadsDir, "config.yaml")
+	configPath := filepath.Join(bdDir, "config.yaml")
 	if err := os.WriteFile(configPath, []byte(configContent), 0600); err != nil {
 		t.Fatalf("failed to write config file: %v", err)
 	}
@@ -1199,10 +1199,10 @@ func TestGetCustomTypesFromYAML(t *testing.T) {
 	restore := envSnapshot(t)
 	defer restore()
 
-	// Create a temporary directory with a .beads/config.yaml
+	// Create a temporary directory with a .bd/config.yaml
 	tmpDir := t.TempDir()
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0755); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0755); err != nil {
 		t.Fatalf("failed to create .beads directory: %v", err)
 	}
 
@@ -1211,7 +1211,7 @@ func TestGetCustomTypesFromYAML(t *testing.T) {
 types:
   custom: "molecule,gate,convoy,agent,event"
 `
-	configPath := filepath.Join(beadsDir, "config.yaml")
+	configPath := filepath.Join(bdDir, "config.yaml")
 	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil {
 		t.Fatalf("failed to write config file: %v", err)
 	}
@@ -1248,10 +1248,10 @@ func TestGetCustomTypesFromYAML_NotSet(t *testing.T) {
 	restore := envSnapshot(t)
 	defer restore()
 
-	// Create a temporary directory with a .beads/config.yaml WITHOUT types.custom
+	// Create a temporary directory with a .bd/config.yaml WITHOUT types.custom
 	tmpDir := t.TempDir()
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0755); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0755); err != nil {
 		t.Fatalf("failed to create .beads directory: %v", err)
 	}
 
@@ -1259,7 +1259,7 @@ func TestGetCustomTypesFromYAML_NotSet(t *testing.T) {
 	configContent := `
 issue-prefix: "test"
 `
-	configPath := filepath.Join(beadsDir, "config.yaml")
+	configPath := filepath.Join(bdDir, "config.yaml")
 	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil {
 		t.Fatalf("failed to write config file: %v", err)
 	}
@@ -1296,7 +1296,7 @@ func TestGetCustomTypesFromYAML_NilViper(t *testing.T) {
 }
 
 // TestGetStringFromDir verifies that GetStringFromDir reads config.yaml from
-// the given beadsDir without using or modifying global viper state.
+// the given bdDir without using or modifying global viper state.
 func TestGetStringFromDir(t *testing.T) {
 	writeConfig := func(t *testing.T, dir, content string) {
 		t.Helper()

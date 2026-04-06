@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/spf13/viper"
-	"github.com/steveyegge/beads/internal/debug"
+	"github.com/steveyegge/bd/internal/debug"
 	"gopkg.in/yaml.v3"
 )
 
@@ -32,17 +32,17 @@ func Initialize() error {
 	// subsequent file so higher-priority values overwrite lower-priority ones.
 	//
 	// Precedence (highest to lowest):
-	//   BEADS_DIR/config.yaml > project .beads/config.yaml > ~/.config/bd/config.yaml > ~/.beads/config.yaml
+	//   BD_DIR/config.yaml > project .bd/config.yaml > ~/.config/bd/config.yaml > ~/.bd/config.yaml
 	//
 	// Previously, only ONE config file was loaded (the highest-priority match),
 	// which meant user-level config was silently ignored when project-level
-	// config existed — e.g., the idle-monitor daemon with BEADS_DIR set (GH#2375).
+	// config existed — e.g., the idle-monitor daemon with BD_DIR set (GH#2375).
 	var configPaths []string     // ordered lowest priority first
 	var primaryConfigPath string // project-level config (for config.local.yaml and SaveConfigValue)
 
-	// 3. Legacy: ~/.beads/config.yaml (lowest priority)
+	// 3. Legacy: ~/.bd/config.yaml (lowest priority)
 	if homeDir, err := os.UserHomeDir(); err == nil {
-		p := filepath.Join(homeDir, ".beads", "config.yaml")
+		p := filepath.Join(homeDir, ".bd", "config.yaml")
 		if _, err := os.Stat(p); err == nil {
 			configPaths = append(configPaths, p)
 		}
@@ -56,16 +56,16 @@ func Initialize() error {
 		}
 	}
 
-	// 1. Project: walk up from CWD to find .beads/config.yaml
+	// 1. Project: walk up from CWD to find .bd/config.yaml
 	cwd, err := os.Getwd()
 	if err == nil {
-		// In the beads repo, `.beads/config.yaml` is tracked and may set non-default config values.
+		// In the beads repo, `.bd/config.yaml` is tracked and may set non-default config values.
 		// In `go test` (especially for `cmd/bd`), we want to avoid unintentionally picking up
 		// the repo-local config, while still allowing tests to load config.yaml from temp repos.
 		//
-		// If BEADS_TEST_IGNORE_REPO_CONFIG is set, we will ignore the config at
-		// <module-root>/.beads/config.yaml (where module-root is the nearest parent containing go.mod).
-		ignoreRepoConfig := os.Getenv("BEADS_TEST_IGNORE_REPO_CONFIG") != ""
+		// If BD_TEST_IGNORE_REPO_CONFIG is set, we will ignore the config at
+		// <module-root>/.bd/config.yaml (where module-root is the nearest parent containing go.mod).
+		ignoreRepoConfig := os.Getenv("BD_TEST_IGNORE_REPO_CONFIG") != ""
 		var moduleRoot string
 		if ignoreRepoConfig {
 			// Find module root by walking up to go.mod.
@@ -77,14 +77,14 @@ func Initialize() error {
 			}
 		}
 
-		// Walk up parent directories to find .beads/config.yaml
+		// Walk up parent directories to find .bd/config.yaml
 		for dir := cwd; dir != filepath.Dir(dir); dir = filepath.Dir(dir) {
-			beadsDir := filepath.Join(dir, ".beads")
-			p := filepath.Join(beadsDir, "config.yaml")
+			bdDir := filepath.Join(dir, ".bd")
+			p := filepath.Join(bdDir, "config.yaml")
 			if _, err := os.Stat(p); err == nil {
 				if ignoreRepoConfig && moduleRoot != "" {
-					// Only ignore the repo-local config (moduleRoot/.beads/config.yaml).
-					wantIgnore := filepath.Clean(p) == filepath.Clean(filepath.Join(moduleRoot, ".beads", "config.yaml"))
+					// Only ignore the repo-local config (moduleRoot/.bd/config.yaml).
+					wantIgnore := filepath.Clean(p) == filepath.Clean(filepath.Join(moduleRoot, ".bd", "config.yaml"))
 					if wantIgnore {
 						continue
 					}
@@ -96,11 +96,11 @@ func Initialize() error {
 		}
 	}
 
-	// 0. BEADS_DIR: highest priority
-	if beadsDir := os.Getenv("BEADS_DIR"); beadsDir != "" {
-		p := filepath.Join(beadsDir, "config.yaml")
+	// 0. BD_DIR: highest priority
+	if bdDir := os.Getenv("BD_DIR"); bdDir != "" {
+		p := filepath.Join(bdDir, "config.yaml")
 		if _, err := os.Stat(p); err == nil {
-			// Avoid duplicate if BEADS_DIR points to same config as CWD walk
+			// Avoid duplicate if BD_DIR points to same config as CWD walk
 			if primaryConfigPath == "" || filepath.Clean(p) != filepath.Clean(primaryConfigPath) {
 				configPaths = append(configPaths, p)
 			}
@@ -110,7 +110,7 @@ func Initialize() error {
 
 	// Automatic environment variable binding
 	// Environment variables take precedence over config file
-	// E.g., BD_JSON, BD_NO_DAEMON, BD_DB (BD_ACTOR deprecated in favor of BEADS_ACTOR)
+	// E.g., BD_JSON, BD_NO_DAEMON, BD_DB (BD_ACTOR deprecated in favor of BD_ACTOR)
 	v.SetEnvPrefix("BD")
 
 	// Replace hyphens and dots with underscores for env var mapping
@@ -126,7 +126,7 @@ func Initialize() error {
 	v.SetDefault("actor", "")
 	v.SetDefault("issue-prefix", "")
 	// Additional environment variables (not prefixed with BD_)
-	_ = v.BindEnv("identity", "BEADS_IDENTITY") // BindEnv only fails with zero args, which can't happen here
+	_ = v.BindEnv("identity", "BD_IDENTITY") // BindEnv only fails with zero args, which can't happen here
 	v.SetDefault("identity", "")
 
 	// Dolt configuration defaults
@@ -138,7 +138,7 @@ func Initialize() error {
 	v.SetDefault("routing.mode", "")
 	v.SetDefault("routing.default", ".")
 	v.SetDefault("routing.maintainer", ".")
-	v.SetDefault("routing.contributor", "~/.beads-planning")
+	v.SetDefault("routing.contributor", "~/.bd-planning")
 
 	// Sync configuration defaults (bd-4u8)
 	v.SetDefault("sync.require_confirmation_on_mass_delete", false)
@@ -181,7 +181,7 @@ func Initialize() error {
 	// Maps directory patterns to labels for automatic filtering in monorepos
 	v.SetDefault("directory.labels", map[string]string{})
 
-	// Backup configuration defaults (JSONL export to .beads/backup/)
+	// Backup configuration defaults (JSONL export to .bd/backup/)
 	v.SetDefault("backup.enabled", false)
 	v.SetDefault("backup.interval", "15m")
 	v.SetDefault("backup.git-push", false)
@@ -192,7 +192,7 @@ func Initialize() error {
 	// beads state (issues + memories) across machines via git.
 	v.SetDefault("export.auto", false)
 	v.SetDefault("export.interval", "60s")
-	v.SetDefault("export.path", "export.jsonl") // relative to .beads/
+	v.SetDefault("export.path", "export.jsonl") // relative to .bd/
 	v.SetDefault("export.git-add", false)
 
 	// AI configuration defaults
@@ -291,9 +291,9 @@ func GetValueSource(key string) ConfigSource {
 		return SourceEnvVar
 	}
 
-	// Check BEADS_ prefixed env vars for legacy compatibility
-	beadsEnvKey := "BEADS_" + strings.ToUpper(strings.ReplaceAll(strings.ReplaceAll(key, "-", "_"), ".", "_"))
-	if _, ok := os.LookupEnv(beadsEnvKey); ok {
+	// Check BD_ prefixed env vars for legacy compatibility
+	bdEnvKey := "BD_" + strings.ToUpper(strings.ReplaceAll(strings.ReplaceAll(key, "-", "_"), ".", "_"))
+	if _, ok := os.LookupEnv(bdEnvKey); ok {
 		return SourceEnvVar
 	}
 
@@ -359,7 +359,7 @@ func CheckOverrides(flagOverrides map[string]struct {
 				// are still intentional overrides.
 				envKey := "BD_" + strings.ToUpper(strings.ReplaceAll(strings.ReplaceAll(key, "-", "_"), ".", "_"))
 				if _, ok := os.LookupEnv(envKey); !ok {
-					envKey = "BEADS_" + strings.ToUpper(strings.ReplaceAll(strings.ReplaceAll(key, "-", "_"), ".", "_"))
+					envKey = "BD_" + strings.ToUpper(strings.ReplaceAll(strings.ReplaceAll(key, "-", "_"), ".", "_"))
 					if _, ok := os.LookupEnv(envKey); !ok {
 						continue
 					}
@@ -409,9 +409,9 @@ func LogOverride(override ConfigOverride) {
 }
 
 // SaveConfigValue sets a key-value pair and writes it to the config file.
-// If no config file is currently loaded, it creates config.yaml in the given beadsDir.
+// If no config file is currently loaded, it creates config.yaml in the given bdDir.
 // Only the specified key is modified; other file contents are preserved.
-func SaveConfigValue(key string, value interface{}, beadsDir string) error {
+func SaveConfigValue(key string, value interface{}, bdDir string) error {
 	if v == nil {
 		return fmt.Errorf("config not initialized")
 	}
@@ -419,7 +419,7 @@ func SaveConfigValue(key string, value interface{}, beadsDir string) error {
 
 	configPath := v.ConfigFileUsed()
 	if configPath == "" {
-		configPath = filepath.Join(beadsDir, "config.yaml")
+		configPath = filepath.Join(bdDir, "config.yaml")
 		v.SetConfigFile(configPath)
 	}
 
@@ -464,15 +464,15 @@ func GetString(key string) string {
 }
 
 // GetStringFromDir reads a single string configuration value directly from
-// <beadsDir>/config.yaml without using or modifying global viper state.
+// <bdDir>/config.yaml without using or modifying global viper state.
 // This is intended for library consumers that call NewFromConfigWithOptions
 // without first invoking config.Initialize().
 //
 // The key uses dotted notation (e.g. "dolt.auto-start"). YAML booleans and
 // numbers are coerced to their string representations ("true", "false", etc.).
 // Returns "" if the file is absent, the key is not found, or any error occurs.
-func GetStringFromDir(beadsDir, key string) string {
-	configPath := filepath.Join(beadsDir, "config.yaml")
+func GetStringFromDir(bdDir, key string) string {
+	configPath := filepath.Join(bdDir, "config.yaml")
 	data, err := os.ReadFile(configPath)
 	if err != nil {
 		return ""
@@ -665,14 +665,14 @@ func ResolveExternalProjectPath(projectName string) string {
 		return ""
 	}
 
-	// Resolve relative paths from repo root (parent of .beads/), NOT CWD.
+	// Resolve relative paths from repo root (parent of .bd/), NOT CWD.
 	// This ensures paths like "../beads" in config resolve correctly
 	// when running from different directories.
 	if !filepath.IsAbs(path) {
-		// Config is at .beads/config.yaml, so go up twice to get repo root
+		// Config is at .bd/config.yaml, so go up twice to get repo root
 		configFile := ConfigFileUsed()
 		if configFile != "" {
-			repoRoot := filepath.Dir(filepath.Dir(configFile)) // .beads/config.yaml -> repo/
+			repoRoot := filepath.Dir(filepath.Dir(configFile)) // .bd/config.yaml -> repo/
 			path = filepath.Join(repoRoot, path)
 		} else {
 			// Fallback: resolve from CWD (legacy behavior)
@@ -695,7 +695,7 @@ func ResolveExternalProjectPath(projectName string) string {
 // GetIdentity resolves the user's identity for messaging.
 // Priority chain:
 //  1. flagValue (if non-empty, from --identity flag)
-//  2. BEADS_IDENTITY env var / config.yaml identity field (via viper)
+//  2. BD_IDENTITY env var / config.yaml identity field (via viper)
 //  3. git config user.name
 //  4. hostname
 //
@@ -706,7 +706,7 @@ func GetIdentity(flagValue string) string {
 		return flagValue
 	}
 
-	// 2. BEADS_IDENTITY env var or config.yaml identity (viper handles both)
+	// 2. BD_IDENTITY env var or config.yaml identity (viper handles both)
 	if identity := GetString("identity"); identity != "" {
 		return identity
 	}

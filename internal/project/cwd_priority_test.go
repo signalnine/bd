@@ -1,4 +1,4 @@
-package beads
+package project
 
 import (
 	"os"
@@ -7,24 +7,24 @@ import (
 	"testing"
 )
 
-// TestFindBeadsDir_CwdPriority verifies that a .beads/ directory in cwd takes
-// priority over a .beads/ directory at the git worktree root.
+// TestFindBeadsDir_CwdPriority verifies that a .bd/ directory in cwd takes
+// priority over a .bd/ directory at the git worktree root.
 //
-// Scenario: A "rig" subdirectory has its own .beads/ inside a git worktree
-// that also has .beads/ at its root. Before this fix, step 2b
-// (git.GetRepoRoot → check .beads/) fired before the cwd walk, grabbing
-// the worktree root's .beads/ instead of the rig's local one.
+// Scenario: A "rig" subdirectory has its own .bd/ inside a git worktree
+// that also has .bd/ at its root. Before this fix, step 2b
+// (git.GetRepoRoot → check .bd/) fired before the cwd walk, grabbing
+// the worktree root's .bd/ instead of the rig's local one.
 func TestFindBeadsDir_CwdPriority(t *testing.T) {
 	// Save and restore env
-	origBeadsDir := os.Getenv("BEADS_DIR")
+	origBeadsDir := os.Getenv("BD_DIR")
 	t.Cleanup(func() {
 		if origBeadsDir != "" {
-			os.Setenv("BEADS_DIR", origBeadsDir)
+			os.Setenv("BD_DIR", origBeadsDir)
 		} else {
-			os.Unsetenv("BEADS_DIR")
+			os.Unsetenv("BD_DIR")
 		}
 	})
-	os.Unsetenv("BEADS_DIR")
+	os.Unsetenv("BD_DIR")
 
 	tmpDir := t.TempDir()
 
@@ -34,8 +34,8 @@ func TestFindBeadsDir_CwdPriority(t *testing.T) {
 		t.Skipf("git not available: %v", err)
 	}
 
-	// Create root-level .beads/ with project files (the "wrong" one)
-	rootBeadsDir := filepath.Join(tmpDir, ".beads")
+	// Create root-level .bd/ with project files (the "wrong" one)
+	rootBeadsDir := filepath.Join(tmpDir, ".bd")
 	if err := os.MkdirAll(rootBeadsDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -46,9 +46,9 @@ func TestFindBeadsDir_CwdPriority(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Create a rig subdirectory with its own .beads/ (the "right" one)
+	// Create a rig subdirectory with its own .bd/ (the "right" one)
 	rigDir := filepath.Join(tmpDir, "my-rig")
-	rigBeadsDir := filepath.Join(rigDir, ".beads")
+	rigBeadsDir := filepath.Join(rigDir, ".bd")
 	if err := os.MkdirAll(rigBeadsDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -62,34 +62,34 @@ func TestFindBeadsDir_CwdPriority(t *testing.T) {
 	// cd into the rig directory
 	t.Chdir(rigDir)
 
-	result := FindBeadsDir()
+	result := FindBdDir()
 
 	resultResolved, _ := filepath.EvalSymlinks(result)
 	expectedResolved, _ := filepath.EvalSymlinks(rigBeadsDir)
 	if resultResolved != expectedResolved {
-		t.Errorf("FindBeadsDir() = %q, want %q (rig's .beads should win over root's)", result, rigBeadsDir)
+		t.Errorf("FindBdDir() = %q, want %q (rig's .beads should win over root's)", result, rigBeadsDir)
 	}
 }
 
 // TestFindDatabasePath_CwdPriority verifies FindDatabasePath (the database
-// discovery path) also prefers cwd's .beads/ over the git worktree root's.
+// discovery path) also prefers cwd's .bd/ over the git worktree root's.
 func TestFindDatabasePath_CwdPriority(t *testing.T) {
-	origBeadsDir := os.Getenv("BEADS_DIR")
-	origBeadsDB := os.Getenv("BEADS_DB")
+	origBeadsDir := os.Getenv("BD_DIR")
+	origBeadsDB := os.Getenv("BD_DB")
 	t.Cleanup(func() {
 		if origBeadsDir != "" {
-			os.Setenv("BEADS_DIR", origBeadsDir)
+			os.Setenv("BD_DIR", origBeadsDir)
 		} else {
-			os.Unsetenv("BEADS_DIR")
+			os.Unsetenv("BD_DIR")
 		}
 		if origBeadsDB != "" {
-			os.Setenv("BEADS_DB", origBeadsDB)
+			os.Setenv("BD_DB", origBeadsDB)
 		} else {
-			os.Unsetenv("BEADS_DB")
+			os.Unsetenv("BD_DB")
 		}
 	})
-	os.Unsetenv("BEADS_DIR")
-	os.Unsetenv("BEADS_DB")
+	os.Unsetenv("BD_DIR")
+	os.Unsetenv("BD_DB")
 
 	tmpDir := t.TempDir()
 
@@ -99,8 +99,8 @@ func TestFindDatabasePath_CwdPriority(t *testing.T) {
 		t.Skipf("git not available: %v", err)
 	}
 
-	// Create root-level .beads/ with a dolt dir (the "wrong" one)
-	rootBeadsDir := filepath.Join(tmpDir, ".beads")
+	// Create root-level .bd/ with a dolt dir (the "wrong" one)
+	rootBeadsDir := filepath.Join(tmpDir, ".bd")
 	rootDoltDir := filepath.Join(rootBeadsDir, "dolt")
 	if err := os.MkdirAll(rootDoltDir, 0o755); err != nil {
 		t.Fatal(err)
@@ -109,9 +109,9 @@ func TestFindDatabasePath_CwdPriority(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Create rig subdirectory with its own .beads/ and dolt dir
+	// Create rig subdirectory with its own .bd/ and dolt dir
 	rigDir := filepath.Join(tmpDir, "my-rig")
-	rigBeadsDir := filepath.Join(rigDir, ".beads")
+	rigBeadsDir := filepath.Join(rigDir, ".bd")
 	rigDoltDir := filepath.Join(rigBeadsDir, "dolt")
 	if err := os.MkdirAll(rigDoltDir, 0o755); err != nil {
 		t.Fatal(err)
@@ -125,7 +125,7 @@ func TestFindDatabasePath_CwdPriority(t *testing.T) {
 
 	result := FindDatabasePath()
 
-	// The database path should be under the rig's .beads/, not the root's
+	// The database path should be under the rig's .bd/, not the root's
 	if result == "" {
 		t.Fatal("FindDatabasePath() returned empty, expected rig's database path")
 	}
@@ -142,17 +142,17 @@ func TestFindDatabasePath_CwdPriority(t *testing.T) {
 }
 
 // TestFindBeadsDir_CwdWithoutBeads_FallsBackToWalk verifies that when cwd
-// has no .beads/, the normal walk-up behavior still works.
+// has no .bd/, the normal walk-up behavior still works.
 func TestFindBeadsDir_CwdWithoutBeads_FallsBackToWalk(t *testing.T) {
-	origBeadsDir := os.Getenv("BEADS_DIR")
+	origBeadsDir := os.Getenv("BD_DIR")
 	t.Cleanup(func() {
 		if origBeadsDir != "" {
-			os.Setenv("BEADS_DIR", origBeadsDir)
+			os.Setenv("BD_DIR", origBeadsDir)
 		} else {
-			os.Unsetenv("BEADS_DIR")
+			os.Unsetenv("BD_DIR")
 		}
 	})
-	os.Unsetenv("BEADS_DIR")
+	os.Unsetenv("BD_DIR")
 
 	tmpDir := t.TempDir()
 
@@ -162,8 +162,8 @@ func TestFindBeadsDir_CwdWithoutBeads_FallsBackToWalk(t *testing.T) {
 		t.Skipf("git not available: %v", err)
 	}
 
-	// Create root-level .beads/ only (no rig-level .beads/)
-	rootBeadsDir := filepath.Join(tmpDir, ".beads")
+	// Create root-level .bd/ only (no rig-level .bd/)
+	rootBeadsDir := filepath.Join(tmpDir, ".bd")
 	if err := os.MkdirAll(rootBeadsDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -171,7 +171,7 @@ func TestFindBeadsDir_CwdWithoutBeads_FallsBackToWalk(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Create a subdirectory WITHOUT .beads/
+	// Create a subdirectory WITHOUT .bd/
 	subDir := filepath.Join(tmpDir, "some", "deep", "subdir")
 	if err := os.MkdirAll(subDir, 0o755); err != nil {
 		t.Fatal(err)
@@ -179,27 +179,27 @@ func TestFindBeadsDir_CwdWithoutBeads_FallsBackToWalk(t *testing.T) {
 
 	t.Chdir(subDir)
 
-	result := FindBeadsDir()
+	result := FindBdDir()
 
 	resultResolved, _ := filepath.EvalSymlinks(result)
 	expectedResolved, _ := filepath.EvalSymlinks(rootBeadsDir)
 	if resultResolved != expectedResolved {
-		t.Errorf("FindBeadsDir() = %q, want %q (should fall back to root when cwd has no .beads/)", result, rootBeadsDir)
+		t.Errorf("FindBdDir() = %q, want %q (should fall back to root when cwd has no .bd/)", result, rootBeadsDir)
 	}
 }
 
-// TestFindBeadsDir_CwdBeadsDirWithRedirect verifies that cwd's .beads/
+// TestFindBeadsDir_CwdBeadsDirWithRedirect verifies that cwd's .bd/
 // redirect is followed when the cwd check fires.
 func TestFindBeadsDir_CwdBeadsDirWithRedirect(t *testing.T) {
-	origBeadsDir := os.Getenv("BEADS_DIR")
+	origBeadsDir := os.Getenv("BD_DIR")
 	t.Cleanup(func() {
 		if origBeadsDir != "" {
-			os.Setenv("BEADS_DIR", origBeadsDir)
+			os.Setenv("BD_DIR", origBeadsDir)
 		} else {
-			os.Unsetenv("BEADS_DIR")
+			os.Unsetenv("BD_DIR")
 		}
 	})
-	os.Unsetenv("BEADS_DIR")
+	os.Unsetenv("BD_DIR")
 
 	tmpDir := t.TempDir()
 
@@ -209,8 +209,8 @@ func TestFindBeadsDir_CwdBeadsDirWithRedirect(t *testing.T) {
 		t.Skipf("git not available: %v", err)
 	}
 
-	// Create root-level .beads/
-	rootBeadsDir := filepath.Join(tmpDir, ".beads")
+	// Create root-level .bd/
+	rootBeadsDir := filepath.Join(tmpDir, ".bd")
 	if err := os.MkdirAll(rootBeadsDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -227,9 +227,9 @@ func TestFindBeadsDir_CwdBeadsDirWithRedirect(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Create rig subdirectory with .beads/ that has a redirect
+	// Create rig subdirectory with .bd/ that has a redirect
 	rigDir := filepath.Join(tmpDir, "my-rig")
-	rigBeadsDir := filepath.Join(rigDir, ".beads")
+	rigBeadsDir := filepath.Join(rigDir, ".bd")
 	if err := os.MkdirAll(rigBeadsDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -240,30 +240,30 @@ func TestFindBeadsDir_CwdBeadsDirWithRedirect(t *testing.T) {
 
 	t.Chdir(rigDir)
 
-	result := FindBeadsDir()
+	result := FindBdDir()
 
 	resultResolved, _ := filepath.EvalSymlinks(result)
 	expectedResolved, _ := filepath.EvalSymlinks(targetBeadsDir)
 	if resultResolved != expectedResolved {
-		t.Errorf("FindBeadsDir() = %q, want %q (cwd .beads/ redirect should be followed)", result, targetBeadsDir)
+		t.Errorf("FindBdDir() = %q, want %q (cwd .bd/ redirect should be followed)", result, targetBeadsDir)
 	}
 }
 
-// TestFindBeadsDir_BEADS_DIR_StillTakesPriority verifies that BEADS_DIR env
+// TestFindBeadsDir_BEADS_DIR_StillTakesPriority verifies that BD_DIR env
 // var still takes priority over the cwd check.
 func TestFindBeadsDir_BEADS_DIR_StillTakesPriority(t *testing.T) {
-	origBeadsDir := os.Getenv("BEADS_DIR")
+	origBeadsDir := os.Getenv("BD_DIR")
 	t.Cleanup(func() {
 		if origBeadsDir != "" {
-			os.Setenv("BEADS_DIR", origBeadsDir)
+			os.Setenv("BD_DIR", origBeadsDir)
 		} else {
-			os.Unsetenv("BEADS_DIR")
+			os.Unsetenv("BD_DIR")
 		}
 	})
 
 	tmpDir := t.TempDir()
 
-	// Create an explicit BEADS_DIR target
+	// Create an explicit BD_DIR target
 	explicitBeadsDir := filepath.Join(tmpDir, "explicit-beads")
 	if err := os.MkdirAll(explicitBeadsDir, 0o755); err != nil {
 		t.Fatal(err)
@@ -271,11 +271,11 @@ func TestFindBeadsDir_BEADS_DIR_StillTakesPriority(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(explicitBeadsDir, "metadata.json"), []byte(`{"backend":"dolt","dolt_database":"explicit_db"}`), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	os.Setenv("BEADS_DIR", explicitBeadsDir)
+	os.Setenv("BD_DIR", explicitBeadsDir)
 
-	// Create cwd with its own .beads/
+	// Create cwd with its own .bd/
 	cwdDir := filepath.Join(tmpDir, "cwd-project")
-	cwdBeadsDir := filepath.Join(cwdDir, ".beads")
+	cwdBeadsDir := filepath.Join(cwdDir, ".bd")
 	if err := os.MkdirAll(cwdBeadsDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -285,28 +285,28 @@ func TestFindBeadsDir_BEADS_DIR_StillTakesPriority(t *testing.T) {
 
 	t.Chdir(cwdDir)
 
-	result := FindBeadsDir()
+	result := FindBdDir()
 
 	resultResolved, _ := filepath.EvalSymlinks(result)
 	expectedResolved, _ := filepath.EvalSymlinks(explicitBeadsDir)
 	if resultResolved != expectedResolved {
-		t.Errorf("FindBeadsDir() = %q, want %q (BEADS_DIR should still take priority over cwd)", result, explicitBeadsDir)
+		t.Errorf("FindBdDir() = %q, want %q (BD_DIR should still take priority over cwd)", result, explicitBeadsDir)
 	}
 }
 
 // TestFindBeadsDir_CwdEmptyBeadsDir_SkipsToCwdWalk verifies that when cwd
-// has a .beads/ directory without any project files, it's skipped and the
+// has a .bd/ directory without any project files, it's skipped and the
 // normal walk-up behavior continues.
 func TestFindBeadsDir_CwdEmptyBeadsDir_SkipsToCwdWalk(t *testing.T) {
-	origBeadsDir := os.Getenv("BEADS_DIR")
+	origBeadsDir := os.Getenv("BD_DIR")
 	t.Cleanup(func() {
 		if origBeadsDir != "" {
-			os.Setenv("BEADS_DIR", origBeadsDir)
+			os.Setenv("BD_DIR", origBeadsDir)
 		} else {
-			os.Unsetenv("BEADS_DIR")
+			os.Unsetenv("BD_DIR")
 		}
 	})
-	os.Unsetenv("BEADS_DIR")
+	os.Unsetenv("BD_DIR")
 
 	tmpDir := t.TempDir()
 
@@ -316,8 +316,8 @@ func TestFindBeadsDir_CwdEmptyBeadsDir_SkipsToCwdWalk(t *testing.T) {
 		t.Skipf("git not available: %v", err)
 	}
 
-	// Create root-level .beads/ with project files
-	rootBeadsDir := filepath.Join(tmpDir, ".beads")
+	// Create root-level .bd/ with project files
+	rootBeadsDir := filepath.Join(tmpDir, ".bd")
 	if err := os.MkdirAll(rootBeadsDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -325,9 +325,9 @@ func TestFindBeadsDir_CwdEmptyBeadsDir_SkipsToCwdWalk(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Create rig with empty .beads/ (no project files)
+	// Create rig with empty .bd/ (no project files)
 	rigDir := filepath.Join(tmpDir, "empty-rig")
-	rigBeadsDir := filepath.Join(rigDir, ".beads")
+	rigBeadsDir := filepath.Join(rigDir, ".bd")
 	if err := os.MkdirAll(rigBeadsDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -335,13 +335,13 @@ func TestFindBeadsDir_CwdEmptyBeadsDir_SkipsToCwdWalk(t *testing.T) {
 
 	t.Chdir(rigDir)
 
-	result := FindBeadsDir()
+	result := FindBdDir()
 
-	// Should fall through to the root's .beads/ since rig's is empty
+	// Should fall through to the root's .bd/ since rig's is empty
 	resultResolved, _ := filepath.EvalSymlinks(result)
 	expectedResolved, _ := filepath.EvalSymlinks(rootBeadsDir)
 	if resultResolved != expectedResolved {
-		t.Errorf("FindBeadsDir() = %q, want %q (empty cwd .beads/ should be skipped)", result, rootBeadsDir)
+		t.Errorf("FindBdDir() = %q, want %q (empty cwd .bd/ should be skipped)", result, rootBeadsDir)
 	}
 }
 

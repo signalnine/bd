@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/beads/internal/config"
-	"github.com/steveyegge/beads/internal/storage"
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/config"
+	"github.com/steveyegge/bd/internal/storage"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 var repoCmd = &cobra.Command{
@@ -22,7 +22,7 @@ var repoCmd = &cobra.Command{
 Multi-repo support allows hydrating issues from multiple beads repositories
 into a single database for unified cross-repo issue tracking.
 
-Configuration is stored in .beads/config.yaml under the 'repos' section:
+Configuration is stored in .bd/config.yaml under the 'repos' section:
 
   repos:
     primary: "."
@@ -46,7 +46,7 @@ var repoAddCmd = &cobra.Command{
 The path should point to a directory containing a .beads folder.
 Paths can be absolute or relative (they are stored as-is).
 
-This modifies .beads/config.yaml, which is version-controlled and
+This modifies .bd/config.yaml, which is version-controlled and
 shared across all clones of this repository.`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -65,8 +65,8 @@ shared across all clones of this repository.`,
 				}
 			}
 
-			beadsDir := filepath.Join(expandedPath, ".beads")
-			if _, err := os.Stat(beadsDir); os.IsNotExist(err) {
+			bdDir := filepath.Join(expandedPath, ".bd")
+			if _, err := os.Stat(bdDir); os.IsNotExist(err) {
 				return fmt.Errorf("no .beads directory found at %s - is this a beads repository?", expandedPath)
 			}
 		}
@@ -168,7 +168,7 @@ that came from the removed repository.`,
 var repoListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all configured repositories",
-	Long: `List all repositories configured in .beads/config.yaml.
+	Long: `List all repositories configured in .bd/config.yaml.
 
 Shows the primary repository (always ".") and any additional
 repositories configured for hydration.`,
@@ -264,7 +264,7 @@ Also triggers Dolt push/pull if a remote is configured.`,
 				continue
 			}
 
-			jsonlPath := filepath.Join(absPath, ".beads", "issues.jsonl")
+			jsonlPath := filepath.Join(absPath, ".bd", "issues.jsonl")
 			info, err := os.Stat(jsonlPath)
 			if err != nil {
 				if verbose {

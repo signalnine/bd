@@ -35,12 +35,12 @@ func TestE2E_AutoStartedRepoLocalServerPersistsAcrossCommands(t *testing.T) {
 	_ = runCommandInDir(tmpDir, "git", "config", "remote.origin.url", "https://github.com/test/repo.git")
 
 	env := append(os.Environ(),
-		"BEADS_TEST_MODE=",
+		"BD_TEST_MODE=",
 		"GT_ROOT=",
-		"BEADS_DOLT_AUTO_START=",
-		"BEADS_DOLT_SERVER_PORT=",
-		"BEADS_DOLT_PORT=",
-		"BEADS_DOLT_SHARED_SERVER=",
+		"BD_DOLT_AUTO_START=",
+		"BD_DOLT_SERVER_PORT=",
+		"BD_DOLT_PORT=",
+		"BD_DOLT_SHARED_SERVER=",
 		"GIT_TERMINAL_PROMPT=0",
 		"SSH_ASKPASS=",
 		"GIT_ASKPASS=",
@@ -104,7 +104,7 @@ func TestE2E_AutoStartedRepoLocalServerPersistsAcrossCommands(t *testing.T) {
 		t.Fatalf("expected live tracked server after bd show, got stale endpoint bookkeeping:\n%s", statusOut)
 	}
 
-	portBytes, err := os.ReadFile(filepath.Join(tmpDir, ".beads", "dolt-server.port"))
+	portBytes, err := os.ReadFile(filepath.Join(tmpDir, ".bd", "dolt-server.port"))
 	if err != nil {
 		t.Fatalf("read dolt-server.port: %v", err)
 	}

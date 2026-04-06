@@ -36,7 +36,7 @@ func ResolveForWrite(path string) (string, error) {
 // - If absolute path conversion fails, returns original path
 //
 // This function is used to ensure consistent path handling across the codebase,
-// particularly for BEADS_DIR environment variable processing and git worktree
+// particularly for BD_DIR environment variable processing and git worktree
 // paths which require exact case matching.
 func CanonicalizePath(path string) string {
 	// Try to get absolute path

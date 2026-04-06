@@ -5,7 +5,7 @@ package embeddeddolt_test
 import (
 	"testing"
 
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 func TestReopenIssue(t *testing.T) {

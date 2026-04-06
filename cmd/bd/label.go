@@ -9,10 +9,10 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/beads/internal/storage"
-	"github.com/steveyegge/beads/internal/types"
-	"github.com/steveyegge/beads/internal/ui"
-	"github.com/steveyegge/beads/internal/utils"
+	"github.com/steveyegge/bd/internal/storage"
+	"github.com/steveyegge/bd/internal/types"
+	"github.com/steveyegge/bd/internal/ui"
+	"github.com/steveyegge/bd/internal/utils"
 )
 
 var labelCmd = &cobra.Command{

@@ -18,9 +18,9 @@ func TestDetermineAutoRoutedRepoPath_ContributorToPlanning(t *testing.T) {
 	planningDir := filepath.Join(tmpDir, "planning")
 
 	runCmd(t, tmpDir, "git", "init", repoDir)
-	runCmd(t, repoDir, "git", "config", "beads.role", "contributor")
+	runCmd(t, repoDir, "git", "config", "bd.role", "contributor")
 
-	sourceStore := newTestStoreIsolatedDB(t, filepath.Join(repoDir, ".beads", "beads.db"), "src")
+	sourceStore := newTestStoreIsolatedDB(t, filepath.Join(repoDir, ".bd", "bd.db"), "src")
 	ctx := context.Background()
 
 	if err := sourceStore.SetConfig(ctx, "routing.mode", "auto"); err != nil {
@@ -55,9 +55,9 @@ func TestOpenRoutedReadStore_ContributorRouting(t *testing.T) {
 	planningDir := filepath.Join(tmpDir, "planning")
 
 	runCmd(t, tmpDir, "git", "init", repoDir)
-	runCmd(t, repoDir, "git", "config", "beads.role", "contributor")
+	runCmd(t, repoDir, "git", "config", "bd.role", "contributor")
 
-	sourceStore := newTestStoreIsolatedDB(t, filepath.Join(repoDir, ".beads", "beads.db"), "src")
+	sourceStore := newTestStoreIsolatedDB(t, filepath.Join(repoDir, ".bd", "bd.db"), "src")
 	ctx := context.Background()
 
 	if err := sourceStore.SetConfig(ctx, "routing.mode", "auto"); err != nil {
@@ -67,7 +67,7 @@ func TestOpenRoutedReadStore_ContributorRouting(t *testing.T) {
 		t.Fatalf("failed to set routing.contributor: %v", err)
 	}
 
-	targetStore := newTestStoreIsolatedDB(t, filepath.Join(planningDir, ".beads", "beads.db"), "plan")
+	targetStore := newTestStoreIsolatedDB(t, filepath.Join(planningDir, ".bd", "bd.db"), "plan")
 	if err := targetStore.Close(); err != nil {
 		t.Fatalf("failed to close planning store: %v", err)
 	}

@@ -9,9 +9,9 @@ import (
 )
 
 const (
-	// BeadsDirPerm is the permission mode for .beads/ directories (owner-only).
+	// BeadsDirPerm is the permission mode for .bd/ directories (owner-only).
 	BeadsDirPerm fs.FileMode = 0700
-	// BeadsFilePerm is the permission mode for state files inside .beads/ (owner-only).
+	// BeadsFilePerm is the permission mode for state files inside .bd/ (owner-only).
 	BeadsFilePerm fs.FileMode = 0600
 )
 

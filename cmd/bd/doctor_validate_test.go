@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/steveyegge/beads/internal/storage/dolt"
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/storage/dolt"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 // setupValidateTestDB creates a temp .beads workspace with a configured database.
@@ -18,12 +18,12 @@ import (
 func setupValidateTestDB(t *testing.T, prefix string) (tmpDir string, store *dolt.DoltStore) {
 	t.Helper()
 	tmpDir = t.TempDir()
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.Mkdir(beadsDir, 0755); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.Mkdir(bdDir, 0755); err != nil {
 		t.Fatal(err)
 	}
 
-	dbPath := filepath.Join(beadsDir, "dolt")
+	dbPath := filepath.Join(bdDir, "dolt")
 	store = newTestStoreIsolatedDB(t, dbPath, prefix)
 
 	return tmpDir, store
@@ -44,7 +44,7 @@ func TestValidateCheck_AllClean(t *testing.T) {
 	}
 
 	// Write clean JSONL so git conflicts check has a file to scan
-	jsonlPath := filepath.Join(tmpDir, ".beads", "issues.jsonl")
+	jsonlPath := filepath.Join(tmpDir, ".bd", "issues.jsonl")
 	if err := os.WriteFile(jsonlPath, []byte(""), 0644); err != nil {
 		t.Fatalf("Failed to create JSONL: %v", err)
 	}
@@ -204,7 +204,7 @@ func TestValidateCheck_NoBeadsDir(t *testing.T) {
 
 	for _, cr := range checks {
 		if cr.check.Status != statusOK {
-			t.Errorf("%s: status = %q, want %q when no .beads/ exists", cr.check.Name, cr.check.Status, statusOK)
+			t.Errorf("%s: status = %q, want %q when no .bd/ exists", cr.check.Name, cr.check.Status, statusOK)
 		}
 	}
 }

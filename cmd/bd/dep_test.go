@@ -13,13 +13,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 func TestDependencySuite(t *testing.T) {
 	t.Parallel()
 	tmpDir := t.TempDir()
-	testDB := filepath.Join(tmpDir, ".beads", "beads.db")
+	testDB := filepath.Join(tmpDir, ".bd", "bd.db")
 	s := newTestStore(t, testDB)
 	ctx := context.Background()
 
@@ -1333,22 +1333,22 @@ func TestDepListCrossRigRouting(t *testing.T) {
 
 	// Create temp directory structure:
 	// tmpDir/
-	//   .beads/
+	//   .bd/
 	//     dolt/ (town database, prefix "hq")
 	//     routes.jsonl (routing config)
 	//   rig/
-	//     .beads/
+	//     .bd/
 	//       dolt/ (rig database, prefix "gt")
 	tmpDir := t.TempDir()
 
 	// Create town .beads directory
-	townBeadsDir := filepath.Join(tmpDir, ".beads")
+	townBeadsDir := filepath.Join(tmpDir, ".bd")
 	if err := os.MkdirAll(townBeadsDir, 0755); err != nil {
 		t.Fatalf("Failed to create town beads dir: %v", err)
 	}
 
 	// Create rig .beads directory
-	rigBeadsDir := filepath.Join(tmpDir, "rig", ".beads")
+	rigBeadsDir := filepath.Join(tmpDir, "rig", ".bd")
 	if err := os.MkdirAll(rigBeadsDir, 0755); err != nil {
 		t.Fatalf("Failed to create rig beads dir: %v", err)
 	}

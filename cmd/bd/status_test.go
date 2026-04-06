@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/steveyegge/beads/internal/storage/dolt"
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/storage/dolt"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 // Helper function to create a time pointer
@@ -22,7 +22,7 @@ func timePtr(t time.Time) *time.Time {
 func TestStatusCommand(t *testing.T) {
 	// Create a temporary directory for the test database
 	tempDir := t.TempDir()
-	dbPath := filepath.Join(tempDir, ".beads", "test.db")
+	dbPath := filepath.Join(tempDir, ".bd", "test.db")
 
 	// Create .beads directory
 	if err := os.MkdirAll(filepath.Dir(dbPath), 0755); err != nil {
@@ -173,7 +173,7 @@ func TestGetGitActivity(t *testing.T) {
 func TestGetAssignedStatistics(t *testing.T) {
 	// Create a temporary directory for the test database
 	tempDir := t.TempDir()
-	dbPath := filepath.Join(tempDir, ".beads", "test.db")
+	dbPath := filepath.Join(tempDir, ".bd", "test.db")
 
 	// Create .beads directory
 	if err := os.MkdirAll(filepath.Dir(dbPath), 0755); err != nil {

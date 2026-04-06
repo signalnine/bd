@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 // labels used across all fixtures

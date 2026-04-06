@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/beads/internal/beads"
-	"github.com/steveyegge/beads/internal/utils"
+	"github.com/steveyegge/bd/internal/project"
+	"github.com/steveyegge/bd/internal/utils"
 )
 
 // WhereResult contains information about the active beads location
@@ -35,8 +35,8 @@ Examples:
 		result := WhereResult{}
 
 		// Find the beads directory (this follows redirects)
-		beadsDir := beads.FindBeadsDir()
-		if beadsDir == "" {
+		bdDir := project.FindBdDir()
+		if bdDir == "" {
 			if jsonOutput {
 				outputJSON(map[string]string{"error": "no beads directory found"})
 			} else {
@@ -46,17 +46,17 @@ Examples:
 			os.Exit(1)
 		}
 
-		result.Path = beadsDir
+		result.Path = bdDir
 
 		// Check if we got here via redirect by looking for the original .beads directory
 		// Walk up from cwd to find any .beads with a redirect file
 		originalBeadsDir := findOriginalBeadsDir()
-		if originalBeadsDir != "" && originalBeadsDir != beadsDir {
+		if originalBeadsDir != "" && originalBeadsDir != bdDir {
 			result.RedirectedFrom = originalBeadsDir
 		}
 
 		// Find the database path
-		dbPath := beads.FindDatabasePath()
+		dbPath := project.FindDatabasePath()
 		if dbPath != "" {
 			result.DatabasePath = dbPath
 
@@ -71,7 +71,7 @@ Examples:
 
 		// If we don't have the prefix from DB, try to detect it from JSONL
 		if result.Prefix == "" {
-			result.Prefix = detectPrefixFromDir(beadsDir)
+			result.Prefix = detectPrefixFromDir(bdDir)
 		}
 
 		// Output results
@@ -105,10 +105,10 @@ func findOriginalBeadsDir() string {
 		cwd = resolved
 	}
 
-	// Check BEADS_DIR first
-	if envDir := os.Getenv("BEADS_DIR"); envDir != "" {
+	// Check BD_DIR first
+	if envDir := os.Getenv("BD_DIR"); envDir != "" {
 		envDir = utils.CanonicalizePath(envDir)
-		redirectFile := filepath.Join(envDir, beads.RedirectFileName)
+		redirectFile := filepath.Join(envDir, project.RedirectFileName)
 		if _, err := os.Stat(redirectFile); err == nil {
 			return envDir
 		}
@@ -117,11 +117,11 @@ func findOriginalBeadsDir() string {
 
 	// Walk up directory tree looking for .beads with redirect
 	for dir := cwd; dir != "/" && dir != "."; {
-		beadsDir := filepath.Join(dir, ".beads")
-		if info, err := os.Stat(beadsDir); err == nil && info.IsDir() {
-			redirectFile := filepath.Join(beadsDir, beads.RedirectFileName)
+		bdDir := filepath.Join(dir, ".bd")
+		if info, err := os.Stat(bdDir); err == nil && info.IsDir() {
+			redirectFile := filepath.Join(bdDir, project.RedirectFileName)
 			if _, err := os.Stat(redirectFile); err == nil {
-				return beadsDir
+				return bdDir
 			}
 			// Found .beads without redirect - this is the actual location
 			return ""

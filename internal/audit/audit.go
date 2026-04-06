@@ -10,11 +10,11 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/steveyegge/beads/internal/beads"
+	"github.com/steveyegge/bd/internal/project"
 )
 
 const (
-	// FileName is the audit log file name stored under .beads/.
+	// FileName is the audit log file name stored under .bd/.
 	FileName = "interactions.jsonl"
 	idPrefix = "int-"
 )
@@ -49,14 +49,14 @@ type Entry struct {
 }
 
 func Path() (string, error) {
-	beadsDir := beads.FindBeadsDir()
-	if beadsDir == "" {
+	bdDir := project.FindBdDir()
+	if bdDir == "" {
 		return "", fmt.Errorf("no .beads directory found")
 	}
-	return filepath.Join(beadsDir, FileName), nil
+	return filepath.Join(bdDir, FileName), nil
 }
 
-// EnsureFile creates .beads/interactions.jsonl if it does not exist.
+// EnsureFile creates .bd/interactions.jsonl if it does not exist.
 func EnsureFile() (string, error) {
 	p, err := Path()
 	if err != nil {
@@ -79,7 +79,7 @@ func EnsureFile() (string, error) {
 	return p, nil
 }
 
-// Append appends an event to .beads/interactions.jsonl as a single JSON line.
+// Append appends an event to .bd/interactions.jsonl as a single JSON line.
 // This is intentionally append-only: callers must not mutate existing lines.
 func Append(e *Entry) (string, error) {
 	if e == nil {

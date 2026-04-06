@@ -8,10 +8,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/steveyegge/beads/internal/storage"
-	"github.com/steveyegge/beads/internal/storage/issueops"
-	"github.com/steveyegge/beads/internal/storage/versioncontrolops"
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/storage"
+	"github.com/steveyegge/bd/internal/storage/issueops"
+	"github.com/steveyegge/bd/internal/storage/versioncontrolops"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 // RunInTransaction executes a function within a database transaction.

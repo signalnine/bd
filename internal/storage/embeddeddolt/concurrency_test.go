@@ -15,13 +15,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
+	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
 	"golang.org/x/sync/errgroup"
 )
 
 func TestConcurrencyMultiProcess(t *testing.T) {
-	if os.Getenv("BEADS_TEST_EMBEDDED_DOLT") != "1" {
-		t.Skip("set BEADS_TEST_EMBEDDED_DOLT=1 to run embedded dolt concurrency tests")
+	if os.Getenv("BD_TEST_EMBEDDED_DOLT") != "1" {
+		t.Skip("set BD_TEST_EMBEDDED_DOLT=1 to run embedded dolt concurrency tests")
 	}
 
 	procs := envInt("BEADS_EMBEDDED_DOLT_PROCS", 10)
@@ -215,15 +215,15 @@ func mustQueryRow(t *testing.T, db *sql.DB, ctx context.Context, query string, a
 // on the same data directory blocks until the first is closed, rather than
 // failing immediately or panicking (GH#2571).
 func TestConcurrentNewQueues(t *testing.T) {
-	if os.Getenv("BEADS_TEST_EMBEDDED_DOLT") != "1" {
-		t.Skip("set BEADS_TEST_EMBEDDED_DOLT=1 to run embedded dolt concurrency tests")
+	if os.Getenv("BD_TEST_EMBEDDED_DOLT") != "1" {
+		t.Skip("set BD_TEST_EMBEDDED_DOLT=1 to run embedded dolt concurrency tests")
 	}
 
 	ctx := t.Context()
-	beadsDir := t.TempDir()
+	bdDir := t.TempDir()
 
 	// First store opens successfully and holds the exclusive flock.
-	store1, err := embeddeddolt.New(ctx, beadsDir, "testdb", "main")
+	store1, err := embeddeddolt.New(ctx, bdDir, "testdb", "main")
 	if err != nil {
 		t.Fatalf("first New: %v", err)
 	}
@@ -235,7 +235,7 @@ func TestConcurrentNewQueues(t *testing.T) {
 	}
 	ch := make(chan result, 1)
 	go func() {
-		s, err := embeddeddolt.New(ctx, beadsDir, "testdb", "main")
+		s, err := embeddeddolt.New(ctx, bdDir, "testdb", "main")
 		ch <- result{s, err}
 	}()
 
@@ -269,8 +269,8 @@ func TestConcurrentNewQueues(t *testing.T) {
 // TestWaitLockBlocksAndSucceeds verifies that WaitLock blocks until the lock
 // is released, then acquires it successfully.
 func TestWaitLockBlocksAndSucceeds(t *testing.T) {
-	if os.Getenv("BEADS_TEST_EMBEDDED_DOLT") != "1" {
-		t.Skip("set BEADS_TEST_EMBEDDED_DOLT=1 to run embedded dolt concurrency tests")
+	if os.Getenv("BD_TEST_EMBEDDED_DOLT") != "1" {
+		t.Skip("set BD_TEST_EMBEDDED_DOLT=1 to run embedded dolt concurrency tests")
 	}
 
 	dataDir := filepath.Join(t.TempDir(), "embeddeddolt")
@@ -321,8 +321,8 @@ func TestWaitLockBlocksAndSucceeds(t *testing.T) {
 // TestWaitLockRespectsContextCancellation verifies that WaitLock returns a
 // context error when the context is cancelled while waiting.
 func TestWaitLockRespectsContextCancellation(t *testing.T) {
-	if os.Getenv("BEADS_TEST_EMBEDDED_DOLT") != "1" {
-		t.Skip("set BEADS_TEST_EMBEDDED_DOLT=1 to run embedded dolt concurrency tests")
+	if os.Getenv("BD_TEST_EMBEDDED_DOLT") != "1" {
+		t.Skip("set BD_TEST_EMBEDDED_DOLT=1 to run embedded dolt concurrency tests")
 	}
 
 	dataDir := filepath.Join(t.TempDir(), "embeddeddolt")
@@ -352,13 +352,13 @@ func TestWaitLockRespectsContextCancellation(t *testing.T) {
 // supply a pre-acquired lock so New does not attempt a second flock (which
 // would fail on macOS where flock is per-fd, not per-process).
 func TestWithLockBypassesDoubleLock(t *testing.T) {
-	if os.Getenv("BEADS_TEST_EMBEDDED_DOLT") != "1" {
-		t.Skip("set BEADS_TEST_EMBEDDED_DOLT=1 to run embedded dolt concurrency tests")
+	if os.Getenv("BD_TEST_EMBEDDED_DOLT") != "1" {
+		t.Skip("set BD_TEST_EMBEDDED_DOLT=1 to run embedded dolt concurrency tests")
 	}
 
 	ctx := t.Context()
-	beadsDir := t.TempDir()
-	dataDir := filepath.Join(beadsDir, "embeddeddolt")
+	bdDir := t.TempDir()
+	dataDir := filepath.Join(bdDir, "embeddeddolt")
 
 	// Acquire the lock externally (as bd init does).
 	lock, err := embeddeddolt.TryLock(dataDir)
@@ -368,7 +368,7 @@ func TestWithLockBypassesDoubleLock(t *testing.T) {
 	defer lock.Unlock()
 
 	// New with WithLock must succeed without double-locking.
-	store, err := embeddeddolt.New(ctx, beadsDir, "testdb", "main", embeddeddolt.WithLock(lock))
+	store, err := embeddeddolt.New(ctx, bdDir, "testdb", "main", embeddeddolt.WithLock(lock))
 	if err != nil {
 		t.Fatalf("New with WithLock: %v", err)
 	}

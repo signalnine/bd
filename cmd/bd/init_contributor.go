@@ -9,9 +9,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/steveyegge/beads/internal/config"
-	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
-	"github.com/steveyegge/beads/internal/ui"
+	"github.com/steveyegge/bd/internal/config"
+	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
+	"github.com/steveyegge/bd/internal/ui"
 )
 
 // runContributorWizard guides the user through OSS contributor setup
@@ -25,10 +25,10 @@ func runContributorWizard(ctx context.Context, store *embeddeddolt.EmbeddedDoltS
 	}
 	reader := bufio.NewReader(os.Stdin)
 
-	// Early check: BEADS_DIR takes precedence over routing
-	if beadsDir := os.Getenv("BEADS_DIR"); beadsDir != "" {
-		fmt.Printf("%s BEADS_DIR is set: %s\n", ui.RenderWarn("⚠"), beadsDir)
-		fmt.Println("\n  BEADS_DIR takes precedence over contributor routing.")
+	// Early check: BD_DIR takes precedence over routing
+	if bdDir := os.Getenv("BD_DIR"); bdDir != "" {
+		fmt.Printf("%s BD_DIR is set: %s\n", ui.RenderWarn("⚠"), bdDir)
+		fmt.Println("\n  BD_DIR takes precedence over contributor routing.")
 		fmt.Println("  If you're using the ACF pattern (external tracking repo),")
 		fmt.Println("  you likely don't need --contributor.")
 		fmt.Println()
@@ -115,10 +115,10 @@ func runContributorWizard(ctx context.Context, store *embeddeddolt.EmbeddedDoltS
 		return fmt.Errorf("failed to get home directory: %w", err)
 	}
 
-	// Use BEADS_DIR as default if set (user explicitly set it and continued past warning)
-	// Otherwise fall back to ~/.beads-planning
+	// Use BD_DIR as default if set (user explicitly set it and continued past warning)
+	// Otherwise fall back to ~/.bd-planning
 	defaultPlanningRepo := filepath.Join(homeDir, ".beads-planning")
-	if envBeadsDir := os.Getenv("BEADS_DIR"); envBeadsDir != "" {
+	if envBeadsDir := os.Getenv("BD_DIR"); envBeadsDir != "" {
 		defaultPlanningRepo = envBeadsDir
 	}
 
@@ -160,8 +160,8 @@ func runContributorWizard(ctx context.Context, store *embeddeddolt.EmbeddedDoltS
 		}
 
 		// Initialize beads in planning repo
-		beadsDir := filepath.Join(planningPath, ".beads")
-		if err := os.MkdirAll(beadsDir, 0750); err != nil {
+		bdDir := filepath.Join(planningPath, ".bd")
+		if err := os.MkdirAll(bdDir, 0750); err != nil {
 			return fmt.Errorf("failed to create .beads in planning repo: %w", err)
 		}
 
@@ -249,8 +249,8 @@ Created by: bd init --contributor
 	fmt.Printf("\n%s %s\n\n", ui.RenderPass("✓"), ui.RenderBold("Contributor setup complete!"))
 
 	fmt.Println("Configuration:")
-	fmt.Printf("  Current repo issues: %s\n", ui.RenderAccent(".beads/issues.jsonl"))
-	fmt.Printf("  Planning repo issues: %s\n", ui.RenderAccent(filepath.Join(planningPath, ".beads/issues.jsonl")))
+	fmt.Printf("  Current repo issues: %s\n", ui.RenderAccent(".bd/issues.jsonl"))
+	fmt.Printf("  Planning repo issues: %s\n", ui.RenderAccent(filepath.Join(planningPath, ".bd/issues.jsonl")))
 	fmt.Println()
 	fmt.Println("How it works:")
 	fmt.Println("  • Issues you create will route to the planning repo")

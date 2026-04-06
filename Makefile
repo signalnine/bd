@@ -82,7 +82,7 @@ test-full-cgo:
 	@./scripts/test-cgo.sh ./...
 
 # Run differential regression tests (baseline v0.49.6 vs current worktree).
-# Downloads baseline binary on first run; cached in ~/Library/Caches/beads-regression/.
+# Downloads baseline binary on first run; cached in ~/Library/Caches/bd-regression/.
 # Override baseline: BD_REGRESSION_BASELINE_BIN=/path/to/bd make test-regression
 test-regression:
 	@echo "Running regression tests (baseline vs candidate)..."
@@ -193,7 +193,7 @@ clean:
 	rm -f bd
 	rm -f bd.exe
 	rm -f internal/storage/dolt/bench-cpu-*.prof
-	rm -f beads-perf-*.prof
+	rm -f bd-perf-*.prof
 
 # Show help
 help:

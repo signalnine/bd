@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 func TestReadIssueIDsFromFile(t *testing.T) {
@@ -111,8 +111,8 @@ func TestBulkDeleteNoResurrection(t *testing.T) {
 	}
 
 	tmpDir := t.TempDir()
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	testDB := filepath.Join(beadsDir, "beads.db")
+	bdDir := filepath.Join(tmpDir, ".bd")
+	testDB := filepath.Join(bdDir, "bd.db")
 
 	testGitInit(t, tmpDir)
 
@@ -202,8 +202,8 @@ func TestDeleteIssueWrapper(t *testing.T) {
 	}
 
 	tmpDir := t.TempDir()
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	testDB := filepath.Join(beadsDir, "beads.db")
+	bdDir := filepath.Join(tmpDir, ".bd")
+	testDB := filepath.Join(bdDir, "bd.db")
 
 	s := newTestStore(t, testDB)
 	ctx := context.Background()

@@ -9,17 +9,17 @@ import (
 
 func TestAppend_CreatesFileAndWritesJSONL(t *testing.T) {
 	tmp := t.TempDir()
-	beadsDir := filepath.Join(tmp, ".beads")
-	if err := os.MkdirAll(beadsDir, 0750); err != nil {
+	bdDir := filepath.Join(tmp, ".bd")
+	if err := os.MkdirAll(bdDir, 0750); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
-	// beads.FindBeadsDir() validates that the directory contains project files.
-	// Create metadata.json so BEADS_DIR is accepted by hasBeadsProjectFiles.
-	metadataPath := filepath.Join(beadsDir, "metadata.json")
+	// project.FindBdDir() validates that the directory contains project files.
+	// Create metadata.json so BD_DIR is accepted by hasBeadsProjectFiles.
+	metadataPath := filepath.Join(bdDir, "metadata.json")
 	if err := os.WriteFile(metadataPath, []byte(`{"backend":"dolt"}`), 0644); err != nil {
 		t.Fatalf("write metadata.json: %v", err)
 	}
-	t.Setenv("BEADS_DIR", beadsDir)
+	t.Setenv("BD_DIR", bdDir)
 
 	id1, err := Append(&Entry{Kind: "llm_call", Model: "test-model", Prompt: "p", Response: "r"})
 	if err != nil {
@@ -33,7 +33,7 @@ func TestAppend_CreatesFileAndWritesJSONL(t *testing.T) {
 		t.Fatalf("append label: %v", err)
 	}
 
-	p := filepath.Join(beadsDir, FileName)
+	p := filepath.Join(bdDir, FileName)
 	f, err := os.Open(p)
 	if err != nil {
 		t.Fatalf("open: %v", err)

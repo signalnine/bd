@@ -15,9 +15,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/steveyegge/beads/internal/configfile"
-	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/configfile"
+	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 var (
@@ -27,14 +27,14 @@ var (
 )
 
 // buildEmbeddedBD returns the path to an embedded bd binary for subprocess tests.
-// If BEADS_TEST_BD_BINARY is set, uses that pre-built binary (skipping the ~45s build).
+// If BD_TEST_BINARY is set, uses that pre-built binary (skipping the ~45s build).
 // CI can pre-build once and pass the path to all test invocations.
 func buildEmbeddedBD(t *testing.T) string {
 	t.Helper()
 	embeddedBDOnce.Do(func() {
-		if prebuilt := os.Getenv("BEADS_TEST_BD_BINARY"); prebuilt != "" {
+		if prebuilt := os.Getenv("BD_TEST_BINARY"); prebuilt != "" {
 			if _, err := os.Stat(prebuilt); err != nil {
-				embeddedBDErr = fmt.Errorf("BEADS_TEST_BD_BINARY=%q not found: %w", prebuilt, err)
+				embeddedBDErr = fmt.Errorf("BD_TEST_BINARY=%q not found: %w", prebuilt, err)
 				return
 			}
 			embeddedBD = prebuilt
@@ -85,7 +85,7 @@ func bdEnv(dir string) []string {
 		}
 		env = append(env, e)
 	}
-	return append(env, "HOME="+dir, "BEADS_DOLT_AUTO_START=0", "BEADS_NO_DAEMON=1")
+	return append(env, "HOME="+dir, "BD_DOLT_AUTO_START=0", "BD_NO_DAEMON=1")
 }
 
 // bdRunWithFlockRetry runs a bd command with retry on flock contention.
@@ -113,14 +113,14 @@ func bdRunWithFlockRetry(t *testing.T, bd, dir string, args ...string) ([]byte, 
 }
 
 // bdInit creates a temp dir with a git repo, runs bd init --quiet with the
-// given extra args, and returns (dir, beadsDir, combined output).
+// given extra args, and returns (dir, bdDir, combined output).
 // Fatals if bd init fails.
-func bdInit(t *testing.T, bd string, extraArgs ...string) (dir, beadsDir string, out string) {
+func bdInit(t *testing.T, bd string, extraArgs ...string) (dir, bdDir string, out string) {
 	t.Helper()
 	dir = t.TempDir()
 	initGitRepoAt(t, dir)
 	out = runBDInit(t, bd, dir, extraArgs...)
-	beadsDir = filepath.Join(dir, ".beads")
+	bdDir = filepath.Join(dir, ".bd")
 	return
 }
 
@@ -154,7 +154,7 @@ func bdInitFail(t *testing.T, bd string, extraArgs ...string) string {
 	return string(out)
 }
 
-func readBack(t *testing.T, beadsDir, database, key string, metadata bool) string {
+func readBack(t *testing.T, bdDir, database, key string, metadata bool) string {
 	t.Helper()
 
 	// The embedded dolt driver holds a process-level lock, so concurrent
@@ -166,7 +166,7 @@ func readBack(t *testing.T, beadsDir, database, key string, metadata bool) strin
 		if attempt > 0 {
 			time.Sleep(time.Duration(attempt) * 500 * time.Millisecond)
 		}
-		val, err := readBackOnce(t, beadsDir, database, key, metadata)
+		val, err := readBackOnce(t, bdDir, database, key, metadata)
 		if err == nil {
 			return val
 		}
@@ -180,11 +180,11 @@ func readBack(t *testing.T, beadsDir, database, key string, metadata bool) strin
 	return "" // unreachable
 }
 
-func readBackOnce(t *testing.T, beadsDir, database, key string, metadata bool) (string, error) {
+func readBackOnce(t *testing.T, bdDir, database, key string, metadata bool) (string, error) {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	store, err := embeddeddolt.New(ctx, beadsDir, database, "main")
+	store, err := embeddeddolt.New(ctx, bdDir, database, "main")
 	if err != nil {
 		return "", fmt.Errorf("New failed: %w", err)
 	}
@@ -255,17 +255,17 @@ func requireNoFile(t *testing.T, path string) {
 }
 
 func TestEmbeddedInit(t *testing.T) {
-	if os.Getenv("BEADS_TEST_EMBEDDED_DOLT") != "1" {
-		t.Skip("set BEADS_TEST_EMBEDDED_DOLT=1 to run embedded dolt init tests")
+	if os.Getenv("BD_TEST_EMBEDDED_DOLT") != "1" {
+		t.Skip("set BD_TEST_EMBEDDED_DOLT=1 to run embedded dolt init tests")
 	}
 	t.Parallel()
 
 	bd := buildEmbeddedBD(t)
 
 	t.Run("basic", func(t *testing.T) {
-		dir, beadsDir, _ := bdInit(t, bd, "--prefix", "basic")
-		embeddedDir := filepath.Join(beadsDir, "embeddeddolt")
-		requireFile(t, beadsDir)
+		dir, bdDir, _ := bdInit(t, bd, "--prefix", "basic")
+		embeddedDir := filepath.Join(bdDir, "embeddeddolt")
+		requireFile(t, bdDir)
 		requireFile(t, embeddedDir)
 		requireFile(t, filepath.Join(embeddedDir, "basic", ".dolt"))
 
@@ -286,15 +286,15 @@ func TestEmbeddedInit(t *testing.T) {
 	})
 
 	t.Run("prefix", func(t *testing.T) {
-		_, beadsDir, _ := bdInit(t, bd, "--prefix", "myproj")
-		if val := readBack(t, beadsDir, "myproj", "issue_prefix", false); val != "myproj" {
+		_, bdDir, _ := bdInit(t, bd, "--prefix", "myproj")
+		if val := readBack(t, bdDir, "myproj", "issue_prefix", false); val != "myproj" {
 			t.Errorf("issue_prefix: got %q, want %q", val, "myproj")
 		}
 	})
 
 	t.Run("prefix_trailing_hyphen", func(t *testing.T) {
-		_, beadsDir, _ := bdInit(t, bd, "--prefix", "test-")
-		if val := readBack(t, beadsDir, "test", "issue_prefix", false); val != "test" {
+		_, bdDir, _ := bdInit(t, bd, "--prefix", "test-")
+		if val := readBack(t, bdDir, "test", "issue_prefix", false); val != "test" {
 			t.Errorf("issue_prefix: got %q, want %q", val, "test")
 		}
 	})
@@ -322,37 +322,37 @@ func TestEmbeddedInit(t *testing.T) {
 	})
 
 	t.Run("database", func(t *testing.T) {
-		_, beadsDir, _ := bdInit(t, bd, "--database", "custom_db")
-		cfg, err := configfile.Load(beadsDir)
+		_, bdDir, _ := bdInit(t, bd, "--database", "custom_db")
+		cfg, err := configfile.Load(bdDir)
 		if err != nil {
 			t.Fatalf("failed to load metadata.json: %v", err)
 		}
 		if cfg.DoltDatabase != "custom_db" {
 			t.Errorf("DoltDatabase: got %q, want %q", cfg.DoltDatabase, "custom_db")
 		}
-		requireFile(t, filepath.Join(beadsDir, "embeddeddolt", "custom_db", ".dolt"))
-		if val := readBack(t, beadsDir, "custom_db", "issue_prefix", false); val == "" {
+		requireFile(t, filepath.Join(bdDir, "embeddeddolt", "custom_db", ".dolt"))
+		if val := readBack(t, bdDir, "custom_db", "issue_prefix", false); val == "" {
 			t.Error("issue_prefix not set in custom_db")
 		}
 	})
 
 	t.Run("database_with_prefix", func(t *testing.T) {
-		_, beadsDir, _ := bdInit(t, bd, "--database", "shared_db", "--prefix", "alpha")
-		cfg, err := configfile.Load(beadsDir)
+		_, bdDir, _ := bdInit(t, bd, "--database", "shared_db", "--prefix", "alpha")
+		cfg, err := configfile.Load(bdDir)
 		if err != nil {
 			t.Fatalf("failed to load metadata.json: %v", err)
 		}
 		if cfg.DoltDatabase != "shared_db" {
 			t.Errorf("DoltDatabase: got %q, want %q", cfg.DoltDatabase, "shared_db")
 		}
-		if val := readBack(t, beadsDir, "shared_db", "issue_prefix", false); val != "alpha" {
+		if val := readBack(t, bdDir, "shared_db", "issue_prefix", false); val != "alpha" {
 			t.Errorf("issue_prefix: got %q, want %q", val, "alpha")
 		}
 	})
 
 	t.Run("skip_hooks", func(t *testing.T) {
-		_, beadsDir, _ := bdInit(t, bd, "--prefix", "sh", "--skip-hooks")
-		requireNoFile(t, filepath.Join(beadsDir, "hooks"))
+		_, bdDir, _ := bdInit(t, bd, "--prefix", "sh", "--skip-hooks")
+		requireNoFile(t, filepath.Join(bdDir, "hooks"))
 	})
 
 	t.Run("stealth", func(t *testing.T) {
@@ -366,8 +366,8 @@ func TestEmbeddedInit(t *testing.T) {
 			t.Skip("dolt CLI not on PATH")
 		}
 
-		dir, beadsDir, _ := bdInit(t, bd, "--prefix", "fi")
-		dbDir := filepath.Join(beadsDir, "embeddeddolt", "fi")
+		dir, bdDir, _ := bdInit(t, bd, "--prefix", "fi")
+		dbDir := filepath.Join(bdDir, "embeddeddolt", "fi")
 
 		statusOut := runDolt(t, doltBin, dbDir, "status")
 		if !strings.Contains(statusOut, "nothing to commit") {
@@ -405,7 +405,7 @@ func TestEmbeddedInit(t *testing.T) {
 		if commitCount2 < commitCount1 {
 			t.Errorf("commit count decreased after force reinit: before=%d after=%d", commitCount1, commitCount2)
 		}
-		if val := readBack(t, beadsDir, "fi", "issue_prefix", false); val != "fi" {
+		if val := readBack(t, bdDir, "fi", "issue_prefix", false); val != "fi" {
 			t.Errorf("issue_prefix after --force: got %q, want %q", val, "fi")
 		}
 	})
@@ -416,7 +416,7 @@ func TestEmbeddedInit(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to read .git/info/exclude: %v", err)
 		}
-		if !strings.Contains(string(content), ".beads") {
+		if !strings.Contains(string(content), ".bd") {
 			t.Error("--setup-exclude should add .beads to .git/info/exclude")
 		}
 	})
@@ -424,8 +424,8 @@ func TestEmbeddedInit(t *testing.T) {
 	t.Run("from_jsonl", func(t *testing.T) {
 		dir := t.TempDir()
 		initGitRepoAt(t, dir)
-		beadsDir := filepath.Join(dir, ".beads")
-		if err := os.MkdirAll(beadsDir, 0750); err != nil {
+		bdDir := filepath.Join(dir, ".bd")
+		if err := os.MkdirAll(bdDir, 0750); err != nil {
 			t.Fatal(err)
 		}
 		issues := []types.Issue{
@@ -437,7 +437,7 @@ func TestEmbeddedInit(t *testing.T) {
 			b, _ := json.Marshal(issue)
 			lines = append(lines, string(b))
 		}
-		if err := os.WriteFile(filepath.Join(beadsDir, "issues.jsonl"), []byte(strings.Join(lines, "\n")+"\n"), 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(bdDir, "issues.jsonl"), []byte(strings.Join(lines, "\n")+"\n"), 0644); err != nil {
 			t.Fatal(err)
 		}
 
@@ -451,8 +451,8 @@ func TestEmbeddedInit(t *testing.T) {
 	})
 
 	t.Run("backend_dolt", func(t *testing.T) {
-		_, beadsDir, _ := bdInit(t, bd, "--prefix", "bdolt", "--backend", "dolt")
-		embeddedDir := filepath.Join(beadsDir, "embeddeddolt")
+		_, bdDir, _ := bdInit(t, bd, "--prefix", "bdolt", "--backend", "dolt")
+		embeddedDir := filepath.Join(bdDir, "embeddeddolt")
 		requireFile(t, embeddedDir)
 		requireFile(t, filepath.Join(embeddedDir, "bdolt", ".dolt"))
 	})
@@ -472,9 +472,9 @@ func TestEmbeddedInit(t *testing.T) {
 	})
 
 	t.Run("server_flags_ignored", func(t *testing.T) {
-		_, beadsDir, _ := bdInit(t, bd, "--prefix", "sv",
+		_, bdDir, _ := bdInit(t, bd, "--prefix", "sv",
 			"--server-host", "10.0.0.1", "--server-port", "4444", "--server-user", "alice")
-		cfg, err := configfile.Load(beadsDir)
+		cfg, err := configfile.Load(bdDir)
 		if err != nil {
 			t.Fatalf("failed to load metadata.json: %v", err)
 		}
@@ -490,11 +490,11 @@ func TestEmbeddedInit(t *testing.T) {
 	})
 
 	t.Run("metadata_written", func(t *testing.T) {
-		_, beadsDir, _ := bdInit(t, bd, "--prefix", "meta")
-		if val := readBack(t, beadsDir, "meta", "bd_version", true); val == "" {
+		_, bdDir, _ := bdInit(t, bd, "--prefix", "meta")
+		if val := readBack(t, bdDir, "meta", "bd_version", true); val == "" {
 			t.Error("bd_version metadata not set")
 		}
-		importTime := readBack(t, beadsDir, "meta", "last_import_time", true)
+		importTime := readBack(t, bdDir, "meta", "last_import_time", true)
 		if importTime == "" {
 			t.Error("last_import_time metadata not set")
 		}
@@ -504,8 +504,8 @@ func TestEmbeddedInit(t *testing.T) {
 	})
 
 	t.Run("metadata_json", func(t *testing.T) {
-		_, beadsDir, _ := bdInit(t, bd, "--prefix", "mj")
-		cfg, err := configfile.Load(beadsDir)
+		_, bdDir, _ := bdInit(t, bd, "--prefix", "mj")
+		cfg, err := configfile.Load(bdDir)
 		if err != nil {
 			t.Fatalf("failed to load metadata.json: %v", err)
 		}
@@ -518,14 +518,14 @@ func TestEmbeddedInit(t *testing.T) {
 	})
 
 	t.Run("files_created", func(t *testing.T) {
-		dir, beadsDir, _ := bdInit(t, bd, "--prefix", "fc", "--skip-hooks")
-		requireFile(t, filepath.Join(beadsDir, "config.yaml"))
-		requireFile(t, filepath.Join(beadsDir, "interactions.jsonl"))
+		dir, bdDir, _ := bdInit(t, bd, "--prefix", "fc", "--skip-hooks")
+		requireFile(t, filepath.Join(bdDir, "config.yaml"))
+		requireFile(t, filepath.Join(bdDir, "interactions.jsonl"))
 		requireFile(t, filepath.Join(dir, "AGENTS.md"))
 
-		content, err := os.ReadFile(filepath.Join(beadsDir, ".gitignore"))
+		content, err := os.ReadFile(filepath.Join(bdDir, ".gitignore"))
 		if err != nil {
-			t.Fatalf("failed to read .beads/.gitignore: %v", err)
+			t.Fatalf("failed to read .bd/.gitignore: %v", err)
 		}
 		for _, pattern := range []string{"*.db", "dolt/", "bd.sock"} {
 			if !strings.Contains(string(content), pattern) {
@@ -579,7 +579,7 @@ func TestEmbeddedInit(t *testing.T) {
 		}
 		initGitRepoAt(t, dir)
 		runBDInit(t, bd, dir)
-		if val := readBack(t, filepath.Join(dir, ".beads"), "myproject", "issue_prefix", false); val != "myproject" {
+		if val := readBack(t, filepath.Join(dir, ".bd"), "myproject", "issue_prefix", false); val != "myproject" {
 			t.Errorf("auto-detected issue_prefix: got %q, want %q", val, "myproject")
 		}
 	})
@@ -592,7 +592,7 @@ func TestEmbeddedInit(t *testing.T) {
 		}
 		initGitRepoAt(t, dir)
 		runBDInit(t, bd, dir)
-		if val := readBack(t, filepath.Join(dir, ".beads"), "bd_001", "issue_prefix", false); val != "bd_001" {
+		if val := readBack(t, filepath.Join(dir, ".bd"), "bd_001", "issue_prefix", false); val != "bd_001" {
 			t.Errorf("sanitized issue_prefix: got %q, want %q", val, "bd_001")
 		}
 	})
@@ -601,8 +601,8 @@ func TestEmbeddedInit(t *testing.T) {
 // TestEmbeddedInitConcurrent verifies the exclusive flock prevents concurrent
 // writers. Exactly one process should succeed; the rest get the lock error.
 func TestEmbeddedInitConcurrent(t *testing.T) {
-	if os.Getenv("BEADS_TEST_EMBEDDED_DOLT") != "1" {
-		t.Skip("set BEADS_TEST_EMBEDDED_DOLT=1 to run embedded dolt init tests")
+	if os.Getenv("BD_TEST_EMBEDDED_DOLT") != "1" {
+		t.Skip("set BD_TEST_EMBEDDED_DOLT=1 to run embedded dolt init tests")
 	}
 	t.Parallel()
 
@@ -654,16 +654,16 @@ func TestEmbeddedInitConcurrent(t *testing.T) {
 	}
 	t.Logf("%d/%d succeeded, %d/%d got lock error", successes, N, lockErrors, N)
 
-	beadsDir := filepath.Join(dir, ".beads")
-	embeddedDir := filepath.Join(beadsDir, "embeddeddolt")
+	bdDir := filepath.Join(dir, ".bd")
+	embeddedDir := filepath.Join(bdDir, "embeddeddolt")
 	requireFile(t, embeddedDir)
 	requireFile(t, filepath.Join(embeddedDir, "conc", ".dolt"))
 
-	if val := readBack(t, beadsDir, "conc", "issue_prefix", false); val != "conc" {
+	if val := readBack(t, bdDir, "conc", "issue_prefix", false); val != "conc" {
 		t.Errorf("issue_prefix: got %q, want %q", val, "conc")
 	}
 
-	cfg, err := configfile.Load(beadsDir)
+	cfg, err := configfile.Load(bdDir)
 	if err != nil {
 		t.Fatalf("failed to load metadata.json: %v", err)
 	}

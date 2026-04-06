@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/steveyegge/beads/internal/types"
-	"github.com/steveyegge/beads/internal/ui"
+	"github.com/steveyegge/bd/internal/types"
+	"github.com/steveyegge/bd/internal/ui"
 )
 
 // PrettyIssue formats a single issue in the standard one-line list format.

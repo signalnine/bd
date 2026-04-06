@@ -15,8 +15,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/steveyegge/beads/internal/hooks"
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/hooks"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 // TestUpdateCloseHookFiring verifies hook firing logic for status transitions.

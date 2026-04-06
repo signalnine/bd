@@ -10,7 +10,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 // bdReopen runs "bd reopen" with the given args and returns stdout.
@@ -28,8 +28,8 @@ func bdReopen(t *testing.T, bd, dir string, args ...string) string {
 }
 
 func TestEmbeddedReopen(t *testing.T) {
-	if os.Getenv("BEADS_TEST_EMBEDDED_DOLT") != "1" {
-		t.Skip("set BEADS_TEST_EMBEDDED_DOLT=1 to run embedded dolt integration tests")
+	if os.Getenv("BD_TEST_EMBEDDED_DOLT") != "1" {
+		t.Skip("set BD_TEST_EMBEDDED_DOLT=1 to run embedded dolt integration tests")
 	}
 	t.Parallel()
 
@@ -152,8 +152,8 @@ func TestEmbeddedReopen(t *testing.T) {
 
 // TestEmbeddedReopenConcurrent exercises reopen concurrently.
 func TestEmbeddedReopenConcurrent(t *testing.T) {
-	if os.Getenv("BEADS_TEST_EMBEDDED_DOLT") != "1" {
-		t.Skip("set BEADS_TEST_EMBEDDED_DOLT=1 to run embedded dolt integration tests")
+	if os.Getenv("BD_TEST_EMBEDDED_DOLT") != "1" {
+		t.Skip("set BD_TEST_EMBEDDED_DOLT=1 to run embedded dolt integration tests")
 	}
 	t.Parallel()
 

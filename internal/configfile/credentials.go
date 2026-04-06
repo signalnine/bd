@@ -37,10 +37,10 @@ func DefaultCredentialsPath() string {
 //	password=teamServerPassword
 //
 // The file path is determined by:
-//  1. BEADS_CREDENTIALS_FILE env var (if set)
+//  1. BD_CREDENTIALS_FILE env var (if set)
 //  2. Default platform path (see DefaultCredentialsPath)
 func LookupCredentialsPassword(host string, port int) string {
-	credFile := os.Getenv("BEADS_CREDENTIALS_FILE")
+	credFile := os.Getenv("BD_CREDENTIALS_FILE")
 	if credFile == "" {
 		credFile = DefaultCredentialsPath()
 	}

@@ -10,9 +10,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/steveyegge/beads/internal/config"
-	"github.com/steveyegge/beads/internal/storage/dolt"
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/config"
+	"github.com/steveyegge/bd/internal/storage/dolt"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 func TestConfigCommands(t *testing.T) {
@@ -166,19 +166,19 @@ func TestYamlOnlyConfigWithoutDatabase(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0755); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0755); err != nil {
 		t.Fatalf("Failed to create .beads dir: %v", err)
 	}
 
 	// Create config.yaml with a prefix but NO database
-	configPath := filepath.Join(beadsDir, "config.yaml")
+	configPath := filepath.Join(bdDir, "config.yaml")
 	if err := os.WriteFile(configPath, []byte("prefix: test\n"), 0644); err != nil {
 		t.Fatalf("Failed to create config.yaml: %v", err)
 	}
 
 	// Create empty issues.jsonl (simulates fresh clone)
-	jsonlPath := filepath.Join(beadsDir, "issues.jsonl")
+	jsonlPath := filepath.Join(bdDir, "issues.jsonl")
 	if err := os.WriteFile(jsonlPath, []byte(""), 0644); err != nil {
 		t.Fatalf("Failed to create issues.jsonl: %v", err)
 	}
@@ -230,20 +230,20 @@ func setupTestDB(t *testing.T) (*dolt.DoltStore, func()) {
 	return store, cleanup
 }
 
-// TestBeadsRoleGitConfig verifies that beads.role is stored in git config,
+// TestBeadsRoleGitConfig verifies that bd.role is stored in git config,
 // not SQLite, so that bd doctor can find it (GH#1531).
 func TestBeadsRoleGitConfig(t *testing.T) {
 	tmpDir := newGitRepo(t)
 
 	t.Run("set contributor role writes to git config", func(t *testing.T) {
-		cmd := exec.Command("git", "config", "beads.role", "contributor")
+		cmd := exec.Command("git", "config", "bd.role", "contributor")
 		cmd.Dir = tmpDir
 		if err := cmd.Run(); err != nil {
 			t.Fatalf("git config set failed: %v", err)
 		}
 
 		// Verify it's readable from git config
-		cmd = exec.Command("git", "config", "--get", "beads.role")
+		cmd = exec.Command("git", "config", "--get", "bd.role")
 		cmd.Dir = tmpDir
 		output, err := cmd.Output()
 		if err != nil {
@@ -255,13 +255,13 @@ func TestBeadsRoleGitConfig(t *testing.T) {
 	})
 
 	t.Run("set maintainer role writes to git config", func(t *testing.T) {
-		cmd := exec.Command("git", "config", "beads.role", "maintainer")
+		cmd := exec.Command("git", "config", "bd.role", "maintainer")
 		cmd.Dir = tmpDir
 		if err := cmd.Run(); err != nil {
 			t.Fatalf("git config set failed: %v", err)
 		}
 
-		cmd = exec.Command("git", "config", "--get", "beads.role")
+		cmd = exec.Command("git", "config", "--get", "bd.role")
 		cmd.Dir = tmpDir
 		output, err := cmd.Output()
 		if err != nil {
@@ -313,8 +313,8 @@ func TestIsValidRemoteURL(t *testing.T) {
 func TestValidateSyncConfig(t *testing.T) {
 	// Create a temp directory for testing
 	tmpDir := t.TempDir()
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0755); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0755); err != nil {
 		t.Fatalf("Failed to create .beads dir: %v", err)
 	}
 
@@ -322,7 +322,7 @@ func TestValidateSyncConfig(t *testing.T) {
 		// Create minimal config.yaml
 		configContent := `prefix: test
 `
-		if err := os.WriteFile(filepath.Join(beadsDir, "config.yaml"), []byte(configContent), 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(bdDir, "config.yaml"), []byte(configContent), 0644); err != nil {
 			t.Fatalf("Failed to write config.yaml: %v", err)
 		}
 
@@ -338,7 +338,7 @@ func TestValidateSyncConfig(t *testing.T) {
 federation:
   sovereignty: "invalid-value"
 `
-		if err := os.WriteFile(filepath.Join(beadsDir, "config.yaml"), []byte(configContent), 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(bdDir, "config.yaml"), []byte(configContent), 0644); err != nil {
 			t.Fatalf("Failed to write config.yaml: %v", err)
 		}
 
@@ -360,7 +360,7 @@ federation:
 sync:
   mode: "dolt-native"
 `
-		if err := os.WriteFile(filepath.Join(beadsDir, "config.yaml"), []byte(configContent), 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(bdDir, "config.yaml"), []byte(configContent), 0644); err != nil {
 			t.Fatalf("Failed to write config.yaml: %v", err)
 		}
 
@@ -382,7 +382,7 @@ sync:
 federation:
   remote: "invalid-url"
 `
-		if err := os.WriteFile(filepath.Join(beadsDir, "config.yaml"), []byte(configContent), 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(bdDir, "config.yaml"), []byte(configContent), 0644); err != nil {
 			t.Fatalf("Failed to write config.yaml: %v", err)
 		}
 
@@ -409,7 +409,7 @@ federation:
   sovereignty: "T2"
   remote: "https://github.com/user/beads-data.git"
 `
-		if err := os.WriteFile(filepath.Join(beadsDir, "config.yaml"), []byte(configContent), 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(bdDir, "config.yaml"), []byte(configContent), 0644); err != nil {
 			t.Fatalf("Failed to write config.yaml: %v", err)
 		}
 
@@ -424,10 +424,10 @@ federation:
 func TestFindBeadsRepoRoot(t *testing.T) {
 	// Create a temp directory structure
 	tmpDir := t.TempDir()
-	beadsDir := filepath.Join(tmpDir, ".beads")
+	bdDir := filepath.Join(tmpDir, ".bd")
 	subDir := filepath.Join(tmpDir, "sub", "dir")
 
-	if err := os.MkdirAll(beadsDir, 0755); err != nil {
+	if err := os.MkdirAll(bdDir, 0755); err != nil {
 		t.Fatalf("Failed to create .beads dir: %v", err)
 	}
 	if err := os.MkdirAll(subDir, 0755); err != nil {
@@ -739,7 +739,7 @@ func TestConfigSetMany(t *testing.T) {
 // in set-many correctly rejects invalid values for known constrained keys
 // before any DB writes would occur.
 func TestConfigSetManyValidationIntegration(t *testing.T) {
-	t.Run("beads.role only accepts maintainer or contributor", func(t *testing.T) {
+	t.Run("bd.role only accepts maintainer or contributor", func(t *testing.T) {
 		validRoles := map[string]bool{"maintainer": true, "contributor": true}
 		for _, role := range []string{"maintainer", "contributor"} {
 			if !validRoles[role] {

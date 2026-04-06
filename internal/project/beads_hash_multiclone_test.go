@@ -1,7 +1,7 @@
 //go:build integration
 // +build integration
 
-package beads_test
+package project_test
 
 import (
 	"encoding/json"
@@ -13,7 +13,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/steveyegge/beads/internal/testutil"
+	"github.com/steveyegge/bd/internal/testutil"
 )
 
 var testBDBinary string
@@ -22,7 +22,7 @@ var testBDBinary string
 var testDoltPort int
 
 func TestMain(m *testing.M) {
-	os.Setenv("BEADS_TEST_MODE", "1")
+	os.Setenv("BD_TEST_MODE", "1")
 
 	// Start an isolated Dolt server so integration tests don't hit production.
 	if err := testutil.EnsureDoltContainerForTestMain(); err != nil {
@@ -69,8 +69,8 @@ func TestMain(m *testing.M) {
 	code := m.Run()
 
 	os.RemoveAll(tmpDir)
-	os.Unsetenv("BEADS_DOLT_PORT")
-	os.Unsetenv("BEADS_TEST_MODE")
+	os.Unsetenv("BD_DOLT_PORT")
+	os.Unsetenv("BD_TEST_MODE")
 	os.Exit(code)
 }
 
@@ -234,7 +234,7 @@ func setupClone(t *testing.T, tmpDir, remoteDir, name, bdPath string) string {
 
 	if name == "A" {
 		runCmd(t, cloneDir, bdCmd, "init", "--quiet", "--prefix", "test")
-		runCmd(t, cloneDir, "git", "add", ".beads")
+		runCmd(t, cloneDir, "git", "add", ".bd")
 		runCmd(t, cloneDir, "git", "commit", "--no-verify", "-m", "Initialize beads")
 		runCmd(t, cloneDir, "git", "push", "origin", "master")
 	} else {
@@ -279,7 +279,7 @@ func getTitlesFromClone(t *testing.T, cloneDir string) map[string]bool {
 
 func resolveConflictMarkersIfPresent(t *testing.T, cloneDir string) {
 	t.Helper()
-	jsonlPath := filepath.Join(cloneDir, ".beads", "issues.jsonl")
+	jsonlPath := filepath.Join(cloneDir, ".bd", "issues.jsonl")
 	jsonlContent, _ := os.ReadFile(jsonlPath)
 	if strings.Contains(string(jsonlContent), "<<<<<<<") {
 		var cleanLines []string
@@ -294,7 +294,7 @@ func resolveConflictMarkersIfPresent(t *testing.T, cloneDir string) {
 		}
 		cleaned := strings.Join(cleanLines, "\n") + "\n"
 		os.WriteFile(jsonlPath, []byte(cleaned), 0644)
-		runCmd(t, cloneDir, "git", "add", ".beads/issues.jsonl")
+		runCmd(t, cloneDir, "git", "add", ".bd/issues.jsonl")
 		runCmd(t, cloneDir, "git", "commit", "-m", "Resolve merge conflict")
 	}
 }
@@ -306,12 +306,12 @@ func installGitHooks(t *testing.T, repoDir string) {
 	bdCmd := strings.ReplaceAll(getBDCommand(), "\\", "/")
 
 	preCommit := fmt.Sprintf(`#!/bin/sh
-%s export -o .beads/issues.jsonl >/dev/null 2>&1 || true
-git add .beads/issues.jsonl >/dev/null 2>&1 || true
+%s export -o .bd/issues.jsonl >/dev/null 2>&1 || true
+git add .bd/issues.jsonl >/dev/null 2>&1 || true
 exit 0
 `, bdCmd)
 	postMerge := fmt.Sprintf(`#!/bin/sh
-%s import -i .beads/issues.jsonl >/dev/null 2>&1 || true
+%s import -i .bd/issues.jsonl >/dev/null 2>&1 || true
 exit 0
 `, bdCmd)
 	os.WriteFile(filepath.Join(hooksDir, "pre-commit"), []byte(preCommit), 0755)

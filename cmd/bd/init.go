@@ -12,13 +12,13 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/beads/internal/beads"
-	"github.com/steveyegge/beads/internal/config"
-	"github.com/steveyegge/beads/internal/configfile"
-	"github.com/steveyegge/beads/internal/git"
-	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
-	"github.com/steveyegge/beads/internal/ui"
-	"github.com/steveyegge/beads/internal/utils"
+	"github.com/steveyegge/bd/internal/project"
+	"github.com/steveyegge/bd/internal/config"
+	"github.com/steveyegge/bd/internal/configfile"
+	"github.com/steveyegge/bd/internal/git"
+	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
+	"github.com/steveyegge/bd/internal/ui"
+	"github.com/steveyegge/bd/internal/utils"
 	"golang.org/x/term"
 )
 
@@ -26,7 +26,7 @@ var initCmd = &cobra.Command{
 	Use:     "init",
 	GroupID: "setup",
 	Short:   "Initialize bd in the current directory",
-	Long: `Initialize bd in the current directory by creating a .beads/ directory
+	Long: `Initialize bd in the current directory by creating a .bd/ directory
 and Dolt database. Optionally specify a custom issue prefix.
 
 Dolt is the default (and only supported) storage backend. The legacy SQLite
@@ -44,7 +44,7 @@ With --stealth: configures per-repository git settings for invisible beads usage
 By default, beads uses an embedded Dolt engine (no external server needed).
 Pass --server to use an external dolt sql-server instead. In server mode,
 set connection details with --server-host, --server-port, and --server-user.
-Password should be set via BEADS_DOLT_PASSWORD environment variable.
+Password should be set via BD_DOLT_PASSWORD environment variable.
 
 Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
   Skips all interactive prompts, using sensible defaults:
@@ -83,7 +83,7 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 			fmt.Fprintf(os.Stderr, "  bd init\n\n")
 			fmt.Fprintf(os.Stderr, "To import issues from an existing JSONL export:\n")
 			fmt.Fprintf(os.Stderr, "  bd init --from-jsonl\n\n")
-			fmt.Fprintf(os.Stderr, "See: https://github.com/steveyegge/beads/blob/main/docs/DOLT-BACKEND.md\n")
+			fmt.Fprintf(os.Stderr, "See: https://github.com/steveyegge/bd/blob/main/docs/DOLT-BACKEND.md\n")
 			os.Exit(1)
 		} else if backendFlag != "" && backendFlag != "dolt" {
 			FatalError("unknown backend %q: only \"dolt\" is supported", backendFlag)
@@ -187,10 +187,10 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 			skipHooks = true
 		}
 
-		// Check BEADS_DB environment variable if --db flag not set
+		// Check BD_DB environment variable if --db flag not set
 		// (PersistentPreRun doesn't run for init command)
 		if dbPath == "" {
-			if envDB := os.Getenv("BEADS_DB"); envDB != "" {
+			if envDB := os.Getenv("BD_DB"); envDB != "" {
 				dbPath = envDB
 			}
 		}
@@ -224,48 +224,48 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 			prefix = "bd_" + prefix
 		}
 
-		// Determine beadsDir first (used for all storage path calculations).
-		// BEADS_DIR takes precedence, otherwise use CWD/.beads (with redirect support).
+		// Determine bdDir first (used for all storage path calculations).
+		// BD_DIR takes precedence, otherwise use CWD/.bd (with redirect support).
 		// This must be computed BEFORE initDBPath to ensure consistent path resolution
 		// (avoiding macOS /var -> /private/var symlink issues when directory creation
 		// happens between path computations).
-		var beadsDirForInit string
-		if envBeadsDir := os.Getenv("BEADS_DIR"); envBeadsDir != "" {
-			beadsDirForInit = utils.CanonicalizePath(envBeadsDir)
+		var bdDirForInit string
+		if envBeadsDir := os.Getenv("BD_DIR"); envBeadsDir != "" {
+			bdDirForInit = utils.CanonicalizePath(envBeadsDir)
 		} else {
-			beadsDirForInit = beads.GetWorktreeFallbackBeadsDir()
-			if beadsDirForInit == "" {
-				localBeadsDir := filepath.Join(".", ".beads")
-				beadsDirForInit = beads.FollowRedirect(localBeadsDir)
+			bdDirForInit = project.GetWorktreeFallbackBdDir()
+			if bdDirForInit == "" {
+				localBdDir := filepath.Join(".", ".bd")
+				bdDirForInit = project.FollowRedirect(localBdDir)
 			}
 		}
 
 		// Determine storage path.
 		//
-		// Precedence: --db > BEADS_DIR > default (.beads/dolt)
+		// Precedence: --db > BD_DIR > default (.bd/dolt)
 		// If there's a redirect file, use the redirect target (GH#bd-0qel)
 		initDBPath := dbPath
 		if initDBPath == "" {
-			initDBPath = filepath.Join(beadsDirForInit, "embeddeddolt")
+			initDBPath = filepath.Join(bdDirForInit, "embeddeddolt")
 		}
 
-		// Determine if we should create .beads/ directory in CWD or main repo root
+		// Determine if we should create .bd/ directory in CWD or main repo root
 		// For worktrees, .beads should always be in the main repository root
 		cwd, err := os.Getwd()
 		if err != nil {
 			FatalError("failed to get current directory: %v", err)
 		}
 
-		hasExplicitBeadsDir := os.Getenv("BEADS_DIR") != ""
+		hasExplicitBdDir := os.Getenv("BD_DIR") != ""
 
-		// Use the beadsDir computed earlier (before any directory creation)
+		// Use the bdDir computed earlier (before any directory creation)
 		// to ensure consistent path representation.
-		beadsDir := beadsDirForInit
+		bdDir := bdDirForInit
 
 		// Prevent nested .beads directories
 		// Check if current working directory is inside a .beads directory
-		if strings.Contains(filepath.Clean(cwd), string(filepath.Separator)+".beads"+string(filepath.Separator)) ||
-			strings.HasSuffix(filepath.Clean(cwd), string(filepath.Separator)+".beads") {
+		if strings.Contains(filepath.Clean(cwd), string(filepath.Separator)+".bd"+string(filepath.Separator)) ||
+			strings.HasSuffix(filepath.Clean(cwd), string(filepath.Separator)+".bd") {
 			fmt.Fprintf(os.Stderr, "Error: cannot initialize bd inside a .beads directory\n")
 			fmt.Fprintf(os.Stderr, "Current directory: %s\n", cwd)
 			fmt.Fprintf(os.Stderr, "Please run 'bd init' from outside the .beads directory.\n")
@@ -275,28 +275,28 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 		initDBDir := filepath.Dir(initDBPath)
 
 		// Convert both to absolute paths for comparison
-		beadsDirAbs, err := filepath.Abs(beadsDir)
+		beadsDirAbs, err := filepath.Abs(bdDir)
 		if err != nil {
-			beadsDirAbs = filepath.Clean(beadsDir)
+			beadsDirAbs = filepath.Clean(bdDir)
 		}
 		initDBDirAbs, err := filepath.Abs(initDBDir)
 		if err != nil {
 			initDBDirAbs = filepath.Clean(initDBDir)
 		}
 
-		// Always create local .beads/ when using default location (CWD/.beads).
+		// Always create local .bd/ when using default location (CWD/.bd).
 		// The local directory is needed for metadata.json, config.yaml, .gitignore,
 		// interactions.jsonl, and hooks — regardless of where dolt data lives.
-		// Only skip when BEADS_DIR explicitly points outside the project.
+		// Only skip when BD_DIR explicitly points outside the project.
 		//
-		// Previous logic only created .beads/ when the dolt data dir was a
-		// subdirectory of .beads/, which broke server mode with external
-		// BEADS_DOLT_DATA_DIR or BEADS_DOLT_* env vars (GH#2519).
-		useLocalBeads := !hasExplicitBeadsDir || filepath.Clean(initDBDirAbs) == filepath.Clean(beadsDirAbs)
+		// Previous logic only created .bd/ when the dolt data dir was a
+		// subdirectory of .bd/, which broke server mode with external
+		// BD_DOLT_DATA_DIR or BD_DOLT_* env vars env vars (GH#2519).
+		useLocalBd := !hasExplicitBdDir || filepath.Clean(initDBDirAbs) == filepath.Clean(beadsDirAbs)
 
-		if useLocalBeads {
+		if useLocalBd {
 			// Create .beads directory with owner-only permissions (0700).
-			if err := os.MkdirAll(beadsDir, config.BeadsDirPerm); err != nil {
+			if err := os.MkdirAll(bdDir, config.BeadsDirPerm); err != nil {
 				if os.IsPermission(err) {
 					if runtime.GOOS == "windows" {
 						FatalError("failed to create .beads directory: %v\n\n"+
@@ -308,14 +308,14 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 						FatalError("failed to create .beads directory: %v\n\n"+
 							"Permission denied. Check directory ownership and permissions:\n"+
 							"  ls -la %s\n"+
-							"  chmod 755 %s", err, filepath.Dir(beadsDir), filepath.Dir(beadsDir))
+							"  chmod 755 %s", err, filepath.Dir(bdDir), filepath.Dir(bdDir))
 					}
 				}
 				FatalError("failed to create .beads directory: %v", err)
 			}
 
 			// Create/update .gitignore in .beads directory (only if missing)
-			gitignorePath := filepath.Join(beadsDir, ".gitignore")
+			gitignorePath := filepath.Join(bdDir, ".gitignore")
 			if _, err := os.Stat(gitignorePath); os.IsNotExist(err) {
 				beadsGitignore := "*.db\n*.db-shm\n*.db-wal\n.dolt/\n"
 				if err := os.WriteFile(gitignorePath, []byte(beadsGitignore), 0600); err != nil {
@@ -326,10 +326,10 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 
 			// Add .dolt/ and *.db to project-root .gitignore (GH#2034)
 			// Prevents users from accidentally committing Dolt database files.
-			// Skip when BEADS_DIR points outside the current directory — the CWD
+			// Skip when BD_DIR points outside the current directory — the CWD
 			// may not be a repo we should mutate (e.g. running from a worktree
-			// with an external BEADS_DIR). When BEADS_DIR points to the same
-			// repo's .beads/, the gitignore update is still appropriate.
+			// with an external BD_DIR). When BD_DIR points to the same
+			// repo's .bd/, the gitignore update is still appropriate.
 			cwdAbs, _ := filepath.Abs(cwd)
 			beadsDirIsLocal := strings.HasPrefix(beadsDirAbs, filepath.Clean(cwdAbs)+string(filepath.Separator))
 			if beadsDirIsLocal {
@@ -340,7 +340,7 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 			}
 
 			// Ensure interactions.jsonl exists (append-only agent audit log)
-			interactionsPath := filepath.Join(beadsDir, "interactions.jsonl")
+			interactionsPath := filepath.Join(bdDir, "interactions.jsonl")
 			if _, err := os.Stat(interactionsPath); os.IsNotExist(err) {
 				// nolint:gosec // G306: JSONL file needs to be readable by other tools
 				if err := os.WriteFile(interactionsPath, []byte{}, 0644); err != nil {
@@ -353,9 +353,9 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 		// Ensure git is initialized — bd requires git for role config, sync branches,
 		// hooks, worktrees, and fingerprint computation. git init is idempotent so
 		// safe to call even if already in a git repo.
-		// Skip when BEADS_DIR is explicitly set — the caller may be creating a
-		// standalone .beads/ directory outside any git repo.
-		if !isGitRepo() && !hasExplicitBeadsDir {
+		// Skip when BD_DIR is explicitly set — the caller may be creating a
+		// standalone .bd/ directory outside any git repo.
+		if !isGitRepo() && !hasExplicitBdDir {
 			gitInitCmd := exec.Command("git", "init")
 			if output, err := gitInitCmd.CombinedOutput(); err != nil {
 				FatalError("failed to initialize git repository: %v\n%s", err, output)
@@ -374,7 +374,7 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 		// Respect existing config's database name to avoid creating phantom catalog
 		// entries when a user has renamed their database (GH#2051).
 		dbName := ""
-		if existingCfg, _ := configfile.Load(beadsDir); existingCfg != nil && existingCfg.DoltDatabase != "" {
+		if existingCfg, _ := configfile.Load(bdDir); existingCfg != nil && existingCfg.DoltDatabase != "" {
 			dbName = existingCfg.DoltDatabase
 		} else if prefix != "" {
 			// Sanitize hyphens and dots to underscores for SQL-idiomatic database names.
@@ -413,14 +413,14 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 			}
 		}
 
-		initLock, err := acquireEmbeddedLock(beadsDir)
+		initLock, err := acquireEmbeddedLock(bdDir)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			os.Exit(1)
 		}
 		defer initLock.Unlock()
 
-		store, err := newDoltStore(ctx, beadsDir, dbName, embeddeddolt.WithLock(initLock))
+		store, err := newDoltStore(ctx, bdDir, dbName, embeddeddolt.WithLock(initLock))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error: failed to open Dolt store: %v\n", err)
 			os.Exit(1)
@@ -466,7 +466,7 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 		verifyMetadata(ctx, store, "bd_version", Version)
 
 		// Compute and store repository fingerprint (FR-015)
-		repoID, err := beads.ComputeRepoID()
+		repoID, err := project.ComputeRepoID()
 		if err != nil {
 			if !quiet {
 				fmt.Fprintf(os.Stderr, "Warning: could not compute repository ID: %v\n", err)
@@ -478,7 +478,7 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 		}
 
 		// Compute and store clone-specific ID (FR-016: skip on failure)
-		cloneID, err := beads.GetCloneID()
+		cloneID, err := project.GetCloneID()
 		if err != nil {
 			if !quiet {
 				fmt.Fprintf(os.Stderr, "Warning: could not compute clone ID: %v\n", err)
@@ -490,9 +490,9 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 		}
 
 		// Create or preserve metadata.json for database metadata (bd-zai fix)
-		if useLocalBeads {
+		if useLocalBd {
 			// First, check if metadata.json already exists
-			existingCfg, err := configfile.Load(beadsDir)
+			existingCfg, err := configfile.Load(bdDir)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Warning: failed to load existing metadata.json: %v\n", err)
 			}
@@ -529,10 +529,10 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 
 			// Always store backend explicitly in metadata.json
 			cfg.Backend = backend
-			// Metadata.json.database should point to the Dolt directory (not beads.db).
-			// Backward-compat: older dolt setups left this as "beads.db", which is misleading.
+			// Metadata.json.database should point to the Dolt directory (not bd.db).
+			// Backward-compat: older dolt setups left this as "bd.db", which is misleading.
 			if backend == configfile.BackendDolt {
-				if cfg.Database == "" || cfg.Database == beads.CanonicalDatabaseName {
+				if cfg.Database == "" || cfg.Database == project.CanonicalDatabaseName {
 					cfg.Database = "dolt"
 				}
 
@@ -564,7 +564,7 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 				}
 			}
 
-			if err := cfg.Save(beadsDir); err != nil {
+			if err := cfg.Save(bdDir); err != nil {
 				fmt.Fprintf(os.Stderr, "Warning: failed to create metadata.json: %v\n", err)
 				// Non-fatal - continue anyway
 			}
@@ -577,7 +577,7 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 			}
 
 			// Create config.yaml template (prefix is stored in DB, not config.yaml)
-			if err := createConfigYaml(beadsDir, false, ""); err != nil {
+			if err := createConfigYaml(bdDir, false, ""); err != nil {
 				fmt.Fprintf(os.Stderr, "Warning: failed to create config.yaml: %v\n", err)
 				// Non-fatal - continue anyway
 			}
@@ -585,13 +585,13 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 			// In stealth mode, persist no-git-ops: true so bd prime
 			// automatically uses stealth session-close protocol (GH#2159)
 			if stealth {
-				if err := config.SaveConfigValue("no-git-ops", true, beadsDir); err != nil {
+				if err := config.SaveConfigValue("no-git-ops", true, bdDir); err != nil {
 					fmt.Fprintf(os.Stderr, "Warning: failed to set no-git-ops in config: %v\n", err)
 				}
 			}
 
 			// Create README.md
-			if err := createReadme(beadsDir); err != nil {
+			if err := createReadme(bdDir); err != nil {
 				fmt.Fprintf(os.Stderr, "Warning: failed to create README.md: %v\n", err)
 				// Non-fatal - continue anyway
 			}
@@ -613,7 +613,7 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 		}
 
 		// Prompt for contributor mode if:
-		// - In a git repo (needed to set beads.role config)
+		// - In a git repo (needed to set bd.role config)
 		// - Interactive terminal (stdin is TTY) and not --non-interactive
 		// - No explicit --contributor or --team flag provided
 		// - No explicit --role flag provided
@@ -634,7 +634,7 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 			}
 		} else if isGitRepo() && !contributor && !team {
 			// If prompt was skipped (non-interactive or CI environment),
-			// ensure beads.role is set to avoid "not configured" warning
+			// ensure bd.role is set to avoid "not configured" warning
 			// during diagnostics. Use --role flag if provided, otherwise default.
 			role := roleFlag
 			if role == "" {
@@ -642,12 +642,12 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 			}
 			if _, hasRole := getBeadsRole(); !hasRole {
 				if err := setBeadsRole(role); err != nil && !quiet {
-					fmt.Fprintf(os.Stderr, "Warning: failed to set default beads.role: %v\n", err)
+					fmt.Fprintf(os.Stderr, "Warning: failed to set default bd.role: %v\n", err)
 				}
 			} else if roleFlag != "" {
 				// Explicit --role flag overrides existing role
 				if err := setBeadsRole(role); err != nil && !quiet {
-					fmt.Fprintf(os.Stderr, "Warning: failed to set beads.role: %v\n", err)
+					fmt.Fprintf(os.Stderr, "Warning: failed to set bd.role: %v\n", err)
 				}
 			}
 		}
@@ -670,7 +670,7 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 			// Without this, SSH remotes can be inferred as maintainer and bypass routing.
 			if isGitRepo() {
 				if err := setBeadsRole("contributor"); err != nil && !quiet {
-					fmt.Fprintf(os.Stderr, "Warning: failed to set beads.role=contributor: %v\n", err)
+					fmt.Fprintf(os.Stderr, "Warning: failed to set bd.role=contributor: %v\n", err)
 				}
 			}
 		}
@@ -690,8 +690,8 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 			}
 		}
 
-		// Safety net: ensure beads.role is always set when in a git repo (GH#2950).
-		// Earlier code paths may skip role-setting when BEADS_DIR is set,
+		// Safety net: ensure bd.role is always set when in a git repo (GH#2950).
+		// Earlier code paths may skip role-setting when BD_DIR is set,
 		// promptContributorMode fails, or edge-case flag combinations are used.
 		// This guarantees every init leaves a usable role-configured state.
 		if isGitRepo() {
@@ -701,7 +701,7 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 					fallbackRole = roleFlag
 				}
 				if err := setBeadsRole(fallbackRole); err != nil && !quiet {
-					fmt.Fprintf(os.Stderr, "Warning: failed to set beads.role=%s: %v\n", fallbackRole, err)
+					fmt.Fprintf(os.Stderr, "Warning: failed to set bd.role=%s: %v\n", fallbackRole, err)
 				}
 			}
 		}
@@ -758,7 +758,7 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 
 		// Check if we're in a git repo and hooks aren't installed
 		// Install by default unless --skip-hooks is passed
-		// Hooks are installed to .beads/hooks/ (uses git config core.hooksPath)
+		// Hooks are installed to .bd/hooks/ (uses git config core.hooksPath)
 		// For jujutsu colocated repos, use simplified hooks (no staging needed)
 		hooksExist := hooksInstalled()
 		if !skipHooks && (!hooksExist || hooksNeedUpdate()) {
@@ -782,12 +782,12 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 					fmt.Printf("  Hooks installed (jujutsu mode - no staging)\n")
 				}
 			} else if isGitRepo() {
-				// Regular git repo - install hooks to .beads/hooks/
+				// Regular git repo - install hooks to .bd/hooks/
 				if err := installHooksWithOptions(managedHookNames, false, false, false, true); err != nil && !quiet {
-					fmt.Fprintf(os.Stderr, "\n%s Failed to install git hooks to .beads/hooks/: %v\n", ui.RenderWarn("⚠"), err)
+					fmt.Fprintf(os.Stderr, "\n%s Failed to install git hooks to .bd/hooks/: %v\n", ui.RenderWarn("⚠"), err)
 					fmt.Fprintf(os.Stderr, "You can try again with: %s\n\n", ui.RenderAccent("bd hooks install --beads"))
 				} else if !quiet {
-					fmt.Printf("  Hooks installed to: .beads/hooks/\n")
+					fmt.Printf("  Hooks installed to: .bd/hooks/\n")
 				}
 			}
 		}
@@ -795,8 +795,8 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 		// Initialize version tracking: create .local_version file during bd init
 		// instead of deferring it to the first bd command.
 		// This ensures no "Version Tracking" warning from bd doctor after init.
-		if useLocalBeads {
-			localVersionPath := filepath.Join(beadsDir, ".local_version")
+		if useLocalBd {
+			localVersionPath := filepath.Join(bdDir, ".local_version")
 			if err := writeLocalVersion(localVersionPath, Version); err != nil && !quiet {
 				fmt.Fprintf(os.Stderr, "Warning: failed to initialize version tracking: %v\n", err)
 				// Non-fatal - initialization still succeeded
@@ -808,8 +808,8 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 		// Auto-stage and commit beads files so bd doctor doesn't warn about
 		// untracked files or dirty working tree in a clean room setup.
 		// Only runs when not stealth, in a git repo, and using local storage.
-		if !stealth && isGitRepo() && useLocalBeads {
-			gitAddCmd := exec.Command("git", "add", ".beads/")
+		if !stealth && isGitRepo() && useLocalBd {
+			gitAddCmd := exec.Command("git", "add", ".bd/")
 			if _, addErr := gitAddCmd.CombinedOutput(); addErr == nil {
 				// Also stage the agents file if it exists
 				agentsFileToStage := config.SafeAgentsFile()
@@ -880,8 +880,8 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 		// This catches the branch-switch scenario: user ran bd init on a new
 		// branch and the database was created fresh, but backup JSONL files
 		// exist from a prior backup on this or another branch.
-		if !bootstrappedFromRemote && hasBackupFiles(beadsDir) {
-			fmt.Printf("  %s Backup files detected in .beads/backup/\n", ui.RenderWarn("!"))
+		if !bootstrappedFromRemote && hasBackupFiles(bdDir) {
+			fmt.Printf("  %s Backup files detected in .bd/backup/\n", ui.RenderWarn("!"))
 			fmt.Printf("    To restore issues from a previous backup, run:\n")
 			fmt.Printf("      %s\n\n", ui.RenderAccent("bd backup restore"))
 		}
@@ -898,7 +898,7 @@ func init() {
 	initCmd.Flags().Bool("skip-hooks", false, "Skip git hooks installation")
 	initCmd.Flags().Bool("skip-agents", false, "Skip AGENTS.md and Claude settings generation")
 	initCmd.Flags().Bool("force", false, "Force re-initialization even if database already has issues (may cause data loss)")
-	initCmd.Flags().Bool("from-jsonl", false, "Import issues from .beads/issues.jsonl instead of git history")
+	initCmd.Flags().Bool("from-jsonl", false, "Import issues from .bd/issues.jsonl instead of git history")
 	initCmd.Flags().String("destroy-token", "", "Explicit confirmation token for destructive re-init in non-interactive mode (format: 'DESTROY-<prefix>')")
 	initCmd.Flags().String("agents-template", "", "Path to custom AGENTS.md template (overrides embedded default)")
 	initCmd.Flags().String("agents-profile", "", "AGENTS.md profile: 'minimal' (default, pointer to bd prime) or 'full' (complete command reference)")
@@ -917,12 +917,12 @@ func init() {
 	initCmd.Flags().Int("server-port", 0, "Dolt server port (default: 3307)")
 	initCmd.Flags().String("server-user", "", "Dolt server MySQL user (default: root)")
 	initCmd.Flags().String("database", "", "Use existing server database name (overrides prefix-based naming)")
-	initCmd.Flags().Bool("shared-server", false, "Enable shared Dolt server mode (all projects share one server at ~/.beads/shared-server/)")
+	initCmd.Flags().Bool("shared-server", false, "Enable shared Dolt server mode (all projects share one server at ~/.bd/shared-server/)")
 
 	rootCmd.AddCommand(initCmd)
 }
 
-// migrateOldDatabases detects and migrates old database files to beads.db
+// migrateOldDatabases detects and migrates old database files to bd.db
 func migrateOldDatabases(targetPath string, quiet bool) error {
 	targetDir := filepath.Dir(targetPath)
 	targetName := filepath.Base(targetPath)
@@ -982,21 +982,21 @@ func migrateOldDatabases(targetPath string, quiet bool) error {
 	return nil
 }
 
-// checkExistingBeadsDataAt checks for existing database at a specific beadsDir path.
-// This is extracted to support both BEADS_DIR and CWD-based resolution.
-func checkExistingBeadsDataAt(beadsDir string, prefix string) error {
+// checkExistingBeadsDataAt checks for existing database at a specific bdDir path.
+// This is extracted to support both BD_DIR and CWD-based resolution.
+func checkExistingBeadsDataAt(bdDir string, prefix string) error {
 	// Check if .beads directory exists
-	if _, err := os.Stat(beadsDir); os.IsNotExist(err) {
+	if _, err := os.Stat(bdDir); os.IsNotExist(err) {
 		return nil // No .beads directory, safe to init
 	}
 
 	// Check for existing Dolt database
-	if cfg, err := configfile.Load(beadsDir); err == nil && cfg != nil && cfg.GetBackend() == configfile.BackendDolt {
-		// Embedded mode stores databases under `.beads/embeddeddolt/<db>/`.
+	if cfg, err := configfile.Load(bdDir); err == nil && cfg != nil && cfg.GetBackend() == configfile.BackendDolt {
+		// Embedded mode stores databases under `.bd/embeddeddolt/<db>/`.
 		// Treat any present embedded DB as "already initialized" (guard against
 		// accidental re-init / data loss).
 		if isEmbeddedMode() {
-			embeddedRoot := filepath.Join(beadsDir, "embeddeddolt")
+			embeddedRoot := filepath.Join(bdDir, "embeddeddolt")
 			entries, err := os.ReadDir(embeddedRoot)
 			if err != nil {
 				if os.IsNotExist(err) {
@@ -1029,7 +1029,7 @@ Aborting.`, ui.RenderWarn("⚠"), location, ui.RenderAccent("bd list"), prefix)
 		}
 
 		// Check for existing embedded database
-		embeddedPath := filepath.Join(beadsDir, "embeddeddolt")
+		embeddedPath := filepath.Join(bdDir, "embeddeddolt")
 		if info, err := os.Stat(embeddedPath); err == nil && info.IsDir() {
 			entries, _ := os.ReadDir(embeddedPath)
 			if len(entries) > 0 {
@@ -1049,15 +1049,15 @@ Aborting.`, ui.RenderWarn("⚠"), embeddedPath, ui.RenderAccent("bd list"), pref
 			}
 		}
 		// Backend is Dolt but no dolt directory exists yet — this is a fresh
-		// clone. Any beads.db file is a legacy SQLite artifact, not the active
+		// clone. Any bd.db file is a legacy SQLite artifact, not the active
 		// database. Skip the SQLite checks below and allow init to proceed.
 		return nil
 	}
 
 	// Check for redirect file - if present, check the redirect target
-	redirectTarget := beads.FollowRedirect(beadsDir)
-	if redirectTarget != beadsDir {
-		targetDBPath := filepath.Join(redirectTarget, beads.CanonicalDatabaseName)
+	redirectTarget := project.FollowRedirect(bdDir)
+	if redirectTarget != bdDir {
+		targetDBPath := filepath.Join(redirectTarget, project.CanonicalDatabaseName)
 		if _, err := os.Stat(targetDBPath); err == nil {
 			return fmt.Errorf(`
 %s Cannot init: redirect target already has database
@@ -1081,7 +1081,7 @@ Aborting.`, ui.RenderWarn("⚠"), redirectTarget, targetDBPath, ui.RenderAccent(
 	}
 
 	// Check for existing database file (no redirect case)
-	dbPath := filepath.Join(beadsDir, beads.CanonicalDatabaseName)
+	dbPath := filepath.Join(bdDir, project.CanonicalDatabaseName)
 	if _, err := os.Stat(dbPath); err == nil {
 		return fmt.Errorf(`
 %s Found existing database: %s
@@ -1105,17 +1105,17 @@ Aborting.`, ui.RenderWarn("⚠"), dbPath, ui.RenderAccent("bd list"), prefix)
 // issues. Returns 0 if the database is unreachable or empty. Used by --force
 // safeguard to show users what they're about to destroy.
 func countExistingIssues(_ string) (int, error) {
-	beadsDir := ".beads"
-	if envBeadsDir := os.Getenv("BEADS_DIR"); envBeadsDir != "" {
-		beadsDir = utils.CanonicalizePath(envBeadsDir)
+	bdDir := ".bd"
+	if envBeadsDir := os.Getenv("BD_DIR"); envBeadsDir != "" {
+		bdDir = utils.CanonicalizePath(envBeadsDir)
 	} else {
-		beadsDir = beads.FollowRedirect(beadsDir)
+		bdDir = project.FollowRedirect(bdDir)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	store, err := newDoltStoreFromConfig(ctx, beadsDir)
+	store, err := newDoltStoreFromConfig(ctx, bdDir)
 	if err != nil {
 		return 0, err
 	}
@@ -1143,9 +1143,9 @@ func countExistingIssues(_ string) (int, error) {
 // For redirects, checks the redirect target and errors if it already has a database.
 // This prevents accidentally overwriting an existing canonical database (GH#bd-0qel).
 func checkExistingBeadsData(prefix string) error {
-	// Check BEADS_DIR environment variable first (matches FindBeadsDir pattern)
-	// When BEADS_DIR is set, it takes precedence over CWD and worktree checks
-	if envBeadsDir := os.Getenv("BEADS_DIR"); envBeadsDir != "" {
+	// Check BD_DIR environment variable first (matches FindBdDir pattern)
+	// When BD_DIR is set, it takes precedence over CWD and worktree checks
+	if envBeadsDir := os.Getenv("BD_DIR"); envBeadsDir != "" {
 		absBeadsDir := utils.CanonicalizePath(envBeadsDir)
 		return checkExistingBeadsDataAt(absBeadsDir, prefix)
 	}
@@ -1158,18 +1158,18 @@ func checkExistingBeadsData(prefix string) error {
 	// Determine where to check for .beads directory
 	// Guard with isGitRepo() check first - on Windows, git commands may hang
 	// when run outside a git repository (GH#727)
-	var beadsDir string
+	var bdDir string
 	if isGitRepo() && git.IsWorktree() {
-		beadsDir = beads.GetWorktreeFallbackBeadsDir()
-		if beadsDir == "" {
+		bdDir = project.GetWorktreeFallbackBdDir()
+		if bdDir == "" {
 			return nil // Can't determine shared fallback, allow init to proceed
 		}
 	} else {
 		// For regular repos (or non-git directories), check current directory
-		beadsDir = filepath.Join(cwd, ".beads")
+		bdDir = filepath.Join(cwd, ".bd")
 	}
 
-	return checkExistingBeadsDataAt(beadsDir, prefix)
+	return checkExistingBeadsDataAt(bdDir, prefix)
 }
 
 // isNonInteractiveInit returns true if init should run without interactive prompts.
@@ -1200,10 +1200,10 @@ func shouldPromptForRole() bool {
 	return term.IsTerminal(int(os.Stdin.Fd()))
 }
 
-// getBeadsRole reads the beads.role git config value.
+// getBeadsRole reads the bd.role git config value.
 // Returns the role and true if configured, or empty string and false if not set.
 func getBeadsRole() (string, bool) {
-	cmd := exec.Command("git", "config", "--get", "beads.role")
+	cmd := exec.Command("git", "config", "--get", "bd.role")
 	output, err := cmd.Output()
 	if err != nil {
 		return "", false
@@ -1215,9 +1215,9 @@ func getBeadsRole() (string, bool) {
 	return role, true
 }
 
-// setBeadsRole writes the beads.role git config value.
+// setBeadsRole writes the bd.role git config value.
 func setBeadsRole(role string) error {
-	cmd := exec.Command("git", "config", "beads.role", role)
+	cmd := exec.Command("git", "config", "bd.role", role)
 	return cmd.Run()
 }
 
@@ -1225,9 +1225,9 @@ func setBeadsRole(role string) error {
 // Returns true if the user indicates they are a contributor, false otherwise.
 //
 // Behavior:
-// - If beads.role is already set: shows current role, offers to change
+// - If bd.role is already set: shows current role, offers to change
 // - If not set: prompts "Contributing to someone else's repo? [y/N]"
-// - Sets git config beads.role based on answer
+// - Sets git config bd.role based on answer
 func promptContributorMode() (isContributor bool, err error) {
 	ctx := getRootContext()
 	reader := bufio.NewReader(os.Stdin)
@@ -1270,7 +1270,7 @@ func promptContributorMode() (isContributor bool, err error) {
 	}
 
 	if err := setBeadsRole(role); err != nil {
-		return isContributor, fmt.Errorf("failed to set beads.role config: %w", err)
+		return isContributor, fmt.Errorf("failed to set bd.role config: %w", err)
 	}
 
 	return isContributor, nil
@@ -1315,9 +1315,9 @@ func validateDatabaseName(name string) error {
 	return nil
 }
 
-// hasBackupFiles checks if backup JSONL files exist in .beads/backup/.
-func hasBackupFiles(beadsDir string) bool {
-	backupDir := filepath.Join(beadsDir, "backup")
+// hasBackupFiles checks if backup JSONL files exist in .bd/backup/.
+func hasBackupFiles(bdDir string) bool {
+	backupDir := filepath.Join(bdDir, "backup")
 	info, err := os.Stat(filepath.Join(backupDir, "issues.jsonl"))
 	return err == nil && info.Size() > 0
 }

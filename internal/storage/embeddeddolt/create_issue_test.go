@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 // testEnv bundles a store with the paths needed to open raw SQL connections.
@@ -27,8 +27,8 @@ type testEnv struct {
 func newTestEnv(t *testing.T, prefix string) *testEnv {
 	t.Helper()
 	ctx := t.Context()
-	beadsDir := filepath.Join(t.TempDir(), ".beads")
-	store, err := embeddeddolt.New(ctx, beadsDir, prefix, "main")
+	bdDir := filepath.Join(t.TempDir(), ".bd")
+	store, err := embeddeddolt.New(ctx, bdDir, prefix, "main")
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}
@@ -42,7 +42,7 @@ func newTestEnv(t *testing.T, prefix string) *testEnv {
 	}
 	return &testEnv{
 		store:    store,
-		dataDir:  filepath.Join(beadsDir, "embeddeddolt"),
+		dataDir:  filepath.Join(bdDir, "embeddeddolt"),
 		database: prefix,
 	}
 }
@@ -142,8 +142,8 @@ func (te *testEnv) assertChildCounter(t *testing.T, ctx context.Context, parentI
 
 func skipUnlessEmbeddedDolt(t *testing.T) {
 	t.Helper()
-	if os.Getenv("BEADS_TEST_EMBEDDED_DOLT") != "1" {
-		t.Skip("set BEADS_TEST_EMBEDDED_DOLT=1 to run embedded dolt tests")
+	if os.Getenv("BD_TEST_EMBEDDED_DOLT") != "1" {
+		t.Skip("set BD_TEST_EMBEDDED_DOLT=1 to run embedded dolt tests")
 	}
 }
 
@@ -213,8 +213,8 @@ func TestCreateIssue(t *testing.T) {
 
 	t.Run("missing_prefix_errors", func(t *testing.T) {
 		ctx := t.Context()
-		beadsDir := filepath.Join(t.TempDir(), ".beads")
-		store, err := embeddeddolt.New(ctx, beadsDir, "noprefix", "main")
+		bdDir := filepath.Join(t.TempDir(), ".bd")
+		store, err := embeddeddolt.New(ctx, bdDir, "noprefix", "main")
 		if err != nil {
 			t.Fatalf("New: %v", err)
 		}

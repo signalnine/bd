@@ -38,7 +38,7 @@ This command helps catch common issues before pushing to CI:
 - Tests not run locally
 - Lint errors
 - Unformatted Go files
-- .beads/issues.jsonl pollution
+- .bd/issues.jsonl pollution
 - Stale nix vendorHash
 - Version mismatches
 
@@ -83,7 +83,7 @@ func runPreflight(cmd *cobra.Command, args []string) {
 	fmt.Println("[ ] Tests pass: go test -short ./...")
 	fmt.Println("[ ] Lint passes: golangci-lint run ./...")
 	fmt.Println("[ ] Formatting: gofmt -l .")
-	fmt.Println("[ ] No beads pollution: check .beads/issues.jsonl diff")
+	fmt.Println("[ ] No beads pollution: check .bd/issues.jsonl diff")
 	fmt.Println("[ ] Nix hash current: go.sum unchanged or vendorHash updated")
 	fmt.Println("[ ] Version sync: version.go matches default.nix")
 	fmt.Println()
@@ -285,9 +285,9 @@ func runFmtCheck() CheckResult {
 	}
 }
 
-// runBeadsPollutionCheck detects .beads/issues.jsonl modifications vs merge base.
+// runBeadsPollutionCheck detects .bd/issues.jsonl modifications vs merge base.
 func runBeadsPollutionCheck() CheckResult {
-	command := "git diff -- .beads/issues.jsonl"
+	command := "git diff -- .bd/issues.jsonl"
 
 	// Determine current branch
 	branchCmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
@@ -306,13 +306,13 @@ func runBeadsPollutionCheck() CheckResult {
 	var diffOutput []byte
 	if branch != "main" && branch != "HEAD" {
 		// Feature branch: diff against merge base with origin/main
-		cmd := exec.Command("git", "diff", "origin/main...HEAD", "--", ".beads/issues.jsonl")
+		cmd := exec.Command("git", "diff", "origin/main...HEAD", "--", ".bd/issues.jsonl")
 		diffOutput, _ = cmd.Output()
 	} else {
 		// On main or detached HEAD: check staged + unstaged changes
-		cmd := exec.Command("git", "diff", "HEAD", "--", ".beads/issues.jsonl")
+		cmd := exec.Command("git", "diff", "HEAD", "--", ".bd/issues.jsonl")
 		out1, _ := cmd.Output()
-		cmd2 := exec.Command("git", "diff", "--cached", "--", ".beads/issues.jsonl")
+		cmd2 := exec.Command("git", "diff", "--cached", "--", ".bd/issues.jsonl")
 		out2, _ := cmd2.Output()
 		diffOutput = append(out1, out2...)
 	}
@@ -321,7 +321,7 @@ func runBeadsPollutionCheck() CheckResult {
 		return CheckResult{
 			Name:    "No beads pollution",
 			Passed:  false,
-			Output:  ".beads/issues.jsonl has been modified — revert changes before pushing",
+			Output:  ".bd/issues.jsonl has been modified — revert changes before pushing",
 			Command: command,
 		}
 	}

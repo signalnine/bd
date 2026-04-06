@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 // ComputeBlockedIDsInTx returns the set of issue IDs that are blocked by active issues.

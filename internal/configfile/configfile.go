@@ -29,9 +29,9 @@ type Config struct {
 	DoltServerUser     string `json:"dolt_server_user,omitempty"`     // MySQL user (default: root)
 	DoltDatabase       string `json:"dolt_database,omitempty"`        // SQL database name (default: beads)
 	DoltServerTLS      bool   `json:"dolt_server_tls,omitempty"`      // Enable TLS for server connections (required for Hosted Dolt)
-	DoltDataDir        string `json:"dolt_data_dir,omitempty"`        // Custom dolt data directory (absolute path; default: .beads/dolt)
+	DoltDataDir        string `json:"dolt_data_dir,omitempty"`        // Custom dolt data directory (absolute path; default: .bd/dolt)
 	DoltRemotesAPIPort int    `json:"dolt_remotesapi_port,omitempty"` // Dolt remotesapi port for federation (default: 8080)
-	// Note: Password should be set via BEADS_DOLT_PASSWORD env var for security
+	// Note: Password should be set via BD_DOLT_PASSWORD env var for security
 
 	// Project identity — unique ID generated at bd init time.
 	// Used to detect cross-project data leakage when a client connects
@@ -51,21 +51,21 @@ type Config struct {
 
 func DefaultConfig() *Config {
 	return &Config{
-		Database: "beads.db",
+		Database: "bd.db",
 	}
 }
 
-func ConfigPath(beadsDir string) string {
-	return filepath.Join(beadsDir, ConfigFileName)
+func ConfigPath(bdDir string) string {
+	return filepath.Join(bdDir, ConfigFileName)
 }
 
-func Load(beadsDir string) (*Config, error) {
-	configPath := ConfigPath(beadsDir)
+func Load(bdDir string) (*Config, error) {
+	configPath := ConfigPath(bdDir)
 
 	data, err := os.ReadFile(configPath) // #nosec G304 - controlled path from config
 	if os.IsNotExist(err) {
 		// Try legacy config.json location (migration path)
-		legacyPath := filepath.Join(beadsDir, "config.json")
+		legacyPath := filepath.Join(bdDir, "config.json")
 		data, err = os.ReadFile(legacyPath) // #nosec G304 - controlled path from config
 		if os.IsNotExist(err) {
 			return nil, nil
@@ -81,7 +81,7 @@ func Load(beadsDir string) (*Config, error) {
 		}
 
 		// Save to new location
-		if err := cfg.Save(beadsDir); err != nil {
+		if err := cfg.Save(bdDir); err != nil {
 			return nil, fmt.Errorf("migrating config to metadata.json: %w", err)
 		}
 
@@ -102,13 +102,13 @@ func Load(beadsDir string) (*Config, error) {
 	return &cfg, nil
 }
 
-func (c *Config) Save(beadsDir string) error {
-	configPath := ConfigPath(beadsDir)
+func (c *Config) Save(bdDir string) error {
+	configPath := ConfigPath(bdDir)
 
 	// Strip absolute dolt_data_dir before saving — metadata.json is committed
 	// to git and propagates to other clones, but absolute paths are
 	// machine-specific and cause data-loss on other machines (GH#2251).
-	// Users should set absolute paths via BEADS_DOLT_DATA_DIR env var instead.
+	// Users should set absolute paths via BD_DOLT_DATA_DIR env var instead.
 	saved := *c
 	if filepath.IsAbs(saved.DoltDataDir) {
 		saved.DoltDataDir = ""
@@ -126,15 +126,15 @@ func (c *Config) Save(beadsDir string) error {
 	return nil
 }
 
-func (c *Config) DatabasePath(beadsDir string) string {
+func (c *Config) DatabasePath(bdDir string) string {
 	// Check for custom dolt data directory (absolute path on a faster filesystem).
-	// This is useful on WSL where .beads/ lives on NTFS (slow 9P mount) but
+	// This is useful on WSL where .bd/ lives on NTFS (slow 9P mount) but
 	// dolt data can be placed on native ext4 for 5-10x I/O speedup.
 	if customDir := c.GetDoltDataDir(); customDir != "" {
 		if filepath.IsAbs(customDir) {
 			return customDir
 		}
-		return filepath.Join(beadsDir, customDir)
+		return filepath.Join(bdDir, customDir)
 	}
 
 	if filepath.IsAbs(c.Database) {
@@ -142,7 +142,7 @@ func (c *Config) DatabasePath(beadsDir string) string {
 	}
 	// Always use "dolt" as the directory name.
 	// Stale values like "town", "wyvern", "beads_rig" caused split-brain (see DOLT-HEALTH-P0.md).
-	return filepath.Join(beadsDir, "dolt")
+	return filepath.Join(bdDir, "dolt")
 }
 
 // DefaultDeletionsRetentionDays is the default retention period for deletion records.
@@ -227,8 +227,8 @@ const (
 // Server mode is the standard connection method.
 //
 // Checks (in priority order):
-//  1. BEADS_DOLT_SERVER_MODE=1 env var
-//  2. BEADS_DOLT_SHARED_SERVER env var (shared-server implies server mode)
+//  1. BD_DOLT_SERVER_MODE=1 env var
+//  2. BD_DOLT_SHARED_SERVER env var (shared-server implies server mode)
 //  3. dolt_mode field in metadata.json
 //
 // Runtime env vars take precedence over persisted metadata.json to prevent
@@ -237,12 +237,12 @@ func (c *Config) IsDoltServerMode() bool {
 	if c.GetBackend() != BackendDolt {
 		return false
 	}
-	if os.Getenv("BEADS_DOLT_SERVER_MODE") == "1" {
+	if os.Getenv("BD_DOLT_SERVER_MODE") == "1" {
 		return true
 	}
 	// Shared-server mode implies server-backed storage. Check env var
 	// directly to avoid circular import with doltserver package.
-	if v := os.Getenv("BEADS_DOLT_SHARED_SERVER"); v == "1" || strings.EqualFold(v, "true") {
+	if v := os.Getenv("BD_DOLT_SHARED_SERVER"); v == "1" || strings.EqualFold(v, "true") {
 		return true
 	}
 	return strings.ToLower(c.DoltMode) == DoltModeServer
@@ -257,9 +257,9 @@ func (c *Config) GetDoltMode() string {
 }
 
 // GetDoltServerHost returns the Dolt server host.
-// Checks BEADS_DOLT_SERVER_HOST env var first, then config, then default.
+// Checks BD_DOLT_SERVER_HOST env var first, then config, then default.
 func (c *Config) GetDoltServerHost() string {
-	if h := os.Getenv("BEADS_DOLT_SERVER_HOST"); h != "" {
+	if h := os.Getenv("BD_DOLT_SERVER_HOST"); h != "" {
 		return h
 	}
 	if c.DoltServerHost != "" {
@@ -268,21 +268,21 @@ func (c *Config) GetDoltServerHost() string {
 	return DefaultDoltServerHost
 }
 
-// Deprecated: Use doltserver.DefaultConfig(beadsDir).Port instead.
+// Deprecated: Use doltserver.DefaultConfig(bdDir).Port instead.
 // This method falls back to 3307 which is wrong for standalone mode
 // (where the port is an OS-assigned ephemeral port).
 // Kept for backward compatibility with external consumers.
 //
 // GetDoltServerPort returns the Dolt server port.
-// Checks BEADS_DOLT_SERVER_PORT env var first, then BEADS_DOLT_PORT (orchestrator sets this),
+// Checks BD_DOLT_SERVER_PORT env var first, then BD_DOLT_PORT (orchestrator sets this),
 // then config, then default.
 func (c *Config) GetDoltServerPort() int {
-	if p := os.Getenv("BEADS_DOLT_SERVER_PORT"); p != "" {
+	if p := os.Getenv("BD_DOLT_SERVER_PORT"); p != "" {
 		if port, err := strconv.Atoi(p); err == nil {
 			return port
 		}
 	}
-	if p := os.Getenv("BEADS_DOLT_PORT"); p != "" {
+	if p := os.Getenv("BD_DOLT_PORT"); p != "" {
 		if port, err := strconv.Atoi(p); err == nil {
 			return port
 		}
@@ -294,9 +294,9 @@ func (c *Config) GetDoltServerPort() int {
 }
 
 // GetDoltServerUser returns the Dolt server MySQL user.
-// Checks BEADS_DOLT_SERVER_USER env var first, then config, then default.
+// Checks BD_DOLT_SERVER_USER env var first, then config, then default.
 func (c *Config) GetDoltServerUser() string {
-	if u := os.Getenv("BEADS_DOLT_SERVER_USER"); u != "" {
+	if u := os.Getenv("BD_DOLT_SERVER_USER"); u != "" {
 		return u
 	}
 	if c.DoltServerUser != "" {
@@ -306,9 +306,9 @@ func (c *Config) GetDoltServerUser() string {
 }
 
 // GetDoltDatabase returns the Dolt SQL database name.
-// Checks BEADS_DOLT_SERVER_DATABASE env var first, then config, then default.
+// Checks BD_DOLT_SERVER_DATABASE env var first, then config, then default.
 func (c *Config) GetDoltDatabase() string {
-	if d := os.Getenv("BEADS_DOLT_SERVER_DATABASE"); d != "" {
+	if d := os.Getenv("BD_DOLT_SERVER_DATABASE"); d != "" {
 		return d
 	}
 	if c.DoltDatabase != "" {
@@ -319,9 +319,9 @@ func (c *Config) GetDoltDatabase() string {
 
 // GetDoltServerPassword returns the Dolt server password.
 // Checks in order:
-//  1. BEADS_DOLT_PASSWORD env var (highest priority, existing behavior)
+//  1. BD_DOLT_PASSWORD env var (highest priority, existing behavior)
 //  2. Credentials file lookup by [host:port] section
-//     (path from BEADS_CREDENTIALS_FILE env var, or ~/.config/beads/credentials)
+//     (path from BD_CREDENTIALS_FILE env var, or ~/.config/beads/credentials)
 //  3. Empty string (no password)
 //
 // Note: uses the port from configfile (metadata.json / env var), which may differ
@@ -339,7 +339,7 @@ func (c *Config) GetDoltServerPassword() string {
 // doltserver port file says 3307 (local), causing the credentials file lookup
 // to use the wrong [host:port] section.
 func (c *Config) GetDoltServerPasswordForPort(port int) string {
-	if p := os.Getenv("BEADS_DOLT_PASSWORD"); p != "" {
+	if p := os.Getenv("BD_DOLT_PASSWORD"); p != "" {
 		return p
 	}
 	host := c.GetDoltServerHost()
@@ -351,30 +351,30 @@ func (c *Config) GetDoltServerPasswordForPort(port int) string {
 
 // GetDoltServerTLS returns whether TLS is enabled for server connections.
 // Required for Hosted Dolt instances.
-// Checks BEADS_DOLT_SERVER_TLS env var first ("1" or "true"), then config.
+// Checks BD_DOLT_SERVER_TLS env var first ("1" or "true"), then config.
 func (c *Config) GetDoltServerTLS() bool {
-	if t := os.Getenv("BEADS_DOLT_SERVER_TLS"); t != "" {
+	if t := os.Getenv("BD_DOLT_SERVER_TLS"); t != "" {
 		return t == "1" || strings.ToLower(t) == "true"
 	}
 	return c.DoltServerTLS
 }
 
 // GetDoltDataDir returns the custom dolt data directory path.
-// When set, dolt stores its data in this directory instead of .beads/dolt/.
+// When set, dolt stores its data in this directory instead of .bd/dolt/.
 // This is useful on WSL where the project lives on a slow NTFS mount (9P)
 // but dolt data can be placed on native ext4 for significantly better I/O.
-// Checks BEADS_DOLT_DATA_DIR env var first, then config.
+// Checks BD_DOLT_DATA_DIR env var first, then config.
 func (c *Config) GetDoltDataDir() string {
-	if d := os.Getenv("BEADS_DOLT_DATA_DIR"); d != "" {
+	if d := os.Getenv("BD_DOLT_DATA_DIR"); d != "" {
 		return d
 	}
 	return c.DoltDataDir
 }
 
 // GetDoltRemotesAPIPort returns the Dolt remotesapi port used for federation.
-// Checks BEADS_DOLT_REMOTESAPI_PORT env var first, then config, then default (8080).
+// Checks BD_DOLT_REMOTESAPI_PORT env var first, then config, then default (8080).
 func (c *Config) GetDoltRemotesAPIPort() int {
-	if p := os.Getenv("BEADS_DOLT_REMOTESAPI_PORT"); p != "" {
+	if p := os.Getenv("BD_DOLT_REMOTESAPI_PORT"); p != "" {
 		if port, err := strconv.Atoi(p); err == nil {
 			return port
 		}

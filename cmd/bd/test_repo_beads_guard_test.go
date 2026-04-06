@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/steveyegge/beads/internal/config"
+	"github.com/steveyegge/bd/internal/config"
 )
 
 // beforeTestsHook is set by CGO-tagged test files to perform setup before tests run
@@ -16,7 +16,7 @@ import (
 var beforeTestsHook func() func()
 
 // Guardrail: ensure the cmd/bd test suite does not touch the real repo .beads state.
-// Disable with BEADS_TEST_GUARD_DISABLE=1 (useful when running tests while actively using beads).
+// Disable with BD_TEST_GUARD_DISABLE=1 (useful when running tests while actively using beads).
 func TestMain(m *testing.M) {
 	// Delegate to testMainInner so defers run before os.Exit.
 	os.Exit(testMainInner(m))
@@ -25,9 +25,9 @@ func TestMain(m *testing.M) {
 func testMainInner(m *testing.M) int {
 	origWD, _ := os.Getwd()
 
-	// Isolate config discovery from the repo's tracked `.beads/config.yaml`.
+	// Isolate config discovery from the repo's tracked `.bd/config.yaml`.
 	// Many tests expect default config values; running from within this repo would
-	// cause config.Initialize() to walk up from CWD and load `.beads/config.yaml`,
+	// cause config.Initialize() to walk up from CWD and load `.bd/config.yaml`,
 	// which may set non-default config values and makes tests assert the wrong behavior.
 	tmp, err := os.MkdirTemp("", "beads-bd-tests-*")
 	if err != nil {
@@ -49,7 +49,7 @@ func testMainInner(m *testing.M) int {
 	_ = os.Setenv("HOME", tmp)
 	_ = os.Setenv("USERPROFILE", tmp) // Windows compatibility
 	_ = os.Setenv("XDG_CONFIG_HOME", filepath.Join(tmp, "xdg-config"))
-	_ = os.Setenv("BEADS_TEST_IGNORE_REPO_CONFIG", "1")
+	_ = os.Setenv("BD_TEST_IGNORE_REPO_CONFIG", "1")
 
 	// Also reset viper state that was loaded by main.go's init().
 	config.ResetForTesting()
@@ -58,19 +58,19 @@ func testMainInner(m *testing.M) int {
 	// This ensures backward compatibility with tests that manipulate globals directly.
 	enableTestModeGlobals()
 
-	// Set BEADS_TEST_MODE once for the entire test run (bd-cqjoi).
+	// Set BD_TEST_MODE once for the entire test run (bd-cqjoi).
 	// Previously each test set/unset this env var via ensureTestMode(),
 	// which raced under t.Parallel().
-	_ = os.Setenv("BEADS_TEST_MODE", "1")
+	_ = os.Setenv("BD_TEST_MODE", "1")
 
-	// Clear BEADS_DIR to prevent tests from accidentally picking up the project's
+	// Clear BD_DIR to prevent tests from accidentally picking up the project's
 	// .beads directory via git repo detection when there's a redirect file.
-	// Each test that needs a .beads directory should set BEADS_DIR explicitly.
-	origBeadsDir := os.Getenv("BEADS_DIR")
-	os.Unsetenv("BEADS_DIR")
+	// Each test that needs a .beads directory should set BD_DIR explicitly.
+	origBeadsDir := os.Getenv("BD_DIR")
+	os.Unsetenv("BD_DIR")
 	defer func() {
 		if origBeadsDir != "" {
-			os.Setenv("BEADS_DIR", origBeadsDir)
+			os.Setenv("BD_DIR", origBeadsDir)
 		}
 	}()
 
@@ -83,7 +83,7 @@ func testMainInner(m *testing.M) int {
 		defer cleanup()
 	}
 
-	if os.Getenv("BEADS_TEST_GUARD_DISABLE") != "" {
+	if os.Getenv("BD_TEST_GUARD_DISABLE") != "" {
 		return m.Run()
 	}
 
@@ -92,18 +92,18 @@ func testMainInner(m *testing.M) int {
 		return m.Run()
 	}
 
-	repoBeadsDir := filepath.Join(repoRoot, ".beads")
+	repoBeadsDir := filepath.Join(repoRoot, ".bd")
 	if _, err := os.Stat(repoBeadsDir); err != nil {
 		return m.Run()
 	}
 
 	watch := []string{
-		"beads.db",
-		"beads.db-wal",
-		"beads.db-shm",
-		"beads.db-journal",
+		"bd.db",
+		"bd.db-wal",
+		"bd.db-shm",
+		"bd.db-journal",
 		"issues.jsonl",
-		"beads.jsonl",
+		"bd.jsonl",
 		"metadata.json",
 		// interactions.jsonl excluded: legitimately created by init during tests
 		"deletions.jsonl",

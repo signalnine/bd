@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 const testUserAlice = "alice"
@@ -16,7 +16,7 @@ const testUserAlice = "alice"
 func TestCommentsSuite(t *testing.T) {
 	t.Parallel()
 	tmpDir := t.TempDir()
-	testDB := filepath.Join(tmpDir, ".beads", "beads.db")
+	testDB := filepath.Join(tmpDir, ".bd", "bd.db")
 	s := newTestStore(t, testDB)
 	ctx := context.Background()
 

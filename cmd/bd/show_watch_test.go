@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 // TestSingleIssueSnapshot tests that the snapshot captures status and update time.
@@ -67,7 +67,7 @@ func TestWatchIssueDetectsStatusChange(t *testing.T) {
 
 	ctx := context.Background()
 	tmpDir := t.TempDir()
-	dbPath := filepath.Join(tmpDir, ".beads", "test.db")
+	dbPath := filepath.Join(tmpDir, ".bd", "test.db")
 	s := newTestStore(t, dbPath)
 
 	// Create an open issue
@@ -104,7 +104,7 @@ func TestWatchIssueDetectsStatusChange(t *testing.T) {
 
 	// The polling-based watch loop detects changes by comparing snapshots.
 	// This must differ — the old fsnotify implementation would never see this
-	// because Dolt writes don't produce filesystem events in .beads/.
+	// because Dolt writes don't produce filesystem events in .bd/.
 	if snapBefore == snapAfter {
 		t.Errorf("snapshot did not change after closing issue: before=%q after=%q", snapBefore, snapAfter)
 	}
@@ -121,7 +121,7 @@ func TestWatchIssueDetectsFieldUpdate(t *testing.T) {
 
 	ctx := context.Background()
 	tmpDir := t.TempDir()
-	dbPath := filepath.Join(tmpDir, ".beads", "test.db")
+	dbPath := filepath.Join(tmpDir, ".bd", "test.db")
 	s := newTestStore(t, dbPath)
 
 	issue := &types.Issue{

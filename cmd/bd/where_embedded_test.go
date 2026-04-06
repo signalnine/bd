@@ -27,24 +27,24 @@ func bdWhere(t *testing.T, bd, dir string, args ...string) string {
 }
 
 func TestEmbeddedWhere(t *testing.T) {
-	if os.Getenv("BEADS_TEST_EMBEDDED_DOLT") != "1" {
-		t.Skip("set BEADS_TEST_EMBEDDED_DOLT=1 to run embedded dolt integration tests")
+	if os.Getenv("BD_TEST_EMBEDDED_DOLT") != "1" {
+		t.Skip("set BD_TEST_EMBEDDED_DOLT=1 to run embedded dolt integration tests")
 	}
 	t.Parallel()
 
 	bd := buildEmbeddedBD(t)
-	dir, beadsDir, _ := bdInit(t, bd, "--prefix", "tw")
+	dir, bdDir, _ := bdInit(t, bd, "--prefix", "tw")
 
 	// ===== Default Output =====
 
 	t.Run("where_default", func(t *testing.T) {
 		out := bdWhere(t, bd, dir)
-		if !strings.Contains(out, ".beads") {
+		if !strings.Contains(out, ".bd") {
 			t.Errorf("expected .beads in where output: %s", out)
 		}
 		// Should contain the actual beads directory path
-		if !strings.Contains(out, beadsDir) {
-			t.Errorf("expected beads dir %q in where output: %s", beadsDir, out)
+		if !strings.Contains(out, bdDir) {
+			t.Errorf("expected beads dir %q in where output: %s", bdDir, out)
 		}
 	})
 
@@ -57,7 +57,7 @@ func TestEmbeddedWhere(t *testing.T) {
 		if start < 0 {
 			// --json may be affected by same flag shadowing as info;
 			// just verify no crash and output contains path
-			if !strings.Contains(out, ".beads") {
+			if !strings.Contains(out, ".bd") {
 				t.Errorf("expected .beads in where --json output: %s", out)
 			}
 			return
@@ -68,7 +68,7 @@ func TestEmbeddedWhere(t *testing.T) {
 		}
 		// Verify path is present in JSON (WhereResult uses "path" key)
 		if path, ok := m["path"]; ok {
-			if p, ok := path.(string); ok && !strings.Contains(p, ".beads") {
+			if p, ok := path.(string); ok && !strings.Contains(p, ".bd") {
 				t.Errorf("expected .beads in path: %v", path)
 			}
 		}
@@ -77,8 +77,8 @@ func TestEmbeddedWhere(t *testing.T) {
 
 // TestEmbeddedWhereConcurrent exercises where operations concurrently.
 func TestEmbeddedWhereConcurrent(t *testing.T) {
-	if os.Getenv("BEADS_TEST_EMBEDDED_DOLT") != "1" {
-		t.Skip("set BEADS_TEST_EMBEDDED_DOLT=1 to run embedded dolt integration tests")
+	if os.Getenv("BD_TEST_EMBEDDED_DOLT") != "1" {
+		t.Skip("set BD_TEST_EMBEDDED_DOLT=1 to run embedded dolt integration tests")
 	}
 	t.Parallel()
 
@@ -110,7 +110,7 @@ func TestEmbeddedWhereConcurrent(t *testing.T) {
 				results[worker] = r
 				return
 			}
-			if !strings.Contains(string(out), ".beads") {
+			if !strings.Contains(string(out), ".bd") {
 				r.err = fmt.Errorf("where (worker %d): expected .beads in output: %s", worker, out)
 				results[worker] = r
 				return

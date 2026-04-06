@@ -74,13 +74,13 @@ func bdShowFail2(t *testing.T, bd, dir string, args ...string) string {
 }
 
 func TestEmbeddedShow(t *testing.T) {
-	if os.Getenv("BEADS_TEST_EMBEDDED_DOLT") != "1" {
-		t.Skip("set BEADS_TEST_EMBEDDED_DOLT=1 to run embedded dolt integration tests")
+	if os.Getenv("BD_TEST_EMBEDDED_DOLT") != "1" {
+		t.Skip("set BD_TEST_EMBEDDED_DOLT=1 to run embedded dolt integration tests")
 	}
 	t.Parallel()
 
 	bd := buildEmbeddedBD(t)
-	dir, beadsDir, _ := bdInit(t, bd, "--prefix", "ts")
+	dir, bdDir, _ := bdInit(t, bd, "--prefix", "ts")
 
 	// ===== Basic Show =====
 
@@ -163,7 +163,7 @@ func TestEmbeddedShow(t *testing.T) {
 
 	t.Run("show_json_includes_comments", func(t *testing.T) {
 		issue := bdCreate(t, bd, dir, "Commented show", "--type", "task")
-		store := openStore(t, beadsDir, "ts")
+		store := openStore(t, bdDir, "ts")
 		_, _ = store.AddIssueComment(t.Context(), issue.ID, "tester", "A comment")
 		store.Close() // release flock before subprocess
 
@@ -249,7 +249,7 @@ func TestEmbeddedShow(t *testing.T) {
 		issue := bdCreate(t, bd, dir, "AsOf test", "--type", "task")
 
 		// Get current commit hash
-		store := openStore(t, beadsDir, "ts")
+		store := openStore(t, bdDir, "ts")
 		commitHash, err := store.GetCurrentCommit(t.Context())
 		if err != nil {
 			t.Fatalf("GetCurrentCommit: %v", err)
@@ -349,8 +349,8 @@ func TestEmbeddedShow(t *testing.T) {
 
 // TestEmbeddedShowConcurrent exercises show operations concurrently.
 func TestEmbeddedShowConcurrent(t *testing.T) {
-	if os.Getenv("BEADS_TEST_EMBEDDED_DOLT") != "1" {
-		t.Skip("set BEADS_TEST_EMBEDDED_DOLT=1 to run embedded dolt integration tests")
+	if os.Getenv("BD_TEST_EMBEDDED_DOLT") != "1" {
+		t.Skip("set BD_TEST_EMBEDDED_DOLT=1 to run embedded dolt integration tests")
 	}
 	t.Parallel()
 

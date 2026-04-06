@@ -8,12 +8,12 @@ import (
 )
 
 // TestGetActorWithGit tests the actor resolution fallback chain.
-// Priority: --actor flag > BEADS_ACTOR env > BD_ACTOR env (deprecated) > git config user.name > $USER > "unknown"
+// Priority: --actor flag > BD_ACTOR env > BD_ACTOR env (deprecated) > git config user.name > $USER > "unknown"
 func TestGetActorWithGit(t *testing.T) {
 	// Save original environment and actor variable
 	origActor := actor
 	origBdActor, bdActorSet := os.LookupEnv("BD_ACTOR")
-	origBeadsActor, beadsActorSet := os.LookupEnv("BEADS_ACTOR")
+	origBeadsActor, beadsActorSet := os.LookupEnv("BD_ACTOR")
 	origUser, userSet := os.LookupEnv("USER")
 
 	// Cleanup after test
@@ -25,9 +25,9 @@ func TestGetActorWithGit(t *testing.T) {
 			os.Unsetenv("BD_ACTOR")
 		}
 		if beadsActorSet {
-			os.Setenv("BEADS_ACTOR", origBeadsActor)
+			os.Setenv("BD_ACTOR", origBeadsActor)
 		} else {
-			os.Unsetenv("BEADS_ACTOR")
+			os.Unsetenv("BD_ACTOR")
 		}
 		if userSet {
 			os.Setenv("USER", origUser)
@@ -65,7 +65,7 @@ func TestGetActorWithGit(t *testing.T) {
 			expected:   "flag-actor",
 		},
 		{
-			name:       "BEADS_ACTOR takes priority when no flag",
+			name:       "BD_ACTOR takes priority when no flag",
 			actorFlag:  "",
 			bdActor:    "bd-actor",
 			beadsActor: "beads-actor",
@@ -73,7 +73,7 @@ func TestGetActorWithGit(t *testing.T) {
 			expected:   "beads-actor",
 		},
 		{
-			name:       "BD_ACTOR used as fallback when no BEADS_ACTOR",
+			name:       "BD_ACTOR used as fallback when no BD_ACTOR",
 			actorFlag:  "",
 			bdActor:    "bd-actor",
 			beadsActor: "",
@@ -133,9 +133,9 @@ func TestGetActorWithGit(t *testing.T) {
 			}
 
 			if tt.beadsActor != "" {
-				os.Setenv("BEADS_ACTOR", tt.beadsActor)
+				os.Setenv("BD_ACTOR", tt.beadsActor)
 			} else {
-				os.Unsetenv("BEADS_ACTOR")
+				os.Unsetenv("BD_ACTOR")
 			}
 
 			if tt.user != "" {
@@ -160,7 +160,7 @@ func TestGetActorWithGit_PriorityOrder(t *testing.T) {
 	// Save original state
 	origActor := actor
 	origBdActor, bdActorSet := os.LookupEnv("BD_ACTOR")
-	origBeadsActor, beadsActorSet := os.LookupEnv("BEADS_ACTOR")
+	origBeadsActor, beadsActorSet := os.LookupEnv("BD_ACTOR")
 
 	defer func() {
 		actor = origActor
@@ -170,31 +170,31 @@ func TestGetActorWithGit_PriorityOrder(t *testing.T) {
 			os.Unsetenv("BD_ACTOR")
 		}
 		if beadsActorSet {
-			os.Setenv("BEADS_ACTOR", origBeadsActor)
+			os.Setenv("BD_ACTOR", origBeadsActor)
 		} else {
-			os.Unsetenv("BEADS_ACTOR")
+			os.Unsetenv("BD_ACTOR")
 		}
 	}()
 
-	// Test: flag > BEADS_ACTOR > BD_ACTOR
+	// Test: flag > BD_ACTOR > BD_ACTOR
 	actor = "from-flag"
 	os.Setenv("BD_ACTOR", "from-bd-actor")
-	os.Setenv("BEADS_ACTOR", "from-beads-actor")
+	os.Setenv("BD_ACTOR", "from-beads-actor")
 
 	result := getActorWithGit()
 	if result != "from-flag" {
 		t.Errorf("Expected flag to take priority, got %q", result)
 	}
 
-	// Test: BEADS_ACTOR > BD_ACTOR (no flag)
+	// Test: BD_ACTOR > BD_ACTOR (no flag)
 	actor = ""
 	result = getActorWithGit()
 	if result != "from-beads-actor" {
-		t.Errorf("Expected BEADS_ACTOR to take priority over BD_ACTOR, got %q", result)
+		t.Errorf("Expected BD_ACTOR to take priority over BD_ACTOR, got %q", result)
 	}
 
-	// Test: BD_ACTOR as fallback when BEADS_ACTOR is empty
-	os.Unsetenv("BEADS_ACTOR")
+	// Test: BD_ACTOR as fallback when BD_ACTOR is empty
+	os.Unsetenv("BD_ACTOR")
 	result = getActorWithGit()
 	if result != "from-bd-actor" {
 		t.Errorf("Expected BD_ACTOR to be used as fallback, got %q", result)

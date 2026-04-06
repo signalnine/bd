@@ -6,8 +6,8 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/steveyegge/beads/internal/storage/issueops"
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/storage/issueops"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 // GetReadyWork returns issues that are ready to work on (not blocked).

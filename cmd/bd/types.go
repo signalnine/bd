@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 // coreWorkTypes are the built-in types that beads validates without configuration.
@@ -32,7 +32,7 @@ var typesCmd = &cobra.Command{
 	Long: `List all valid issue types that can be used with bd create --type.
 
 Core work types (bug, task, feature, chore, epic, decision) are always valid.
-Additional types require configuration via types.custom in .beads/config.yaml.
+Additional types require configuration via types.custom in .bd/config.yaml.
 
 Examples:
   bd types              # List all types with descriptions

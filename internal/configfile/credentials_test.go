@@ -25,8 +25,8 @@ password=officePass
 		t.Fatalf("failed to write credentials file: %v", err)
 	}
 
-	// Point BEADS_CREDENTIALS_FILE at our temp file
-	t.Setenv("BEADS_CREDENTIALS_FILE", credFile)
+	// Point BD_CREDENTIALS_FILE at our temp file
+	t.Setenv("BD_CREDENTIALS_FILE", credFile)
 
 	tests := []struct {
 		name     string
@@ -78,7 +78,7 @@ password=officePass
 }
 
 func TestLookupCredentialsPassword_MissingFile(t *testing.T) {
-	t.Setenv("BEADS_CREDENTIALS_FILE", "/nonexistent/path/credentials")
+	t.Setenv("BD_CREDENTIALS_FILE", "/nonexistent/path/credentials")
 
 	got := LookupCredentialsPassword("127.0.0.1", 3307)
 	if got != "" {
@@ -93,10 +93,10 @@ func TestLookupCredentialsPassword_EnvVarTakesPrecedence(t *testing.T) {
 	if err := os.WriteFile(credFile, []byte("[127.0.0.1:3307]\npassword=filePass\n"), 0600); err != nil {
 		t.Fatalf("failed to write credentials file: %v", err)
 	}
-	t.Setenv("BEADS_CREDENTIALS_FILE", credFile)
+	t.Setenv("BD_CREDENTIALS_FILE", credFile)
 
-	// Set BEADS_DOLT_PASSWORD env var — should win
-	t.Setenv("BEADS_DOLT_PASSWORD", "envPass")
+	// Set BD_DOLT_PASSWORD env var — should win
+	t.Setenv("BD_DOLT_PASSWORD", "envPass")
 
 	cfg := DefaultConfig()
 	got := cfg.GetDoltServerPassword()
@@ -112,10 +112,10 @@ func TestLookupCredentialsPassword_FallsBackToFile(t *testing.T) {
 	if err := os.WriteFile(credFile, []byte("[127.0.0.1:3307]\npassword=filePass\n"), 0600); err != nil {
 		t.Fatalf("failed to write credentials file: %v", err)
 	}
-	t.Setenv("BEADS_CREDENTIALS_FILE", credFile)
+	t.Setenv("BD_CREDENTIALS_FILE", credFile)
 
-	// Clear BEADS_DOLT_PASSWORD so file lookup kicks in
-	t.Setenv("BEADS_DOLT_PASSWORD", "")
+	// Clear BD_DOLT_PASSWORD so file lookup kicks in
+	t.Setenv("BD_DOLT_PASSWORD", "")
 
 	cfg := DefaultConfig()
 	got := cfg.GetDoltServerPassword()
@@ -137,8 +137,8 @@ password=workServerPass
 	if err := os.WriteFile(credFile, []byte(content), 0600); err != nil {
 		t.Fatalf("failed to write credentials file: %v", err)
 	}
-	t.Setenv("BEADS_CREDENTIALS_FILE", credFile)
-	t.Setenv("BEADS_DOLT_PASSWORD", "")
+	t.Setenv("BD_CREDENTIALS_FILE", credFile)
+	t.Setenv("BD_DOLT_PASSWORD", "")
 
 	// Personal project uses localhost
 	personal := DefaultConfig()
@@ -176,8 +176,8 @@ password=tunnelPass
 	if err := os.WriteFile(credFile, []byte(content), 0600); err != nil {
 		t.Fatalf("failed to write credentials file: %v", err)
 	}
-	t.Setenv("BEADS_CREDENTIALS_FILE", credFile)
-	t.Setenv("BEADS_DOLT_PASSWORD", "")
+	t.Setenv("BD_CREDENTIALS_FILE", credFile)
+	t.Setenv("BD_DOLT_PASSWORD", "")
 
 	cfg := DefaultConfig()
 	cfg.DoltServerHost = "127.0.0.1"

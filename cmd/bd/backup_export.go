@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/steveyegge/beads/internal/beads"
-	"github.com/steveyegge/beads/internal/config"
-	"github.com/steveyegge/beads/internal/debug"
+	"github.com/steveyegge/bd/internal/project"
+	"github.com/steveyegge/bd/internal/config"
+	"github.com/steveyegge/bd/internal/debug"
 )
 
 // backupState tracks watermarks for backup change detection.
@@ -22,7 +22,7 @@ type backupState struct {
 
 // backupDir returns the backup directory path, creating it if needed.
 // When backup.git-repo is set to a valid git repo, returns a backup/ subdirectory
-// inside that repo. Otherwise falls back to .beads/backup/.
+// inside that repo. Otherwise falls back to .bd/backup/.
 func backupDir() (string, error) {
 	gitRepo := config.GetString("backup.git-repo")
 	if gitRepo != "" {
@@ -31,7 +31,7 @@ func backupDir() (string, error) {
 			gitRepo = filepath.Join(home, gitRepo[2:])
 		}
 		if _, err := os.Stat(filepath.Join(gitRepo, ".git")); err != nil {
-			debug.Logf("backup: git-repo %s is not a git repo, falling back to .beads/backup\n", gitRepo)
+			debug.Logf("backup: git-repo %s is not a git repo, falling back to .bd/backup\n", gitRepo)
 		} else {
 			dir := filepath.Join(gitRepo, "backup")
 			if err := os.MkdirAll(dir, 0700); err != nil {
@@ -40,11 +40,11 @@ func backupDir() (string, error) {
 			return dir, nil
 		}
 	}
-	beadsDir := beads.FindBeadsDir()
-	if beadsDir == "" {
-		beadsDir = ".beads"
+	bdDir := project.FindBdDir()
+	if bdDir == "" {
+		bdDir = ".bd"
 	}
-	dir := filepath.Join(beadsDir, "backup")
+	dir := filepath.Join(bdDir, "backup")
 	if err := os.MkdirAll(dir, 0700); err != nil {
 		return "", fmt.Errorf("failed to create backup directory: %w", err)
 	}
@@ -107,7 +107,7 @@ func atomicWriteFile(path string, data []byte) error {
 	return nil
 }
 
-// runBackupExport performs a Dolt-native backup to .beads/backup/.
+// runBackupExport performs a Dolt-native backup to .bd/backup/.
 // Returns the updated state.
 func runBackupExport(ctx context.Context, force bool) (*backupState, error) {
 	dir, err := backupDir()

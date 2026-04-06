@@ -29,12 +29,12 @@ const (
 // based on git configuration and repository permissions.
 //
 // Detection strategy:
-// 1. Check git config for beads.role setting (preferred source of truth)
+// 1. Check git config for bd.role setting (preferred source of truth)
 // 2. Fall back to URL heuristic with deprecation warning (graceful degradation)
 // 3. Default to maintainer for local projects (no remote configured)
 func DetectUserRole(repoPath string) (UserRole, error) {
 	// First check for explicit role in git config (preferred source)
-	output, err := gitCommandRunner(repoPath, "config", "--get", "beads.role")
+	output, err := gitCommandRunner(repoPath, "config", "--get", "bd.role")
 	if err == nil {
 		role := strings.TrimSpace(string(output))
 		if role == string(Maintainer) {
@@ -48,9 +48,9 @@ func DetectUserRole(repoPath string) (UserRole, error) {
 
 	// Fallback to URL heuristic (deprecated, with warning)
 	// This keeps existing users working while encouraging migration
-	fmt.Fprintln(os.Stderr, "warning: beads.role not configured (GH#2950).")
-	fmt.Fprintln(os.Stderr, "  Fix: git config beads.role maintainer")
-	fmt.Fprintln(os.Stderr, "  Or:  git config beads.role contributor")
+	fmt.Fprintln(os.Stderr, "warning: bd.role not configured (GH#2950).")
+	fmt.Fprintln(os.Stderr, "  Fix: git config bd.role maintainer")
+	fmt.Fprintln(os.Stderr, "  Or:  git config bd.role contributor")
 	return detectFromURL(repoPath), nil
 }
 

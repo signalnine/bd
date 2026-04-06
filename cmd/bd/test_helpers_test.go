@@ -19,11 +19,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/steveyegge/beads/internal/config"
-	"github.com/steveyegge/beads/internal/configfile"
-	"github.com/steveyegge/beads/internal/storage/dolt"
-	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
-	"github.com/steveyegge/beads/internal/testutil"
+	"github.com/steveyegge/bd/internal/config"
+	"github.com/steveyegge/bd/internal/configfile"
+	"github.com/steveyegge/bd/internal/storage/dolt"
+	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
+	"github.com/steveyegge/bd/internal/testutil"
 )
 
 // testDoltServerPort is the port of the shared test Dolt server (0 = not running).
@@ -73,7 +73,7 @@ func generateUniqueTestID(t *testing.T, prefix string, index int) string {
 const windowsOS = "windows"
 
 // initConfigForTest initializes viper config for a test and ensures cleanup.
-// main.go's init() calls config.Initialize() which picks up the real .beads/config.yaml.
+// main.go's init() calls config.Initialize() which picks up the real .bd/config.yaml.
 // TestMain resets viper, but any test calling config.Initialize() re-loads the real config.
 // This helper ensures viper is reset after the test completes, preventing state pollution
 // (e.g., repo config values leaking into JSONL export tests).
@@ -86,11 +86,11 @@ func initConfigForTest(t *testing.T) {
 	t.Cleanup(config.ResetForTesting)
 }
 
-// ensureTestMode is a no-op; BEADS_TEST_MODE is set once in TestMain.
+// ensureTestMode is a no-op; BD_TEST_MODE is set once in TestMain.
 // Previously each test set/unset the env var, which raced under t.Parallel().
 func ensureTestMode(t *testing.T) {
 	t.Helper()
-	// BEADS_TEST_MODE is set in TestMain and stays set for the entire test run.
+	// BD_TEST_MODE is set in TestMain and stays set for the entire test run.
 }
 
 // ensureCleanGlobalState resets global state that may have been modified by other tests.
@@ -146,8 +146,8 @@ func saveAndRestoreGlobals(t *testing.T) *savedGlobals {
 // routing reopens a store by path.
 func writeTestMetadata(t *testing.T, dbPath string, database string) {
 	t.Helper()
-	beadsDir := filepath.Dir(dbPath)
-	if err := os.MkdirAll(beadsDir, 0755); err != nil {
+	bdDir := filepath.Dir(dbPath)
+	if err := os.MkdirAll(bdDir, 0755); err != nil {
 		t.Fatalf("Failed to create beads dir: %v", err)
 	}
 	cfg := &configfile.Config{
@@ -158,7 +158,7 @@ func writeTestMetadata(t *testing.T, dbPath string, database string) {
 		DoltServerHost: "127.0.0.1",
 		DoltServerPort: testDoltServerPort,
 	}
-	if err := cfg.Save(beadsDir); err != nil {
+	if err := cfg.Save(bdDir); err != nil {
 		t.Fatalf("Failed to write test metadata.json: %v", err)
 	}
 }
@@ -348,7 +348,7 @@ func dropTestDatabase(dbName string, port int) {
 
 // openExistingTestDB reopens an existing Dolt store for verification in tests.
 // It tries NewFromConfig first (reads metadata.json for correct database name),
-// then falls back to direct open for BEADS_DB or other non-standard paths.
+// then falls back to direct open for BD_DB or other non-standard paths.
 func openExistingTestDB(t *testing.T, dbPath string) (*dolt.DoltStore, error) {
 	t.Helper()
 	// Serialize dolt.New() to avoid race in Dolt's InitStatusVariables (bd-cqjoi)
@@ -356,8 +356,8 @@ func openExistingTestDB(t *testing.T, dbPath string) (*dolt.DoltStore, error) {
 	defer doltNewMutex.Unlock()
 	ctx := context.Background()
 	// Try NewFromConfig which reads metadata.json for correct database name
-	beadsDir := filepath.Dir(dbPath)
-	if store, err := dolt.NewFromConfig(ctx, beadsDir); err == nil {
+	bdDir := filepath.Dir(dbPath)
+	if store, err := dolt.NewFromConfig(ctx, bdDir); err == nil {
 		return store, nil
 	}
 	// Fallback: open directly with test server config

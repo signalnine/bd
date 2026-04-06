@@ -1,7 +1,7 @@
 //go:build cgo && integration
 // +build cgo,integration
 
-package beads_test
+package project_test
 
 import (
 	"context"
@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/steveyegge/beads/internal/beads"
-	"github.com/steveyegge/beads/internal/storage/dolt"
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/project"
+	"github.com/steveyegge/bd/internal/storage/dolt"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 // integrationTestHelper provides common test setup and assertion methods
@@ -386,10 +386,10 @@ func TestFindDatabasePathIntegration(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	os.MkdirAll(beadsDir, 0o755)
+	bdDir := filepath.Join(tmpDir, ".bd")
+	os.MkdirAll(bdDir, 0o755)
 
-	dbPath := filepath.Join(beadsDir, "test.db")
+	dbPath := filepath.Join(bdDir, "test.db")
 	f, _ := os.Create(dbPath)
 	f.Close()
 
@@ -397,7 +397,7 @@ func TestFindDatabasePathIntegration(t *testing.T) {
 	t.Chdir(tmpDir)
 
 	// Should find the database
-	found := beads.FindDatabasePath()
+	found := project.FindDatabasePath()
 	if found == "" {
 		t.Error("Expected to find database, got empty string")
 	}
@@ -457,12 +457,12 @@ func TestImportWithDeletedParent(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	dbPath := filepath.Join(beadsDir, "beads.db")
-	jsonlPath := filepath.Join(beadsDir, "issues.jsonl")
+	bdDir := filepath.Join(tmpDir, ".bd")
+	dbPath := filepath.Join(bdDir, "bd.db")
+	jsonlPath := filepath.Join(bdDir, "issues.jsonl")
 
 	// Create .beads directory
-	if err := os.MkdirAll(beadsDir, 0755); err != nil {
+	if err := os.MkdirAll(bdDir, 0755); err != nil {
 		t.Fatalf("Failed to create .beads dir: %v", err)
 	}
 

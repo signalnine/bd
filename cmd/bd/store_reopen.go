@@ -6,10 +6,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/steveyegge/beads/internal/beads"
-	"github.com/steveyegge/beads/internal/configfile"
-	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
-	"github.com/steveyegge/beads/internal/utils"
+	"github.com/steveyegge/bd/internal/project"
+	"github.com/steveyegge/bd/internal/configfile"
+	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
+	"github.com/steveyegge/bd/internal/utils"
 )
 
 // openReadOnlyStoreForDBPath reopens a read-only store from an existing dbPath
@@ -21,8 +21,8 @@ func openReadOnlyStoreForDBPath(ctx context.Context, dbPath string) (*embeddeddo
 		return nil, fmt.Errorf("no database path available")
 	}
 
-	if beadsDir := resolveBeadsDirForDBPath(dbPath); beadsDir != "" {
-		return newReadOnlyStoreFromConfig(ctx, beadsDir)
+	if bdDir := resolveBeadsDirForDBPath(dbPath); bdDir != "" {
+		return newReadOnlyStoreFromConfig(ctx, bdDir)
 	}
 
 	// Fallback: derive beads dir from dbPath parent directory.
@@ -34,12 +34,12 @@ func openReadOnlyStoreForDBPath(ctx context.Context, dbPath string) (*embeddeddo
 // non-default dolt_database names or custom dolt_data_dir locations.
 func resolveBeadsDirForDBPath(dbPath string) string {
 	actualDBPath := utils.CanonicalizePath(dbPath)
-	if parent := filepath.Dir(dbPath); filepath.Base(parent) == ".beads" {
+	if parent := filepath.Dir(dbPath); filepath.Base(parent) == ".bd" {
 		if _, err := os.Stat(filepath.Join(parent, "metadata.json")); err == nil {
 			return parent
 		}
 	}
-	if parent := filepath.Dir(actualDBPath); filepath.Base(parent) == ".beads" {
+	if parent := filepath.Dir(actualDBPath); filepath.Base(parent) == ".bd" {
 		if _, err := os.Stat(filepath.Join(parent, "metadata.json")); err == nil {
 			return parent
 		}
@@ -64,8 +64,8 @@ func resolveBeadsDirForDBPath(dbPath string) string {
 
 	addAncestorCandidates := func(path string) {
 		for dir := path; dir != "" && dir != filepath.Dir(dir); dir = filepath.Dir(dir) {
-			addCandidate(filepath.Join(dir, ".beads"))
-			if filepath.Base(dir) == ".beads" {
+			addCandidate(filepath.Join(dir, ".bd"))
+			if filepath.Base(dir) == ".bd" {
 				addCandidate(dir)
 			}
 		}
@@ -83,21 +83,21 @@ func resolveBeadsDirForDBPath(dbPath string) string {
 	addAncestorCandidates(filepath.Dir(dbPath))
 	addAncestorCandidates(filepath.Dir(actualDBPath))
 
-	if found := beads.FindBeadsDir(); found != "" {
+	if found := project.FindBdDir(); found != "" {
 		addCandidate(found)
 		addCandidate(utils.CanonicalizePath(found))
 	}
 
-	for _, beadsDir := range candidates {
-		cfg, err := configfile.Load(beadsDir)
+	for _, bdDir := range candidates {
+		cfg, err := configfile.Load(bdDir)
 		if err != nil || cfg == nil {
 			continue
 		}
-		if utils.PathsEqual(beadsDir, dbPath) || utils.PathsEqual(beadsDir, actualDBPath) {
-			return beadsDir
+		if utils.PathsEqual(bdDir, dbPath) || utils.PathsEqual(bdDir, actualDBPath) {
+			return bdDir
 		}
-		if utils.PathsEqual(cfg.DatabasePath(beadsDir), dbPath) || utils.PathsEqual(cfg.DatabasePath(beadsDir), actualDBPath) {
-			return beadsDir
+		if utils.PathsEqual(cfg.DatabasePath(bdDir), dbPath) || utils.PathsEqual(cfg.DatabasePath(bdDir), actualDBPath) {
+			return bdDir
 		}
 	}
 

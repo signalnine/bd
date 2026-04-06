@@ -12,8 +12,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/steveyegge/beads/internal/beads"
-	"github.com/steveyegge/beads/internal/git"
+	"github.com/steveyegge/bd/internal/project"
+	"github.com/steveyegge/bd/internal/git"
 )
 
 const hookVersionPrefix = "# bd-hooks-version: "
@@ -42,7 +42,7 @@ func generateHookSection(hookName string) string {
 		"# This section is managed by beads. Do not remove these markers.\n" +
 		"if command -v bd >/dev/null 2>&1; then\n" +
 		"  export BD_GIT_HOOK=1\n" +
-		"  _bd_timeout=${BEADS_HOOK_TIMEOUT:-" + fmt.Sprintf("%d", hookTimeoutSeconds) + "}\n" +
+		"  _bd_timeout=${BD_HOOK_TIMEOUT:-" + fmt.Sprintf("%d", hookTimeoutSeconds) + "}\n" +
 		"  if command -v timeout >/dev/null 2>&1; then\n" +
 		"    timeout \"$_bd_timeout\" bd hooks run " + hookName + " \"$@\"\n" +
 		"    _bd_exit=$?\n" +
@@ -285,11 +285,11 @@ func CheckGitHooks() []HookStatus {
 func installHooksWithOptions(hookNames []string, force bool, shared bool, chain bool, beadsHooks bool) error {
 	var hooksDir string
 	if beadsHooks {
-		beadsDir := beads.FindBeadsDir()
-		if beadsDir == "" {
+		bdDir := project.FindBdDir()
+		if bdDir == "" {
 			return fmt.Errorf("not in a beads workspace (no .beads directory found)")
 		}
-		hooksDir = filepath.Join(beadsDir, "hooks")
+		hooksDir = filepath.Join(bdDir, "hooks")
 	} else if shared {
 		hooksDir = ".beads-hooks"
 	} else {
@@ -375,7 +375,7 @@ func preservePreexistingHooks(targetDir string) {
 	}
 	repoRoot := git.GetRepoRoot()
 	if repoRoot != "" {
-		absBeadsHooks, _ := filepath.Abs(filepath.Join(repoRoot, ".beads", "hooks"))
+		absBeadsHooks, _ := filepath.Abs(filepath.Join(repoRoot, ".bd", "hooks"))
 		absSharedHooks, _ := filepath.Abs(filepath.Join(repoRoot, ".beads-hooks"))
 		if absCurrent == absBeadsHooks || absCurrent == absSharedHooks {
 			return
@@ -430,7 +430,7 @@ func configureBeadsHooksPath() error {
 	if repoRoot == "" {
 		return fmt.Errorf("not in a git repository")
 	}
-	absHooksPath := filepath.Join(repoRoot, ".beads", "hooks")
+	absHooksPath := filepath.Join(repoRoot, ".bd", "hooks")
 	cmd := exec.Command("git", "config", "core.hooksPath", absHooksPath)
 	cmd.Dir = repoRoot
 	if output, err := cmd.CombinedOutput(); err != nil {
@@ -501,9 +501,9 @@ func resetHooksPathIfBeadsManaged() error {
 		return nil
 	}
 	hooksPath := strings.TrimSpace(string(out))
-	absBeadsHooks := filepath.Join(repoRoot, ".beads", "hooks")
+	absBeadsHooks := filepath.Join(repoRoot, ".bd", "hooks")
 	absSharedHooks := filepath.Join(repoRoot, ".beads-hooks")
-	if hooksPath == ".beads/hooks" || hooksPath == ".beads-hooks" ||
+	if hooksPath == ".bd/hooks" || hooksPath == ".beads-hooks" ||
 		hooksPath == absBeadsHooks || hooksPath == absSharedHooks {
 		cmd = exec.Command("git", "config", "--unset", "core.hooksPath")
 		cmd.Dir = repoRoot

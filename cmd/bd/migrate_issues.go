@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/beads/internal/storage"
-	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/storage"
+	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 var migrateIssuesCmd = &cobra.Command{
@@ -24,7 +24,7 @@ This command updates the source_repo field for selected issues, allowing you to:
 
 Examples:
   # Preview migration from planning repo to current repo
-  bd migrate-issues --from ~/.beads-planning --to . --dry-run
+  bd migrate-issues --from ~/.bd-planning --to . --dry-run
 
   # Move all open P1 bugs
   bd migrate-issues --from ~/repo1 --to ~/repo2 --priority 1 --type bug --status open

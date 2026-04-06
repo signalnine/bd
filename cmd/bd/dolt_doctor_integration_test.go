@@ -31,7 +31,7 @@ func TestDoltDoctor_NoSQLiteWarningsAfterInitAndCreate(t *testing.T) {
 		t.Skip("skipping: Dolt test container not available")
 	}
 
-	env := append(os.Environ(), "BEADS_TEST_MODE=1")
+	env := append(os.Environ(), "BD_TEST_MODE=1")
 
 	// Init dolt backend.
 	initOut, initErr := runBDExecAllowErrorWithEnv(t, tmpDir, env, "init", "--backend", "dolt", "--prefix", "test", "--quiet")
@@ -57,7 +57,7 @@ func TestDoltDoctor_NoSQLiteWarningsAfterInitAndCreate(t *testing.T) {
 	// Also include stderr-like output if doctor wrote it to stdout in some modes.
 	// (CombinedOutput already captures both.)
 	for _, forbidden := range []string{
-		"No beads.db found",
+		"No bd.db found",
 		"Unable to read database version",
 		"Legacy database",
 	} {
@@ -74,7 +74,7 @@ func TestDoltDoctor_NoSQLiteWarningsAfterInitAndCreate(t *testing.T) {
 	}
 
 	// Regression check: dolt init must NOT create a SQLite database file.
-	if _, err := os.Stat(filepath.Join(tmpDir, ".beads", "beads.db")); err == nil {
-		t.Fatalf("unexpected sqlite database created in dolt mode: %s", filepath.Join(tmpDir, ".beads", "beads.db"))
+	if _, err := os.Stat(filepath.Join(tmpDir, ".bd", "bd.db")); err == nil {
+		t.Fatalf("unexpected sqlite database created in dolt mode: %s", filepath.Join(tmpDir, ".bd", "bd.db"))
 	}
 }

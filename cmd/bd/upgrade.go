@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/beads/internal/beads"
-	"github.com/steveyegge/beads/internal/configfile"
+	"github.com/steveyegge/bd/internal/project"
+	"github.com/steveyegge/bd/internal/configfile"
 )
 
 var upgradeCmd = &cobra.Command{
@@ -155,13 +155,13 @@ Examples:
   bd upgrade ack
   bd upgrade ack --json`,
 	Run: func(cmd *cobra.Command, args []string) {
-		beadsDir := beads.FindBeadsDir()
-		if beadsDir == "" {
+		bdDir := project.FindBdDir()
+		if bdDir == "" {
 			fmt.Println("Error: No .beads directory found")
 			return
 		}
 
-		cfg, err := configfile.Load(beadsDir)
+		cfg, err := configfile.Load(bdDir)
 		if err != nil {
 			fmt.Printf("Error loading metadata.json: %v\n", err)
 			return
@@ -173,7 +173,7 @@ Examples:
 		lastSeenVersion := cfg.LastBdVersion
 		cfg.LastBdVersion = Version
 
-		if err := cfg.Save(beadsDir); err != nil {
+		if err := cfg.Save(bdDir); err != nil {
 			fmt.Printf("Error saving metadata.json: %v\n", err)
 			return
 		}

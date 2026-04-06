@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/steveyegge/beads/internal/configfile"
+	"github.com/steveyegge/bd/internal/configfile"
 )
 
 func buildBDUnderTest(t *testing.T) string {
@@ -40,7 +40,7 @@ func initGitRepo(t *testing.T, dir string) {
 	if out, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("git init %s: %v\n%s", dir, err, out)
 	}
-	writeFile(t, filepath.Join(dir, ".gitignore"), []byte(".beads/.env\n"))
+	writeFile(t, filepath.Join(dir, ".gitignore"), []byte(".bd/.env\n"))
 	commitCmd := exec.Command("git", "add", ".")
 	commitCmd.Dir = dir
 	_, _ = commitCmd.CombinedOutput()
@@ -72,13 +72,13 @@ func writeServerRepo(t *testing.T, repoDir, database, host, syncRemote string, p
 func writeServerRepoWithDataDir(t *testing.T, repoDir, database, host, syncRemote string, port int, doltDataDir string) string {
 	t.Helper()
 	initGitRepo(t, repoDir)
-	beadsDir := filepath.Join(repoDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0o755); err != nil {
+	bdDir := filepath.Join(repoDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0o755); err != nil {
 		t.Fatalf("mkdir beads dir: %v", err)
 	}
-	doltDir := filepath.Join(beadsDir, "dolt")
+	doltDir := filepath.Join(bdDir, "dolt")
 	if doltDataDir != "" {
-		doltDir = filepath.Join(beadsDir, doltDataDir)
+		doltDir = filepath.Join(bdDir, doltDataDir)
 	}
 	if err := os.MkdirAll(doltDir, 0o755); err != nil {
 		t.Fatalf("mkdir dolt dir: %v", err)
@@ -92,22 +92,22 @@ func writeServerRepoWithDataDir(t *testing.T, repoDir, database, host, syncRemot
 	if doltDataDir != "" {
 		cfg.DoltDataDir = doltDataDir
 	}
-	if err := cfg.Save(beadsDir); err != nil {
+	if err := cfg.Save(bdDir); err != nil {
 		t.Fatalf("save metadata: %v", err)
 	}
-	writeFile(t, filepath.Join(beadsDir, "dolt-server.port"), []byte(strconv.Itoa(port)))
-	writeFile(t, filepath.Join(beadsDir, "config.yaml"), []byte("sync:\n  git-remote: "+syncRemote+"\n"))
-	writeFile(t, filepath.Join(beadsDir, ".env"), []byte("BEADS_DOLT_SERVER_HOST="+host+"\n"))
-	return beadsDir
+	writeFile(t, filepath.Join(bdDir, "dolt-server.port"), []byte(strconv.Itoa(port)))
+	writeFile(t, filepath.Join(bdDir, "config.yaml"), []byte("sync:\n  git-remote: "+syncRemote+"\n"))
+	writeFile(t, filepath.Join(bdDir, ".env"), []byte("BD_DOLT_SERVER_HOST="+host+"\n"))
+	return bdDir
 }
 
-func writeProjectConfig(t *testing.T, beadsDir string, syncRemote string, port int, shared bool) {
+func writeProjectConfig(t *testing.T, bdDir string, syncRemote string, port int, shared bool) {
 	t.Helper()
 	sharedText := "false"
 	if shared {
 		sharedText = "true"
 	}
-	writeFile(t, filepath.Join(beadsDir, "config.yaml"), []byte(
+	writeFile(t, filepath.Join(bdDir, "config.yaml"), []byte(
 		"sync:\n  git-remote: "+syncRemote+"\n"+
 			"dolt:\n  port: "+strconv.Itoa(port)+"\n  shared-server: "+sharedText+"\n",
 	))
@@ -144,13 +144,13 @@ func runBDCommand(t *testing.T, binPath, dir string, extraEnv []string, args ...
 	cmd.Env = append(os.Environ(),
 		"HOME="+t.TempDir(),
 		"XDG_CONFIG_HOME="+t.TempDir(),
-		"BEADS_TEST_IGNORE_REPO_CONFIG=1",
-		"BEADS_DIR=",
-		"BEADS_DB=",
-		"BEADS_DOLT_SERVER_DATABASE=",
-		"BEADS_DOLT_SERVER_HOST=",
-		"BEADS_DOLT_SERVER_PORT=",
-		"BEADS_DOLT_PORT=",
+		"BD_TEST_IGNORE_REPO_CONFIG=1",
+		"BD_DIR=",
+		"BD_DB=",
+		"BD_DOLT_SERVER_DATABASE=",
+		"BD_DOLT_SERVER_HOST=",
+		"BD_DOLT_SERVER_PORT=",
+		"BD_DOLT_PORT=",
 	)
 	cmd.Env = append(cmd.Env, extraEnv...)
 	out, err := cmd.CombinedOutput()
@@ -217,7 +217,7 @@ func TestContextUsesBEADSDBForNoDBCommand(t *testing.T) {
 	writeServerRepo(t, repoA, "repo_a_db", "10.0.0.1", "origin-a", 3311)
 	beadsDirB := writeServerRepo(t, repoB, "repo_b_db", "10.0.0.2", "origin-b", 3312)
 
-	out := runBDCommand(t, binPath, repoA, []string{"BEADS_DB=" + filepath.Join(beadsDirB, "dolt")}, "context", "--json")
+	out := runBDCommand(t, binPath, repoA, []string{"BD_DB=" + filepath.Join(beadsDirB, "dolt")}, "context", "--json")
 
 	var got map[string]any
 	decodeJSONOutput(t, out, &got)
@@ -237,7 +237,7 @@ func TestContextUsesBEADSDBDirectoryForNoDBCommand(t *testing.T) {
 	writeServerRepo(t, repoA, "repo_a_db", "10.0.0.1", "origin-a", 3311)
 	beadsDirB := writeServerRepo(t, repoB, "repo_b_db", "10.0.0.2", "origin-b", 3312)
 
-	out := runBDCommand(t, binPath, repoA, []string{"BEADS_DB=" + beadsDirB}, "context", "--json")
+	out := runBDCommand(t, binPath, repoA, []string{"BD_DB=" + beadsDirB}, "context", "--json")
 
 	var got map[string]any
 	decodeJSONOutput(t, out, &got)
@@ -282,7 +282,7 @@ func TestContextExplicitDBFlagOverridesBEADSDBForNoDBCommand(t *testing.T) {
 	beadsDirB := writeServerRepo(t, repoB, "repo_b_db", "10.0.0.2", "origin-b", 3312)
 	beadsDirC := writeServerRepo(t, repoC, "repo_c_db", "10.0.0.3", "origin-c", 3313)
 
-	out := runBDCommand(t, binPath, repoA, []string{"BEADS_DB=" + filepath.Join(beadsDirC, "dolt")}, "--db", filepath.Join(beadsDirB, "dolt"), "context", "--json")
+	out := runBDCommand(t, binPath, repoA, []string{"BD_DB=" + filepath.Join(beadsDirC, "dolt")}, "--db", filepath.Join(beadsDirB, "dolt"), "context", "--json")
 
 	var got map[string]any
 	decodeJSONOutput(t, out, &got)
@@ -304,7 +304,7 @@ func TestContextBEADSDBOverridesBDDBForNoDBCommand(t *testing.T) {
 	beadsDirB := writeServerRepo(t, repoB, "repo_b_db", "10.0.0.2", "origin-b", 3312)
 	beadsDirC := writeServerRepo(t, repoC, "repo_c_db", "10.0.0.3", "origin-c", 3313)
 
-	out := runBDCommand(t, binPath, repoA, []string{"BEADS_DB=" + filepath.Join(beadsDirB, "dolt"), "BD_DB=" + filepath.Join(beadsDirC, "dolt")}, "context", "--json")
+	out := runBDCommand(t, binPath, repoA, []string{"BD_DB=" + filepath.Join(beadsDirB, "dolt"), "BD_DB=" + filepath.Join(beadsDirC, "dolt")}, "context", "--json")
 
 	var got map[string]any
 	decodeJSONOutput(t, out, &got)
@@ -353,7 +353,7 @@ func TestContextPreservesSourceDatabaseAcrossRedirectForNoDBCommand(t *testing.T
 	}
 	writeFile(t, filepath.Join(sharedBeadsDir, "dolt-server.port"), []byte("3399"))
 	writeFile(t, filepath.Join(sharedBeadsDir, "config.yaml"), []byte("sync:\n  git-remote: shared-origin\n"))
-	writeFile(t, filepath.Join(sharedBeadsDir, ".env"), []byte("BEADS_DOLT_SERVER_HOST=10.0.0.9\n"))
+	writeFile(t, filepath.Join(sharedBeadsDir, ".env"), []byte("BD_DOLT_SERVER_HOST=10.0.0.9\n"))
 
 	out := runBDCommand(t, binPath, repoA, nil, "--db", filepath.Join(beadsDirB, "dolt"), "context", "--json")
 
@@ -406,7 +406,7 @@ func TestContextPreservesShellEnvPrecedenceForNoDBCommand(t *testing.T) {
 	writeServerRepo(t, repoA, "repo_a_db", "10.0.0.1", "origin-a", 3311)
 	beadsDirB := writeServerRepo(t, repoB, "repo_b_db", "10.0.0.2", "origin-b", 3312)
 
-	out := runBDCommand(t, binPath, repoA, []string{"BEADS_DOLT_SERVER_HOST=9.9.9.9"}, "--db", filepath.Join(beadsDirB, "dolt"), "context", "--json")
+	out := runBDCommand(t, binPath, repoA, []string{"BD_DOLT_SERVER_HOST=9.9.9.9"}, "--db", filepath.Join(beadsDirB, "dolt"), "context", "--json")
 
 	var got map[string]any
 	decodeJSONOutput(t, out, &got)
@@ -426,7 +426,7 @@ func TestDoltShowUsesBEADSDBForNoDBCommand(t *testing.T) {
 	writeServerRepo(t, repoA, "repo_a_db", "10.0.0.1", "origin-a", 3311)
 	beadsDirB := writeServerRepo(t, repoB, "repo_b_db", "10.0.0.2", "origin-b", 3312)
 
-	out := runBDCommand(t, binPath, repoA, []string{"BEADS_DB=" + filepath.Join(beadsDirB, "dolt")}, "dolt", "show", "--json")
+	out := runBDCommand(t, binPath, repoA, []string{"BD_DB=" + filepath.Join(beadsDirB, "dolt")}, "dolt", "show", "--json")
 
 	var got map[string]any
 	decodeJSONOutput(t, out, &got)

@@ -5,7 +5,7 @@
 // Go-based extensions that want to use bd's storage layer programmatically.
 //
 // For detailed guidance on extending bd, see EXTENDING.md.
-package beads
+package project
 
 import (
 	"context"
@@ -18,23 +18,23 @@ import (
 	"strings"
 	"time"
 
-	"github.com/steveyegge/beads/internal/configfile"
-	"github.com/steveyegge/beads/internal/git"
-	"github.com/steveyegge/beads/internal/storage"
-	"github.com/steveyegge/beads/internal/utils"
+	"github.com/steveyegge/bd/internal/configfile"
+	"github.com/steveyegge/bd/internal/git"
+	"github.com/steveyegge/bd/internal/storage"
+	"github.com/steveyegge/bd/internal/utils"
 )
 
 // CanonicalDatabaseName is the required database filename for all beads repositories
-const CanonicalDatabaseName = "beads.db"
+const CanonicalDatabaseName = "bd.db"
 
 // RedirectFileName is the name of the file that redirects to another .beads directory
 const RedirectFileName = "redirect"
 
-// SourceDatabaseInfo contains the dolt_database name from a source .beads/metadata.json,
+// SourceDatabaseInfo contains the dolt_database name from a source .bd/metadata.json,
 // preserved across a redirect so that the source directory's database identity is not
 // lost when the redirect target has a different dolt_database.
 //
-// When a .beads/redirect points to a shared .beads directory that serves multiple
+// When a .bd/redirect points to a shared .beads directory that serves multiple
 // databases, the source's metadata.json may specify a different dolt_database than
 // the target's. This struct captures the source database name so callers can
 // restore it after redirect resolution.
@@ -51,26 +51,26 @@ type SourceDatabaseInfo struct {
 	SourceDatabase string
 }
 
-// ResolveRedirect follows a .beads/redirect file and captures the source directory's
+// ResolveRedirect follows a .bd/redirect file and captures the source directory's
 // dolt_database from metadata.json BEFORE following the redirect. This preserves
 // the source database identity across redirects.
 //
-// The env var BEADS_DOLT_SERVER_DATABASE still takes highest priority (handled by
+// The env var BD_DOLT_SERVER_DATABASE still takes highest priority (handled by
 // GetDoltDatabase() in callers). This function only captures the raw config field
 // so callers can use it as an override when the env var is not set.
 //
 // Returns SourceDatabaseInfo with WasRedirected=true if a redirect was followed,
 // and SourceDatabase set to the source's dolt_database (if any).
-func ResolveRedirect(beadsDir string) SourceDatabaseInfo {
+func ResolveRedirect(bdDir string) SourceDatabaseInfo {
 	info := SourceDatabaseInfo{
-		SourceDir: beadsDir,
-		TargetDir: beadsDir,
+		SourceDir: bdDir,
+		TargetDir: bdDir,
 	}
 
 	// Read source metadata.json directly (NOT via configfile.Load which may trigger
 	// Dolt connections or recursive FollowRedirect calls causing deadlocks).
 	// We only need the raw dolt_database field.
-	metadataPath := filepath.Join(beadsDir, "metadata.json")
+	metadataPath := filepath.Join(bdDir, "metadata.json")
 	if data, err := os.ReadFile(metadataPath); err == nil {
 		var raw struct {
 			DoltDatabase string `json:"dolt_database"`
@@ -81,8 +81,8 @@ func ResolveRedirect(beadsDir string) SourceDatabaseInfo {
 	}
 
 	// Follow redirect
-	resolved := FollowRedirect(beadsDir)
-	if resolved != beadsDir {
+	resolved := FollowRedirect(bdDir)
+	if resolved != bdDir {
 		info.WasRedirected = true
 		info.TargetDir = resolved
 	}
@@ -100,12 +100,12 @@ func ResolveRedirect(beadsDir string) SourceDatabaseInfo {
 //
 // Redirect chains are not followed - only one level of redirection is supported.
 // This prevents infinite loops and keeps the behavior predictable.
-func FollowRedirect(beadsDir string) string {
-	redirectFile := filepath.Join(beadsDir, RedirectFileName)
+func FollowRedirect(bdDir string) string {
+	redirectFile := filepath.Join(bdDir, RedirectFileName)
 	data, err := os.ReadFile(redirectFile)
 	if err != nil {
 		// No redirect file or can't read it - use original path
-		return beadsDir
+		return bdDir
 	}
 
 	// Parse the redirect target (trim whitespace and handle comments)
@@ -123,12 +123,12 @@ func FollowRedirect(beadsDir string) string {
 	}
 
 	if target == "" {
-		return beadsDir
+		return bdDir
 	}
 
 	// Resolve relative paths from the parent of the .beads directory (project root)
 	if !filepath.IsAbs(target) {
-		projectRoot := filepath.Dir(beadsDir)
+		projectRoot := filepath.Dir(bdDir)
 		target = filepath.Join(projectRoot, target)
 	}
 
@@ -141,7 +141,7 @@ func FollowRedirect(beadsDir string) string {
 	if err != nil || !info.IsDir() {
 		// Invalid redirect target - fall back to original
 		fmt.Fprintf(os.Stderr, "Warning: redirect target does not exist or is not a directory: %s\n", target)
-		return beadsDir
+		return bdDir
 	}
 
 	// Prevent redirect chains - don't follow if target also has a redirect
@@ -151,14 +151,14 @@ func FollowRedirect(beadsDir string) string {
 	}
 
 	if os.Getenv("BD_DEBUG_ROUTING") != "" {
-		fmt.Fprintf(os.Stderr, "[routing] Followed redirect from %s -> %s\n", beadsDir, target)
+		fmt.Fprintf(os.Stderr, "[routing] Followed redirect from %s -> %s\n", bdDir, target)
 	}
 
 	return target
 }
 
-func canonicalizeBeadsDirPath(beadsDir string) string {
-	canonical := utils.CanonicalizePath(beadsDir)
+func canonicalizeBeadsDirPath(bdDir string) string {
+	canonical := utils.CanonicalizePath(bdDir)
 	if stable := preferStableBranchWorktreeBeadsDir(canonical); stable != "" {
 		return stable
 	}
@@ -173,12 +173,12 @@ type worktreeInfo struct {
 	Bare     bool
 }
 
-func preferStableBranchWorktreeBeadsDir(beadsDir string) string {
-	if filepath.Base(beadsDir) != ".beads" {
+func preferStableBranchWorktreeBeadsDir(bdDir string) string {
+	if filepath.Base(bdDir) != ".bd" {
 		return ""
 	}
 
-	repoRoot := filepath.Dir(beadsDir)
+	repoRoot := filepath.Dir(bdDir)
 	if !isDetachedCommitWorktreePath(repoRoot) {
 		return ""
 	}
@@ -222,7 +222,7 @@ func preferStableBranchWorktreeBeadsDir(beadsDir string) string {
 		return candidates[i].Path < candidates[j].Path
 	})
 
-	stableBeadsDir := filepath.Join(candidates[0].Path, ".beads")
+	stableBeadsDir := filepath.Join(candidates[0].Path, ".bd")
 	if info, err := os.Stat(stableBeadsDir); err == nil && info.IsDir() {
 		return utils.CanonicalizePath(stableBeadsDir)
 	}
@@ -296,24 +296,24 @@ type RedirectInfo struct {
 }
 
 // GetRedirectInfo checks if the current beads directory is redirected.
-// It searches for the local .beads/ directory and checks if it contains a redirect file.
+// It searches for the local .bd/ directory and checks if it contains a redirect file.
 // Returns RedirectInfo with IsRedirected=true if a redirect is active.
 //
 // bd-wayc3: This function now also checks the git repo's local .beads directory even when
-// BEADS_DIR is set. This handles the case where BEADS_DIR is pre-set to the redirect target
+// BD_DIR is set. This handles the case where BD_DIR is pre-set to the redirect target
 // (e.g., by shell environment or tooling), but we still need to detect that a redirect exists.
 func GetRedirectInfo() RedirectInfo {
 	// First, always check the git repo's local .beads directory for redirects
-	// This handles the case where BEADS_DIR is pre-set to the redirect target
-	if localBeadsDir := findLocalBdsDirInRepo(); localBeadsDir != "" {
-		if info := checkRedirectInDir(localBeadsDir); info.IsRedirected {
+	// This handles the case where BD_DIR is pre-set to the redirect target
+	if localBdDir := findLocalBdsDirInRepo(); localBdDir != "" {
+		if info := checkRedirectInDir(localBdDir); info.IsRedirected {
 			return info
 		}
 	}
 
 	// Fall back to original logic for non-git-repo cases
-	if localBeadsDir := findLocalBeadsDir(); localBeadsDir != "" {
-		return checkRedirectInDir(localBeadsDir)
+	if localBdDir := findLocalBeadsDir(); localBdDir != "" {
+		return checkRedirectInDir(localBdDir)
 	}
 
 	return RedirectInfo{}
@@ -321,19 +321,19 @@ func GetRedirectInfo() RedirectInfo {
 
 // checkRedirectInDir checks if a beads directory has a redirect file and returns redirect info.
 // Returns RedirectInfo with IsRedirected=true if a valid redirect exists.
-func checkRedirectInDir(beadsDir string) RedirectInfo {
-	info := RedirectInfo{LocalDir: beadsDir}
+func checkRedirectInDir(bdDir string) RedirectInfo {
+	info := RedirectInfo{LocalDir: bdDir}
 
 	// Check if this directory has a redirect file
-	redirectFile := filepath.Join(beadsDir, RedirectFileName)
+	redirectFile := filepath.Join(bdDir, RedirectFileName)
 	if _, err := os.Stat(redirectFile); err != nil {
 		// No redirect file
 		return info
 	}
 
 	// There's a redirect - find the target
-	targetDir := FollowRedirect(beadsDir)
-	if targetDir == beadsDir {
+	targetDir := FollowRedirect(bdDir)
+	if targetDir == bdDir {
 		// Redirect file exists but failed to resolve (invalid target)
 		return info
 	}
@@ -344,8 +344,8 @@ func checkRedirectInDir(beadsDir string) RedirectInfo {
 }
 
 // findLocalBdsDirInRepo finds the .beads directory relative to the git repo root.
-// This ignores BEADS_DIR to find the "true local" .beads for redirect detection.
-// bd-wayc3: Added to detect redirects even when BEADS_DIR is pre-set.
+// This ignores BD_DIR to find the "true local" .beads for redirect detection.
+// bd-wayc3: Added to detect redirects even when BD_DIR is pre-set.
 func findLocalBdsDirInRepo() string {
 	// Get git repo root
 	repoRoot := git.GetRepoRoot()
@@ -353,9 +353,9 @@ func findLocalBdsDirInRepo() string {
 		return ""
 	}
 
-	beadsDir := filepath.Join(repoRoot, ".beads")
-	if info, err := os.Stat(beadsDir); err == nil && info.IsDir() {
-		return beadsDir
+	bdDir := filepath.Join(repoRoot, ".bd")
+	if info, err := os.Stat(bdDir); err == nil && info.IsDir() {
+		return bdDir
 	}
 
 	return ""
@@ -364,9 +364,9 @@ func findLocalBdsDirInRepo() string {
 // findLocalBeadsDir finds the local .beads directory without following redirects.
 // This is used to detect if a redirect is configured.
 func findLocalBeadsDir() string {
-	// Check BEADS_DIR environment variable first
-	if beadsDir := os.Getenv("BEADS_DIR"); beadsDir != "" {
-		return canonicalizeBeadsDirPath(beadsDir)
+	// Check BD_DIR environment variable first
+	if bdDir := os.Getenv("BD_DIR"); bdDir != "" {
+		return canonicalizeBeadsDirPath(bdDir)
 	}
 
 	// For worktrees, check worktree-local redirect first (per-worktree override).
@@ -374,7 +374,7 @@ func findLocalBeadsDir() string {
 	// findLocalBeadsDir doesn't follow redirects — callers use FollowRedirect.
 	if git.IsWorktree() {
 		if root := git.GetRepoRoot(); root != "" {
-			wt := filepath.Join(root, ".beads")
+			wt := filepath.Join(root, ".bd")
 			// Check for redirect file first
 			if _, err := os.Stat(filepath.Join(wt, "redirect")); err == nil {
 				return wt
@@ -388,9 +388,9 @@ func findLocalBeadsDir() string {
 		}
 	}
 
-	if beadsDir := GetWorktreeFallbackBeadsDir(); beadsDir != "" {
-		if info, err := os.Stat(beadsDir); err == nil && info.IsDir() {
-			return beadsDir
+	if bdDir := GetWorktreeFallbackBdDir(); bdDir != "" {
+		if info, err := os.Stat(bdDir); err == nil && info.IsDir() {
+			return bdDir
 		}
 	}
 
@@ -401,9 +401,9 @@ func findLocalBeadsDir() string {
 	}
 
 	for dir := cwd; dir != "/" && dir != "."; {
-		beadsDir := filepath.Join(dir, ".beads")
-		if info, err := os.Stat(beadsDir); err == nil && info.IsDir() {
-			return beadsDir
+		bdDir := filepath.Join(dir, ".bd")
+		if info, err := os.Stat(bdDir); err == nil && info.IsDir() {
+			return bdDir
 		}
 
 		// Move up one directory
@@ -425,33 +425,33 @@ func findLocalBeadsDir() string {
 // directory is required. For embedded mode, checks both the embeddeddolt/
 // directory (where the embedded engine stores data) and the legacy dolt/ path.
 // Returns empty string if no database is found.
-func findDatabaseInBeadsDir(beadsDir string, _ bool) string {
+func findDatabaseInBeadsDir(bdDir string, _ bool) string {
 	// Check for metadata.json first (single source of truth)
-	if cfg, err := configfile.Load(beadsDir); err == nil && cfg != nil {
+	if cfg, err := configfile.Load(bdDir); err == nil && cfg != nil {
 		// For Dolt server mode, database is on the server - no local directory required
 		if cfg.IsDoltServerMode() {
-			return cfg.DatabasePath(beadsDir)
+			return cfg.DatabasePath(bdDir)
 		}
-		// For embedded Dolt, the engine stores data under .beads/embeddeddolt/,
-		// not .beads/dolt/. Check the actual embedded data directory first.
-		embeddedPath := filepath.Join(beadsDir, "embeddeddolt")
+		// For embedded Dolt, the engine stores data under .bd/embeddeddolt/,
+		// not .bd/dolt/. Check the actual embedded data directory first.
+		embeddedPath := filepath.Join(bdDir, "embeddeddolt")
 		if info, err := os.Stat(embeddedPath); err == nil && info.IsDir() {
 			return embeddedPath
 		}
-		// Fall back to configured database path (e.g. .beads/dolt/ for
+		// Fall back to configured database path (e.g. .bd/dolt/ for
 		// server-mode installs or legacy setups that pre-date embeddeddolt).
-		doltPath := cfg.DatabasePath(beadsDir)
+		doltPath := cfg.DatabasePath(bdDir)
 		if info, err := os.Stat(doltPath); err == nil && info.IsDir() {
 			return doltPath
 		}
 	}
 
 	// Fall back: check if embeddeddolt or dolt directory exists without metadata.json
-	embeddedPath := filepath.Join(beadsDir, "embeddeddolt")
+	embeddedPath := filepath.Join(bdDir, "embeddeddolt")
 	if info, err := os.Stat(embeddedPath); err == nil && info.IsDir() {
 		return embeddedPath
 	}
-	doltPath := filepath.Join(beadsDir, "dolt")
+	doltPath := filepath.Join(bdDir, "dolt")
 	if info, err := os.Stat(doltPath); err == nil && info.IsDir() {
 		return doltPath
 	}
@@ -463,37 +463,37 @@ func findDatabaseInBeadsDir(beadsDir string, _ bool) string {
 type Transaction = storage.Transaction
 
 // FindDatabasePath discovers the bd database path using bd's standard search order:
-//  1. $BEADS_DIR environment variable (points to .beads directory)
-//  2. $BEADS_DB environment variable (points directly to database file, deprecated)
-//  3. .beads/*.db in current directory or ancestors
+//  1. $BD_DIR environment variable (points to .beads directory)
+//  2. $BD_DB environment variable (points directly to database file, deprecated)
+//  3. .bd/*.db in current directory or ancestors
 //
-// Redirect files are supported: if a .beads/redirect file exists, its contents
+// Redirect files are supported: if a .bd/redirect file exists, its contents
 // are used as the actual .beads directory path.
 //
 // Returns empty string if no database is found.
 func FindDatabasePath() string {
-	// 1. Check BEADS_DIR environment variable (preferred)
-	if beadsDir := os.Getenv("BEADS_DIR"); beadsDir != "" {
+	// 1. Check BD_DIR environment variable (preferred)
+	if bdDir := os.Getenv("BD_DIR"); bdDir != "" {
 		// Canonicalize the path to prevent nested .beads directories
-		absBeadsDir := canonicalizeBeadsDirPath(beadsDir)
+		absBeadsDir := canonicalizeBeadsDirPath(bdDir)
 
 		// Follow redirect if present
 		absBeadsDir = FollowRedirect(absBeadsDir)
 
-		// Use helper to find database (no warnings for BEADS_DIR - user explicitly set it)
+		// Use helper to find database (no warnings for BD_DIR - user explicitly set it)
 		if dbPath := findDatabaseInBeadsDir(absBeadsDir, false); dbPath != "" {
 			return dbPath
 		}
 
-		// BEADS_DIR is set but no database found - this is OK for --no-db mode
+		// BD_DIR is set but no database found - this is OK for --no-db mode
 		// Return empty string and let the caller handle it
 	}
 
-	// 2. Check BEADS_DB environment variable (deprecated but still supported)
-	if envDB := os.Getenv("BEADS_DB"); envDB != "" {
+	// 2. Check BD_DB environment variable (deprecated but still supported)
+	if envDB := os.Getenv("BD_DB"); envDB != "" {
 		absDB := utils.CanonicalizePath(envDB)
-		// If BEADS_DB points to a directory rather than a file, treat it
-		// like BEADS_DIR to avoid filepath.Dir() resolving one level too
+		// If BD_DB points to a directory rather than a file, treat it
+		// like BD_DIR to avoid filepath.Dir() resolving one level too
 		// high in the caller (cmd/bd/main.go). See GH#2548.
 		if info, err := os.Stat(absDB); err == nil && info.IsDir() {
 			if dbPath := findDatabaseInBeadsDir(absDB, false); dbPath != "" {
@@ -503,12 +503,12 @@ func FindDatabasePath() string {
 		return absDB
 	}
 
-	// 3. Search for .beads/*.db in current directory and ancestors
+	// 3. Search for .bd/*.db in current directory and ancestors
 	if foundDB := findDatabaseInTree(); foundDB != "" {
 		return utils.CanonicalizePath(foundDB)
 	}
 
-	// No fallback to ~/.beads - return empty string
+	// No fallback to ~/.bd - return empty string
 	return ""
 }
 
@@ -519,26 +519,26 @@ func FindDatabasePath() string {
 // - A dolt/ directory (Dolt database)
 //
 // Returns false for directories that only contain legacy registry files.
-// This prevents FindBeadsDir from returning ~/.beads/ which only has registry.json.
-func hasBeadsProjectFiles(beadsDir string) bool {
+// This prevents FindBdDir from returning ~/.bd/ which only has registry.json.
+func hasBeadsProjectFiles(bdDir string) bool {
 	// Check for project configuration files
-	if _, err := os.Stat(filepath.Join(beadsDir, "metadata.json")); err == nil {
+	if _, err := os.Stat(filepath.Join(bdDir, "metadata.json")); err == nil {
 		return true
 	}
-	if _, err := os.Stat(filepath.Join(beadsDir, "config.yaml")); err == nil {
+	if _, err := os.Stat(filepath.Join(bdDir, "config.yaml")); err == nil {
 		return true
 	}
 
 	// Check for Dolt database directory (server mode uses dolt/, embedded uses embeddeddolt/)
-	if info, err := os.Stat(filepath.Join(beadsDir, "dolt")); err == nil && info.IsDir() {
+	if info, err := os.Stat(filepath.Join(bdDir, "dolt")); err == nil && info.IsDir() {
 		return true
 	}
-	if info, err := os.Stat(filepath.Join(beadsDir, "embeddeddolt")); err == nil && info.IsDir() {
+	if info, err := os.Stat(filepath.Join(bdDir, "embeddeddolt")); err == nil && info.IsDir() {
 		return true
 	}
 
 	// Check for database files (excluding backups and vc.db)
-	dbMatches, _ := filepath.Glob(filepath.Join(beadsDir, "*.db"))
+	dbMatches, _ := filepath.Glob(filepath.Join(bdDir, "*.db"))
 	for _, match := range dbMatches {
 		baseName := filepath.Base(match)
 		if !strings.Contains(baseName, ".backup") && baseName != "vc.db" {
@@ -549,19 +549,19 @@ func hasBeadsProjectFiles(beadsDir string) bool {
 	return false
 }
 
-// FindBeadsDir finds the .beads/ directory in the current directory tree.
+// FindBdDir finds the .bd/ directory in the current directory tree.
 // Returns empty string if not found.
 // Stops at the git repository root to avoid finding unrelated directories.
 // Validates that the directory contains actual project files.
-// Redirect files are supported: if a .beads/redirect file exists, its contents
+// Redirect files are supported: if a .bd/redirect file exists, its contents
 // are used as the actual .beads directory path.
 // For worktrees, checks in order: worktree redirect, worktree's own .beads
 // (separate-DB mode), then main repository's .beads (shared-DB fallback).
 // This is useful for commands that need to detect beads projects without requiring a database.
-func FindBeadsDir() string {
-	// 1. Check BEADS_DIR environment variable (preferred)
-	if beadsDir := os.Getenv("BEADS_DIR"); beadsDir != "" {
-		absBeadsDir := canonicalizeBeadsDirPath(beadsDir)
+func FindBdDir() string {
+	// 1. Check BD_DIR environment variable (preferred)
+	if bdDir := os.Getenv("BD_DIR"); bdDir != "" {
+		absBeadsDir := canonicalizeBeadsDirPath(bdDir)
 
 		// Follow redirect if present
 		absBeadsDir = FollowRedirect(absBeadsDir)
@@ -574,12 +574,12 @@ func FindBeadsDir() string {
 		}
 	}
 
-	// 1b. Check cwd for .beads/ before git-worktree resolution.
-	// This handles rigs (subdirectories with their own .beads/) inside a
-	// git repo that also has .beads/. Without this, step 2b grabs the
-	// git root's .beads/ and the rig's local one is never found.
+	// 1b. Check cwd for .bd/ before git-worktree resolution.
+	// This handles rigs (subdirectories with their own .bd/) inside a
+	// git repo that also has .bd/. Without this, step 2b grabs the
+	// git root's .bd/ and the rig's local one is never found.
 	if cwd, err := os.Getwd(); err == nil {
-		cwdBeadsDir := filepath.Join(cwd, ".beads")
+		cwdBeadsDir := filepath.Join(cwd, ".bd")
 		if info, err := os.Stat(cwdBeadsDir); err == nil && info.IsDir() {
 			cwdBeadsDir = FollowRedirect(cwdBeadsDir)
 			if hasBeadsProjectFiles(cwdBeadsDir) {
@@ -602,7 +602,7 @@ func FindBeadsDir() string {
 
 		// 2b. Worktree's own .beads (separate-DB mode, no redirect)
 		if worktreeRoot := git.GetRepoRoot(); worktreeRoot != "" {
-			worktreeBeadsDir := filepath.Join(worktreeRoot, ".beads")
+			worktreeBeadsDir := filepath.Join(worktreeRoot, ".bd")
 			if info, err := os.Stat(worktreeBeadsDir); err == nil && info.IsDir() {
 				if hasBeadsProjectFiles(worktreeBeadsDir) {
 					return worktreeBeadsDir
@@ -611,7 +611,7 @@ func FindBeadsDir() string {
 		}
 
 		// 2c. Fall back to the canonical shared .beads for this worktree.
-		if fallbackBeadsDir := GetWorktreeFallbackBeadsDir(); fallbackBeadsDir != "" {
+		if fallbackBeadsDir := GetWorktreeFallbackBdDir(); fallbackBeadsDir != "" {
 			if info, err := os.Stat(fallbackBeadsDir); err == nil && info.IsDir() {
 				fallbackBeadsDir = FollowRedirect(fallbackBeadsDir)
 				if hasBeadsProjectFiles(fallbackBeadsDir) {
@@ -627,7 +627,7 @@ func FindBeadsDir() string {
 		}
 	}
 
-	// 3. Search for .beads/ in current directory and ancestors
+	// 3. Search for .bd/ in current directory and ancestors
 	cwd, err := os.Getwd()
 	if err != nil {
 		return ""
@@ -642,14 +642,14 @@ func FindBeadsDir() string {
 	}
 
 	for dir := cwd; dir != "/" && dir != "."; {
-		beadsDir := filepath.Join(dir, ".beads")
-		if info, err := os.Stat(beadsDir); err == nil && info.IsDir() {
+		bdDir := filepath.Join(dir, ".bd")
+		if info, err := os.Stat(bdDir); err == nil && info.IsDir() {
 			// Follow redirect if present
-			beadsDir = FollowRedirect(beadsDir)
+			bdDir = FollowRedirect(bdDir)
 
 			// Validate directory contains actual project files
-			if hasBeadsProjectFiles(beadsDir) {
-				return beadsDir
+			if hasBeadsProjectFiles(bdDir) {
+				return bdDir
 			}
 		}
 
@@ -681,7 +681,7 @@ func FindBeadsDir() string {
 // DatabaseInfo contains information about a discovered beads database
 type DatabaseInfo struct {
 	Path       string // Full path to the .db file
-	BeadsDir   string // Parent .beads directory
+	BdDir   string // Parent .beads directory
 	IssueCount int    // Number of issues (-1 if unknown)
 }
 
@@ -695,9 +695,9 @@ func findGitRoot() string {
 	return git.GetRepoRoot()
 }
 
-// GetWorktreeFallbackBeadsDir returns the canonical shared .beads location for
+// GetWorktreeFallbackBdDir returns the canonical shared .beads location for
 // the current git worktree when no local redirect or worktree-local .beads is present.
-func GetWorktreeFallbackBeadsDir() string {
+func GetWorktreeFallbackBdDir() string {
 	if !git.IsWorktree() {
 		return ""
 	}
@@ -709,16 +709,16 @@ func GetWorktreeFallbackBeadsDir() string {
 
 	commonDir = utils.CanonicalizePath(commonDir)
 	if filepath.Base(commonDir) == ".git" {
-		return filepath.Join(filepath.Dir(commonDir), ".beads")
+		return filepath.Join(filepath.Dir(commonDir), ".bd")
 	}
 
-	return filepath.Join(commonDir, ".beads")
+	return filepath.Join(commonDir, ".bd")
 }
 
 // worktreeRedirectTarget returns the resolved redirect target for the current
-// worktree's .beads/redirect file, or empty string if not in a worktree or no
+// worktree's .bd/redirect file, or empty string if not in a worktree or no
 // redirect exists. This centralizes the per-worktree redirect override logic
-// used by findLocalBeadsDir, FindBeadsDir, and findDatabaseInTree.
+// used by findLocalBeadsDir, FindBdDir, and findDatabaseInTree.
 func worktreeRedirectTarget() string {
 	if !git.IsWorktree() {
 		return ""
@@ -727,7 +727,7 @@ func worktreeRedirectTarget() string {
 	if worktreeRoot == "" {
 		return ""
 	}
-	worktreeBeadsDir := filepath.Join(worktreeRoot, ".beads")
+	worktreeBeadsDir := filepath.Join(worktreeRoot, ".bd")
 	redirectFile := filepath.Join(worktreeBeadsDir, "redirect")
 	if _, err := os.Stat(redirectFile); err != nil {
 		return ""
@@ -742,11 +742,11 @@ func worktreeRedirectTarget() string {
 	return target
 }
 
-// findDatabaseInTree walks up the directory tree looking for .beads/*.db
+// findDatabaseInTree walks up the directory tree looking for .bd/*.db
 // Stops at the git repository root to avoid finding unrelated databases.
 // For worktrees, searches the main repository root first, then falls back to worktree.
-// Prefers config.json, falls back to beads.db, and warns if multiple .db files exist.
-// Redirect files are supported: if a .beads/redirect file exists, its contents
+// Prefers config.json, falls back to bd.db, and warns if multiple .db files exist.
+// Redirect files are supported: if a .bd/redirect file exists, its contents
 // are used as the actual .beads directory path.
 func findDatabaseInTree() string {
 	dir, err := os.Getwd()
@@ -760,10 +760,10 @@ func findDatabaseInTree() string {
 		dir = resolvedDir
 	}
 
-	// Check cwd first — a rig subdirectory with its own .beads/ takes
-	// priority over the git root's .beads/ (same fix as FindBeadsDir step 1b).
+	// Check cwd first — a rig subdirectory with its own .bd/ takes
+	// priority over the git root's .bd/ (same fix as FindBdDir step 1b).
 	{
-		cwdBeadsDir := filepath.Join(dir, ".beads")
+		cwdBeadsDir := filepath.Join(dir, ".bd")
 		if info, err := os.Stat(cwdBeadsDir); err == nil && info.IsDir() {
 			cwdBeadsDir = FollowRedirect(cwdBeadsDir)
 			if dbPath := findDatabaseInBeadsDir(cwdBeadsDir, true); dbPath != "" {
@@ -784,7 +784,7 @@ func findDatabaseInTree() string {
 
 		// Worktree's own .beads (separate-DB mode, no redirect)
 		if worktreeRoot := git.GetRepoRoot(); worktreeRoot != "" {
-			worktreeBeadsDir := filepath.Join(worktreeRoot, ".beads")
+			worktreeBeadsDir := filepath.Join(worktreeRoot, ".bd")
 			if info, err := os.Stat(worktreeBeadsDir); err == nil && info.IsDir() {
 				if dbPath := findDatabaseInBeadsDir(worktreeBeadsDir, true); dbPath != "" {
 					return dbPath
@@ -793,7 +793,7 @@ func findDatabaseInTree() string {
 		}
 
 		// Fall back: search the canonical shared .beads for this worktree.
-		if fallbackBeadsDir := GetWorktreeFallbackBeadsDir(); fallbackBeadsDir != "" {
+		if fallbackBeadsDir := GetWorktreeFallbackBdDir(); fallbackBeadsDir != "" {
 			if info, err := os.Stat(fallbackBeadsDir); err == nil && info.IsDir() {
 				fallbackBeadsDir = FollowRedirect(fallbackBeadsDir)
 				if dbPath := findDatabaseInBeadsDir(fallbackBeadsDir, true); dbPath != "" {
@@ -818,13 +818,13 @@ func findDatabaseInTree() string {
 
 	// Walk up directory tree (regular repository or worktree fallback)
 	for {
-		beadsDir := filepath.Join(dir, ".beads")
-		if info, err := os.Stat(beadsDir); err == nil && info.IsDir() {
+		bdDir := filepath.Join(dir, ".bd")
+		if info, err := os.Stat(bdDir); err == nil && info.IsDir() {
 			// Follow redirect if present
-			beadsDir = FollowRedirect(beadsDir)
+			bdDir = FollowRedirect(bdDir)
 
 			// Use helper to find database (with warnings for auto-discovery)
-			if dbPath := findDatabaseInBeadsDir(beadsDir, true); dbPath != "" {
+			if dbPath := findDatabaseInBeadsDir(bdDir, true); dbPath != "" {
 				return dbPath
 			}
 		}
@@ -852,7 +852,7 @@ func findDatabaseInTree() string {
 // Stops searching upward as soon as a .beads directory is found,
 // because in multi-workspace setups, nested .beads directories
 // are intentional and separate - parent directories are out of scope.
-// Redirect files are supported: if a .beads/redirect file exists, its contents
+// Redirect files are supported: if a .bd/redirect file exists, its contents
 // are used as the actual .beads directory path.
 func FindAllDatabases() []DatabaseInfo {
 	databases := []DatabaseInfo{} // Initialize to empty slice, never return nil
@@ -868,19 +868,19 @@ func FindAllDatabases() []DatabaseInfo {
 
 	// Walk up directory tree
 	for {
-		beadsDir := filepath.Join(dir, ".beads")
-		if info, err := os.Stat(beadsDir); err == nil && info.IsDir() {
+		bdDir := filepath.Join(dir, ".bd")
+		if info, err := os.Stat(bdDir); err == nil && info.IsDir() {
 			// Follow redirect if present
-			beadsDir = FollowRedirect(beadsDir)
+			bdDir = FollowRedirect(bdDir)
 
 			// Look for database: dolt directory first, then legacy *.db files
 			dbPath := ""
-			doltDir := filepath.Join(beadsDir, "dolt")
+			doltDir := filepath.Join(bdDir, "dolt")
 			if dInfo, dErr := os.Stat(doltDir); dErr == nil && dInfo.IsDir() {
 				dbPath = doltDir
 			} else {
 				// Legacy: check for *.db files (pre-migration)
-				matches, err := filepath.Glob(filepath.Join(beadsDir, "*.db"))
+				matches, err := filepath.Glob(filepath.Join(bdDir, "*.db"))
 				if err == nil && len(matches) > 0 {
 					dbPath = matches[0]
 				}
@@ -907,7 +907,7 @@ func FindAllDatabases() []DatabaseInfo {
 
 				databases = append(databases, DatabaseInfo{
 					Path:       dbPath,
-					BeadsDir:   beadsDir,
+					BdDir:   bdDir,
 					IssueCount: -1,
 				})
 

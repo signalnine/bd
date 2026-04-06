@@ -16,7 +16,7 @@ func TestValidateWorkspaceIdentity_NilStore(t *testing.T) {
 }
 
 func TestValidateWorkspaceIdentity_NonexistentDir(t *testing.T) {
-	// When beadsDir doesn't exist, configfile.Load fails and we skip validation
+	// When bdDir doesn't exist, configfile.Load fails and we skip validation
 	origStore := store
 	store = nil
 	defer func() { store = origStore }()

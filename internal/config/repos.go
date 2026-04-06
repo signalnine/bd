@@ -22,7 +22,7 @@ type configFile struct {
 }
 
 // FindConfigYAMLPath finds the config.yaml file in .beads directory
-// Walks up from CWD to find .beads/config.yaml
+// Walks up from CWD to find .bd/config.yaml
 func FindConfigYAMLPath() (string, error) {
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -30,14 +30,14 @@ func FindConfigYAMLPath() (string, error) {
 	}
 
 	for dir := cwd; dir != filepath.Dir(dir); dir = filepath.Dir(dir) {
-		beadsDir := filepath.Join(dir, ".beads")
-		configPath := filepath.Join(beadsDir, "config.yaml")
+		bdDir := filepath.Join(dir, ".bd")
+		configPath := filepath.Join(bdDir, "config.yaml")
 		if _, err := os.Stat(configPath); err == nil {
 			return configPath, nil
 		}
 	}
 
-	return "", fmt.Errorf("no .beads/config.yaml found in current directory or parents")
+	return "", fmt.Errorf("no .bd/config.yaml found in current directory or parents")
 }
 
 // GetReposFromYAML reads the repos configuration from config.yaml

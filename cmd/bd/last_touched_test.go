@@ -9,13 +9,13 @@ import (
 func TestLastTouchedBasic(t *testing.T) {
 	// Create a temp directory to simulate .beads
 	tmpDir := t.TempDir()
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0755); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0755); err != nil {
 		t.Fatal(err)
 	}
 
-	// Create a marker file so FindBeadsDir recognizes this as a valid beads directory
-	if err := os.WriteFile(filepath.Join(beadsDir, "config.yaml"), []byte{}, 0644); err != nil {
+	// Create a marker file so FindBdDir recognizes this as a valid beads directory
+	if err := os.WriteFile(filepath.Join(bdDir, "config.yaml"), []byte{}, 0644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -28,7 +28,7 @@ func TestLastTouchedBasic(t *testing.T) {
 		_ = os.Chdir(origDir)
 	}()
 
-	// Change to temp directory so FindBeadsDir finds our .beads
+	// Change to temp directory so FindBdDir finds our .beads
 	if err := os.Chdir(tmpDir); err != nil {
 		t.Fatal(err)
 	}
@@ -66,13 +66,13 @@ func TestLastTouchedBasic(t *testing.T) {
 func TestSetLastTouchedIDIgnoresEmpty(t *testing.T) {
 	// Create a temp directory
 	tmpDir := t.TempDir()
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0755); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0755); err != nil {
 		t.Fatal(err)
 	}
 
-	// Create a marker file so FindBeadsDir recognizes this as a valid beads directory
-	if err := os.WriteFile(filepath.Join(beadsDir, "config.yaml"), []byte{}, 0644); err != nil {
+	// Create a marker file so FindBdDir recognizes this as a valid beads directory
+	if err := os.WriteFile(filepath.Join(bdDir, "config.yaml"), []byte{}, 0644); err != nil {
 		t.Fatal(err)
 	}
 

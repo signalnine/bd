@@ -7,10 +7,10 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/beads/internal/beads"
-	"github.com/steveyegge/beads/internal/configfile"
-	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
-	"github.com/steveyegge/beads/internal/ui"
+	"github.com/steveyegge/bd/internal/project"
+	"github.com/steveyegge/bd/internal/configfile"
+	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
+	"github.com/steveyegge/bd/internal/ui"
 )
 
 var backupRestoreCmd = &cobra.Command{
@@ -18,7 +18,7 @@ var backupRestoreCmd = &cobra.Command{
 	Short: "Restore database from a Dolt backup",
 	Long: `Restore the beads database from a Dolt-native backup.
 
-By default, reads from .beads/backup/ (or the configured backup directory).
+By default, reads from .bd/backup/ (or the configured backup directory).
 Optionally specify a path to a directory containing a Dolt backup.
 
 Use --force to overwrite an existing database with the backup contents.
@@ -120,12 +120,12 @@ func syncProjectIDFromDB(ctx context.Context, s *embeddeddolt.EmbeddedDoltStore)
 		return err
 	}
 
-	beadsDir := beads.FindBeadsDir()
-	if beadsDir == "" {
+	bdDir := project.FindBdDir()
+	if bdDir == "" {
 		return fmt.Errorf("cannot find .beads directory")
 	}
 
-	cfg, err := configfile.Load(beadsDir)
+	cfg, err := configfile.Load(bdDir)
 	if err != nil {
 		return err
 	}
@@ -135,7 +135,7 @@ func syncProjectIDFromDB(ctx context.Context, s *embeddeddolt.EmbeddedDoltStore)
 	}
 
 	cfg.ProjectID = dbID
-	return cfg.Save(beadsDir)
+	return cfg.Save(bdDir)
 }
 
 func validateBackupRestoreDir(dir string) error {

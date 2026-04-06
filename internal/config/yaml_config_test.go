@@ -24,7 +24,7 @@ func TestIsYamlOnlyKey(t *testing.T) {
 		{"sync.require_confirmation_on_mass_delete", true},
 		{"directory.labels", true},
 		{"repos.primary", true},
-		{"external_projects.beads", true},
+		{"external_projects.bd", true},
 
 		// Hierarchy settings (GH#995)
 		{"hierarchy.max-depth", true},
@@ -180,19 +180,19 @@ func TestNormalizeYamlKey(t *testing.T) {
 }
 
 func TestSetYamlConfig(t *testing.T) {
-	// Create a temp directory with .beads/config.yaml
+	// Create a temp directory with .bd/config.yaml
 	tmpDir, err := os.MkdirTemp("", "beads-yaml-test-*")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
 	defer os.RemoveAll(tmpDir)
 
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0755); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0755); err != nil {
 		t.Fatalf("Failed to create .beads dir: %v", err)
 	}
 
-	configPath := filepath.Join(beadsDir, "config.yaml")
+	configPath := filepath.Join(bdDir, "config.yaml")
 	initialConfig := `# Beads Config
 # no-db: false
 other-setting: value
@@ -343,19 +343,19 @@ func TestCommentOutYamlKey(t *testing.T) {
 }
 
 func TestUnsetYamlConfig(t *testing.T) {
-	// Create a temp directory with .beads/config.yaml
+	// Create a temp directory with .bd/config.yaml
 	tmpDir, err := os.MkdirTemp("", "beads-yaml-unset-test-*")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
 	defer os.RemoveAll(tmpDir)
 
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0755); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0755); err != nil {
 		t.Fatalf("Failed to create .beads dir: %v", err)
 	}
 
-	configPath := filepath.Join(beadsDir, "config.yaml")
+	configPath := filepath.Join(bdDir, "config.yaml")
 	initialConfig := `# Beads Config
 backup.enabled: false
 other-setting: value

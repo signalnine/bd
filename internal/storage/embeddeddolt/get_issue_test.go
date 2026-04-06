@@ -6,8 +6,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/steveyegge/beads/internal/storage"
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/storage"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 func TestGetIssue(t *testing.T) {

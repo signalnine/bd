@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 func TestResolveCurrentIssueID_InProgress(t *testing.T) {
@@ -88,16 +88,16 @@ func TestResolveCurrentIssueID_FallsBackToLastTouched(t *testing.T) {
 		actor = oldActor
 	}()
 
-	// Point BEADS_DIR at a temp dir so GetLastTouchedID doesn't find the real file.
-	// Create metadata.json so FindBeadsDir accepts this as a valid beads dir.
-	tmpBeads := filepath.Join(t.TempDir(), ".beads")
+	// Point BD_DIR at a temp dir so GetLastTouchedID doesn't find the real file.
+	// Create metadata.json so FindBdDir accepts this as a valid beads dir.
+	tmpBeads := filepath.Join(t.TempDir(), ".bd")
 	if err := os.MkdirAll(tmpBeads, 0750); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
 	if err := os.WriteFile(filepath.Join(tmpBeads, "metadata.json"), []byte("{}"), 0600); err != nil {
 		t.Fatalf("write metadata.json: %v", err)
 	}
-	t.Setenv("BEADS_DIR", tmpBeads)
+	t.Setenv("BD_DIR", tmpBeads)
 
 	// With no last-touched file, should return empty
 	got := resolveCurrentIssueID(ctx)
@@ -155,16 +155,16 @@ func TestResolveCurrentIssueID_NilStore(t *testing.T) {
 	store = nil
 	defer func() { store = oldStore }()
 
-	// Point BEADS_DIR at a temp dir so GetLastTouchedID doesn't find the real file.
-	// Create metadata.json so FindBeadsDir accepts this as a valid beads dir.
-	tmpBeads := filepath.Join(t.TempDir(), ".beads")
+	// Point BD_DIR at a temp dir so GetLastTouchedID doesn't find the real file.
+	// Create metadata.json so FindBdDir accepts this as a valid beads dir.
+	tmpBeads := filepath.Join(t.TempDir(), ".bd")
 	if err := os.MkdirAll(tmpBeads, 0750); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
 	if err := os.WriteFile(filepath.Join(tmpBeads, "metadata.json"), []byte("{}"), 0600); err != nil {
 		t.Fatalf("write metadata.json: %v", err)
 	}
-	t.Setenv("BEADS_DIR", tmpBeads)
+	t.Setenv("BD_DIR", tmpBeads)
 
 	// With no last-touched file, last-touched returns ""
 	got := resolveCurrentIssueID(context.Background())

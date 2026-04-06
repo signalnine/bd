@@ -124,7 +124,7 @@ func GetGitCommonDir() (string, error) {
 // the worktree-specific directory (e.g., /repo/.git/worktrees/feature/hooks).
 func GetGitHooksDir() (string, error) {
 	// Respect core.hooksPath if configured.
-	// This is used by beads' Dolt backend (hooks installed to .beads/hooks/).
+	// This is used by beads' Dolt backend (hooks installed to .bd/hooks/).
 	cmd := exec.Command("git", "config", "--get", "core.hooksPath")
 	if out, err := cmd.Output(); err == nil {
 		hooksPath := strings.TrimSpace(string(out))
@@ -150,7 +150,7 @@ func GetGitHooksDir() (string, error) {
 				return "", err
 			}
 			// Git treats relative core.hooksPath as relative to the repo root in common usage.
-			// (e.g., ".beads/hooks", ".githooks").
+			// (e.g., ".bd/hooks", ".githooks").
 			p := filepath.Join(ctx.repoRoot, hooksPath)
 			if abs, err := filepath.Abs(p); err == nil {
 				return abs, nil

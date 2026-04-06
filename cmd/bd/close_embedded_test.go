@@ -12,9 +12,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/steveyegge/beads/internal/configfile"
-	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/configfile"
+	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 // ===== Close-specific test helpers =====
@@ -57,10 +57,10 @@ func bdDepAdd(t *testing.T, bd, dir string, args ...string) {
 }
 
 // querySessionSQL queries closed_by_session via raw SQL since it's not in IssueSelectColumns.
-func querySessionSQL(t *testing.T, beadsDir, id string) string {
+func querySessionSQL(t *testing.T, bdDir, id string) string {
 	t.Helper()
-	dataDir := filepath.Join(beadsDir, "embeddeddolt")
-	cfg, _ := configfile.Load(beadsDir)
+	dataDir := filepath.Join(bdDir, "embeddeddolt")
+	cfg, _ := configfile.Load(bdDir)
 	database := ""
 	if cfg != nil {
 		database = cfg.GetDoltDatabase()
@@ -88,13 +88,13 @@ func querySessionSQL(t *testing.T, beadsDir, id string) string {
 // ===== Close tests =====
 
 func TestEmbeddedClose(t *testing.T) {
-	if os.Getenv("BEADS_TEST_EMBEDDED_DOLT") != "1" {
-		t.Skip("set BEADS_TEST_EMBEDDED_DOLT=1 to run embedded dolt integration tests")
+	if os.Getenv("BD_TEST_EMBEDDED_DOLT") != "1" {
+		t.Skip("set BD_TEST_EMBEDDED_DOLT=1 to run embedded dolt integration tests")
 	}
 	t.Parallel()
 
 	bd := buildEmbeddedBD(t)
-	dir, beadsDir, _ := bdInit(t, bd, "--prefix", "tc")
+	dir, bdDir, _ := bdInit(t, bd, "--prefix", "tc")
 
 	// ===== Basic Close Behavior =====
 
@@ -360,7 +360,7 @@ func TestEmbeddedClose(t *testing.T) {
 	t.Run("close_with_session", func(t *testing.T) {
 		issue := bdCreate(t, bd, dir, "Session test", "--type", "task")
 		bdClose(t, bd, dir, issue.ID, "--session", "sess-456")
-		session := querySessionSQL(t, beadsDir, issue.ID)
+		session := querySessionSQL(t, bdDir, issue.ID)
 		if session != "sess-456" {
 			t.Errorf("expected closed_by_session 'sess-456', got %q", session)
 		}
@@ -377,7 +377,7 @@ func TestEmbeddedClose(t *testing.T) {
 		if err != nil {
 			t.Fatalf("bd close with env session failed: %v\n%s", err, out)
 		}
-		session := querySessionSQL(t, beadsDir, issue.ID)
+		session := querySessionSQL(t, bdDir, issue.ID)
 		if session != "env-sess" {
 			t.Errorf("expected closed_by_session 'env-sess', got %q", session)
 		}
@@ -440,8 +440,8 @@ func TestEmbeddedClose(t *testing.T) {
 	// ===== Dolt Commit and Edge Cases =====
 
 	t.Run("close_dolt_commit", func(t *testing.T) {
-		dataDir := filepath.Join(beadsDir, "embeddeddolt")
-		cfg, _ := configfile.Load(beadsDir)
+		dataDir := filepath.Join(bdDir, "embeddeddolt")
+		cfg, _ := configfile.Load(bdDir)
 		database := ""
 		if cfg != nil {
 			database = cfg.GetDoltDatabase()
@@ -489,13 +489,13 @@ func TestEmbeddedClose(t *testing.T) {
 // concurrently to verify EmbeddedDoltStore handles concurrent CLI invocations
 // without panics, data corruption, or deadlocks.
 func TestEmbeddedCloseConcurrent(t *testing.T) {
-	if os.Getenv("BEADS_TEST_EMBEDDED_DOLT") != "1" {
-		t.Skip("set BEADS_TEST_EMBEDDED_DOLT=1 to run embedded dolt integration tests")
+	if os.Getenv("BD_TEST_EMBEDDED_DOLT") != "1" {
+		t.Skip("set BD_TEST_EMBEDDED_DOLT=1 to run embedded dolt integration tests")
 	}
 	t.Parallel()
 
 	bd := buildEmbeddedBD(t)
-	dir, beadsDir, _ := bdInit(t, bd, "--prefix", "cx")
+	dir, bdDir, _ := bdInit(t, bd, "--prefix", "cx")
 
 	const (
 		numWorkers      = 10
@@ -610,7 +610,7 @@ func TestEmbeddedCloseConcurrent(t *testing.T) {
 	}
 
 	// Verify issues from successful workers exist and are closed.
-	store := openStore(t, beadsDir, "cx")
+	store := openStore(t, bdDir, "cx")
 	for id := range allIDs {
 		issue, err := store.GetIssue(t.Context(), id)
 		if err != nil {

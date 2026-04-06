@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/steveyegge/beads/internal/storage"
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/storage"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 // BatchContext holds per-batch state read once and reused for every issue.

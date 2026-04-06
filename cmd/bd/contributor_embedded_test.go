@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
+	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
 )
 
 // TestEmbeddedContributorCreate exercises the full contributor mode flow in
@@ -18,8 +18,8 @@ import (
 // scenario that triggered GH#2988 ("no database selected" when the planning
 // repo's .beads directory has no metadata.json).
 func TestEmbeddedContributorCreate(t *testing.T) {
-	if os.Getenv("BEADS_TEST_EMBEDDED_DOLT") != "1" {
-		t.Skip("set BEADS_TEST_EMBEDDED_DOLT=1 to run embedded dolt contributor tests")
+	if os.Getenv("BD_TEST_EMBEDDED_DOLT") != "1" {
+		t.Skip("set BD_TEST_EMBEDDED_DOLT=1 to run embedded dolt contributor tests")
 	}
 	t.Parallel()
 
@@ -39,11 +39,11 @@ func TestEmbeddedContributorCreate(t *testing.T) {
 
 		// Verify the issue landed in the planning repo's embedded store.
 		// The planning store database name is the sanitized prefix (same as source).
-		planningBeadsDir := filepath.Join(planningDir, ".beads")
+		planningBeadsDir := filepath.Join(planningDir, ".bd")
 		assertIssueInStore(t, planningBeadsDir, "cr", issue.ID)
 
 		// Verify the issue is NOT in the project's store.
-		projectBeadsDir := filepath.Join(dir, ".beads")
+		projectBeadsDir := filepath.Join(dir, ".bd")
 		assertIssueNotInStore(t, projectBeadsDir, "cr", issue.ID)
 	})
 
@@ -73,7 +73,7 @@ func TestEmbeddedContributorCreate(t *testing.T) {
 		}
 
 		// All three should be in the planning store.
-		planningBeadsDir := filepath.Join(planningDir, ".beads")
+		planningBeadsDir := filepath.Join(planningDir, ".bd")
 		for id := range ids {
 			assertIssueInStore(t, planningBeadsDir, "mc", id)
 		}
@@ -105,31 +105,31 @@ func initContributor(t *testing.T, bd, prefix string) (projectDir, planningDir s
 	}
 
 	// Sanity: planning .beads dir should exist (created by wizard).
-	planningBeadsDir := filepath.Join(planningDir, ".beads")
+	planningBeadsDir := filepath.Join(planningDir, ".bd")
 	requireFile(t, planningBeadsDir)
 
-	// Sanity: beads.role should be "contributor".
-	roleCmd := exec.Command("git", "config", "beads.role")
+	// Sanity: bd.role should be "contributor".
+	roleCmd := exec.Command("git", "config", "bd.role")
 	roleCmd.Dir = projectDir
 	roleOut, err := roleCmd.Output()
 	if err != nil {
-		t.Fatalf("git config beads.role failed: %v", err)
+		t.Fatalf("git config bd.role failed: %v", err)
 	}
 	if got := strings.TrimSpace(string(roleOut)); got != "contributor" {
-		t.Fatalf("beads.role: got %q, want %q", got, "contributor")
+		t.Fatalf("bd.role: got %q, want %q", got, "contributor")
 	}
 
 	return projectDir, planningDir
 }
 
 // assertIssueInStore verifies that an issue with the given ID exists in the
-// embedded Dolt store at beadsDir.
-func assertIssueInStore(t *testing.T, beadsDir, database, issueID string) {
+// embedded Dolt store at bdDir.
+func assertIssueInStore(t *testing.T, bdDir, database, issueID string) {
 	t.Helper()
-	dataDir := filepath.Join(beadsDir, "embeddeddolt")
+	dataDir := filepath.Join(bdDir, "embeddeddolt")
 	db, cleanup, err := embeddeddolt.OpenSQL(t.Context(), dataDir, database, "main")
 	if err != nil {
-		t.Fatalf("OpenSQL(%s, %s): %v", beadsDir, database, err)
+		t.Fatalf("OpenSQL(%s, %s): %v", bdDir, database, err)
 	}
 	defer cleanup()
 
@@ -140,18 +140,18 @@ func assertIssueInStore(t *testing.T, beadsDir, database, issueID string) {
 		t.Fatalf("query issues for %s: %v", issueID, err)
 	}
 	if count == 0 {
-		t.Errorf("expected issue %s in store at %s, not found", issueID, beadsDir)
+		t.Errorf("expected issue %s in store at %s, not found", issueID, bdDir)
 	}
 }
 
 // assertIssueNotInStore verifies that an issue with the given ID does NOT
-// exist in the embedded Dolt store at beadsDir.
-func assertIssueNotInStore(t *testing.T, beadsDir, database, issueID string) {
+// exist in the embedded Dolt store at bdDir.
+func assertIssueNotInStore(t *testing.T, bdDir, database, issueID string) {
 	t.Helper()
-	dataDir := filepath.Join(beadsDir, "embeddeddolt")
+	dataDir := filepath.Join(bdDir, "embeddeddolt")
 	db, cleanup, err := embeddeddolt.OpenSQL(t.Context(), dataDir, database, "main")
 	if err != nil {
-		t.Fatalf("OpenSQL(%s, %s): %v", beadsDir, database, err)
+		t.Fatalf("OpenSQL(%s, %s): %v", bdDir, database, err)
 	}
 	defer cleanup()
 
@@ -162,6 +162,6 @@ func assertIssueNotInStore(t *testing.T, beadsDir, database, issueID string) {
 		t.Fatalf("query issues for %s: %v", issueID, err)
 	}
 	if count != 0 {
-		t.Errorf("issue %s should NOT be in store at %s, but found %d rows", issueID, beadsDir, count)
+		t.Errorf("issue %s should NOT be in store at %s, but found %d rows", issueID, bdDir, count)
 	}
 }

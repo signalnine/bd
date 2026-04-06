@@ -1,7 +1,7 @@
 //go:build integration
 // +build integration
 
-package beads
+package project
 
 import (
 	"os"
@@ -28,7 +28,7 @@ func TestFindAllDatabases_SymlinkDeduplication(t *testing.T) {
 	// Create structure:
 	// tmpDir/
 	//   real/
-	//     .beads/test.db
+	//     .bd/test.db
 	//   symlink_to_real -> real/
 	//   subdir/
 	//     (working directory here)
@@ -39,12 +39,12 @@ func TestFindAllDatabases_SymlinkDeduplication(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	beadsDir := filepath.Join(realDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0750); err != nil {
+	bdDir := filepath.Join(realDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0750); err != nil {
 		t.Fatal(err)
 	}
 
-	dbPath := filepath.Join(beadsDir, "test.db")
+	dbPath := filepath.Join(bdDir, "test.db")
 	if err := os.WriteFile(dbPath, []byte("fake db"), 0600); err != nil {
 		t.Fatal(err)
 	}
@@ -69,8 +69,8 @@ func TestFindAllDatabases_SymlinkDeduplication(t *testing.T) {
 
 	// Should find exactly ONE database, not two
 	// Without the fix, it would find the same database twice:
-	// - Once via symlink_to_real/.beads/test.db
-	// - Once via real/.beads/test.db (when walking up to parent)
+	// - Once via symlink_to_real/.bd/test.db
+	// - Once via real/.bd/test.db (when walking up to parent)
 	if len(databases) != 1 {
 		t.Errorf("expected 1 database (with deduplication), got %d", len(databases))
 		for i, db := range databases {
@@ -92,8 +92,8 @@ func TestFindAllDatabases_SymlinkDeduplication(t *testing.T) {
 // TestFindAllDatabases_MultipleSymlinksToSameDB tests that multiple symlinks
 // pointing to the same database are properly deduplicated
 func TestFindAllDatabases_MultipleSymlinksToSameDB(t *testing.T) {
-	if os.Getenv("BEADS_TEST_SKIP") == "dolt" {
-		t.Skip("skipping: Dolt tests disabled via BEADS_TEST_SKIP")
+	if os.Getenv("BD_TEST_SKIP") == "dolt" {
+		t.Skip("skipping: Dolt tests disabled via BD_TEST_SKIP")
 	}
 
 	tmpDir, err := os.MkdirTemp("", "beads-multisymlink-test")
@@ -111,19 +111,19 @@ func TestFindAllDatabases_MultipleSymlinksToSameDB(t *testing.T) {
 	// Create structure:
 	// tmpDir/
 	//   real/
-	//     .beads/test.db
+	//     .bd/test.db
 	//   link1 -> real/
 	//   link2 -> real/
 	//   workdir/
 
 	// Create real directory with database
 	realDir := filepath.Join(tmpDir, "real")
-	beadsDir := filepath.Join(realDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0750); err != nil {
+	bdDir := filepath.Join(realDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0750); err != nil {
 		t.Fatal(err)
 	}
 
-	dbPath := filepath.Join(beadsDir, "test.db")
+	dbPath := filepath.Join(bdDir, "test.db")
 	if err := os.WriteFile(dbPath, []byte("fake db"), 0600); err != nil {
 		t.Fatal(err)
 	}

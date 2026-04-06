@@ -12,9 +12,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/steveyegge/beads/internal/configfile"
-	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/configfile"
+	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 // ===== Shared test helpers (used by both update and close tests) =====
@@ -121,13 +121,13 @@ func showDeps(t *testing.T, bd, dir, id string) []struct {
 // ===== Update tests =====
 
 func TestEmbeddedUpdate(t *testing.T) {
-	if os.Getenv("BEADS_TEST_EMBEDDED_DOLT") != "1" {
-		t.Skip("set BEADS_TEST_EMBEDDED_DOLT=1 to run embedded dolt integration tests")
+	if os.Getenv("BD_TEST_EMBEDDED_DOLT") != "1" {
+		t.Skip("set BD_TEST_EMBEDDED_DOLT=1 to run embedded dolt integration tests")
 	}
 	t.Parallel()
 
 	bd := buildEmbeddedBD(t)
-	dir, beadsDir, _ := bdInit(t, bd, "--prefix", "tu")
+	dir, bdDir, _ := bdInit(t, bd, "--prefix", "tu")
 
 	// ===== Field Update Flags =====
 
@@ -678,8 +678,8 @@ func TestEmbeddedUpdate(t *testing.T) {
 		bdUpdate(t, bd, dir, issue.ID, "--status", "in_progress")
 
 		// Verify a Dolt commit exists by querying dolt_log.
-		dataDir := filepath.Join(beadsDir, "embeddeddolt")
-		cfg, _ := configfile.Load(beadsDir)
+		dataDir := filepath.Join(bdDir, "embeddeddolt")
+		cfg, _ := configfile.Load(bdDir)
 		database := ""
 		if cfg != nil {
 			database = cfg.GetDoltDatabase()
@@ -727,13 +727,13 @@ func TestEmbeddedUpdate(t *testing.T) {
 // concurrently to verify EmbeddedDoltStore handles concurrent CLI invocations
 // without panics, data corruption, or deadlocks.
 func TestEmbeddedUpdateConcurrent(t *testing.T) {
-	if os.Getenv("BEADS_TEST_EMBEDDED_DOLT") != "1" {
-		t.Skip("set BEADS_TEST_EMBEDDED_DOLT=1 to run embedded dolt integration tests")
+	if os.Getenv("BD_TEST_EMBEDDED_DOLT") != "1" {
+		t.Skip("set BD_TEST_EMBEDDED_DOLT=1 to run embedded dolt integration tests")
 	}
 	t.Parallel()
 
 	bd := buildEmbeddedBD(t)
-	dir, beadsDir, _ := bdInit(t, bd, "--prefix", "cu")
+	dir, bdDir, _ := bdInit(t, bd, "--prefix", "cu")
 
 	const (
 		numWorkers      = 10
@@ -868,7 +868,7 @@ func TestEmbeddedUpdateConcurrent(t *testing.T) {
 	}
 
 	// Verify all successfully created issues exist and were updated correctly.
-	store := openStore(t, beadsDir, "cu")
+	store := openStore(t, bdDir, "cu")
 	stats, err := store.GetStatistics(t.Context())
 	if err != nil {
 		t.Fatalf("GetStatistics: %v", err)

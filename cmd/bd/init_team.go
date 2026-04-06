@@ -7,9 +7,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/steveyegge/beads/internal/beads"
-	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
-	"github.com/steveyegge/beads/internal/ui"
+	"github.com/steveyegge/bd/internal/project"
+	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
+	"github.com/steveyegge/bd/internal/ui"
 )
 
 // runTeamWizard guides the user through team workflow setup
@@ -165,7 +165,7 @@ func runTeamWizard(ctx context.Context, store *embeddeddolt.EmbeddedDoltStore) e
 // Uses symbolic-ref instead of rev-parse to work in fresh repos without commits (bd-flil)
 // Uses CWD repo context since this is for user's project configuration
 func getGitBranch() (string, error) {
-	rc, err := beads.GetRepoContext()
+	rc, err := project.GetRepoContext()
 	if err != nil {
 		return "", err
 	}
@@ -182,7 +182,7 @@ func getGitBranch() (string, error) {
 // createSyncBranch creates a new branch for beads sync
 // Uses CWD repo context since this is for user's project configuration
 func createSyncBranch(branchName string) error {
-	rc, err := beads.GetRepoContext()
+	rc, err := project.GetRepoContext()
 	if err != nil {
 		return err
 	}

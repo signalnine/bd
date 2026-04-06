@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 // TestSearchCommand_HelpErrorHandling verifies that the search command handles
@@ -166,7 +166,7 @@ func TestSearchCommand_MissingQueryShowsHelp(t *testing.T) {
 func TestSearchWithDateAndPriorityFilters(t *testing.T) {
 	t.Parallel()
 	tmpDir := t.TempDir()
-	testDB := filepath.Join(tmpDir, ".beads", "beads.db")
+	testDB := filepath.Join(tmpDir, ".bd", "bd.db")
 	s := newTestStore(t, testDB)
 	ctx := context.Background()
 

@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 // MergeSlotStore defines the minimal interface needed by merge slot operations.

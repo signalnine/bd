@@ -1,7 +1,7 @@
 //go:build cgo && integration
 // +build cgo,integration
 
-package beads_test
+package project_test
 
 import (
 	"context"
@@ -12,8 +12,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/steveyegge/beads/internal/routing"
-	"github.com/steveyegge/beads/internal/storage/dolt"
+	"github.com/steveyegge/bd/internal/routing"
+	"github.com/steveyegge/bd/internal/storage/dolt"
 )
 
 func TestRoutingIntegration(t *testing.T) {
@@ -32,7 +32,7 @@ func TestRoutingIntegration(t *testing.T) {
 			setupGit: func(t *testing.T, dir string) {
 				runGitCmd(t, dir, "git", "init")
 				runGitCmd(t, dir, "git", "config", "user.email", "maintainer@example.com")
-				runGitCmd(t, dir, "git", "config", "beads.role", "maintainer")
+				runGitCmd(t, dir, "git", "config", "bd.role", "maintainer")
 			},
 			expectedRole:       routing.Maintainer,
 			expectedTargetRepo: ".",
@@ -54,7 +54,7 @@ func TestRoutingIntegration(t *testing.T) {
 				runGitCmd(t, dir, "git", "remote", "add", "origin", "git@github.com:owner/repo.git")
 				// Set explicit role to avoid relying on deprecated URL heuristic,
 				// which can be flaky when git config rewrites SSH to HTTPS.
-				runGitCmd(t, dir, "git", "config", "beads.role", "maintainer")
+				runGitCmd(t, dir, "git", "config", "bd.role", "maintainer")
 			},
 			expectedRole:       routing.Maintainer,
 			expectedTargetRepo: ".",
@@ -82,9 +82,9 @@ func TestRoutingIntegration(t *testing.T) {
 			// Test routing configuration
 			routingCfg := &routing.RoutingConfig{
 				Mode:             "auto",
-				DefaultRepo:      "~/.beads-planning",
+				DefaultRepo:      "~/.bd-planning",
 				MaintainerRepo:   ".",
-				ContributorRepo:  "~/.beads-planning",
+				ContributorRepo:  "~/.bd-planning",
 				ExplicitOverride: "",
 			}
 
@@ -118,9 +118,9 @@ func TestRoutingWithExplicitOverride(t *testing.T) {
 	// Even though we're a contributor, --repo flag should override
 	routingCfg := &routing.RoutingConfig{
 		Mode:             "auto",
-		DefaultRepo:      "~/.beads-planning",
+		DefaultRepo:      "~/.bd-planning",
 		MaintainerRepo:   ".",
-		ContributorRepo:  "~/.beads-planning",
+		ContributorRepo:  "~/.bd-planning",
 		ExplicitOverride: "/custom/repo/path",
 	}
 
@@ -141,13 +141,13 @@ func TestMultiRepoEndToEnd(t *testing.T) {
 
 	// Create primary repo
 	primaryDir := t.TempDir()
-	beadsDir := filepath.Join(primaryDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0755); err != nil {
+	bdDir := filepath.Join(primaryDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0755); err != nil {
 		t.Fatalf("failed to create .beads dir: %v", err)
 	}
 
 	// Initialize database
-	store, err := dolt.New(context.Background(), &dolt.Config{Path: beadsDir})
+	store, err := dolt.New(context.Background(), &dolt.Config{Path: bdDir})
 	if err != nil {
 		t.Fatalf("failed to create storage: %v", err)
 	}
@@ -155,11 +155,11 @@ func TestMultiRepoEndToEnd(t *testing.T) {
 
 	// Set up as maintainer
 	runGitCmd(t, primaryDir, "git", "init")
-	runGitCmd(t, primaryDir, "git", "config", "beads.role", "maintainer")
+	runGitCmd(t, primaryDir, "git", "config", "bd.role", "maintainer")
 
 	// Configure multi-repo
 	planningDir := t.TempDir()
-	planningBeadsDir := filepath.Join(planningDir, ".beads")
+	planningBeadsDir := filepath.Join(planningDir, ".bd")
 	if err := os.MkdirAll(planningBeadsDir, 0755); err != nil {
 		t.Fatalf("failed to create planning .beads dir: %v", err)
 	}

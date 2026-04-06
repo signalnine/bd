@@ -20,7 +20,7 @@ func TestBeadsDirPermConstants(t *testing.T) {
 }
 
 func TestEnsureBeadsDir(t *testing.T) {
-	dir := filepath.Join(t.TempDir(), ".beads")
+	dir := filepath.Join(t.TempDir(), ".bd")
 	if err := EnsureBeadsDir(dir); err != nil {
 		t.Fatalf("EnsureBeadsDir(%q) = %v", dir, err)
 	}
@@ -35,7 +35,7 @@ func TestEnsureBeadsDir(t *testing.T) {
 }
 
 func TestEnsureBeadsDirNested(t *testing.T) {
-	dir := filepath.Join(t.TempDir(), ".beads", "dolt")
+	dir := filepath.Join(t.TempDir(), ".bd", "dolt")
 	if err := EnsureBeadsDir(dir); err != nil {
 		t.Fatalf("EnsureBeadsDir(%q) = %v", dir, err)
 	}
@@ -53,7 +53,7 @@ func TestEnsureBeadsDirNested(t *testing.T) {
 }
 
 func TestCheckBeadsDirPermissions_Secure(t *testing.T) {
-	dir := filepath.Join(t.TempDir(), ".beads")
+	dir := filepath.Join(t.TempDir(), ".bd")
 	if err := os.MkdirAll(dir, 0700); err != nil {
 		t.Fatal(err)
 	}
@@ -74,7 +74,7 @@ func TestCheckBeadsDirPermissions_Secure(t *testing.T) {
 }
 
 func TestCheckBeadsDirPermissions_Permissive(t *testing.T) {
-	dir := filepath.Join(t.TempDir(), ".beads")
+	dir := filepath.Join(t.TempDir(), ".bd")
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		t.Fatal(err)
 	}

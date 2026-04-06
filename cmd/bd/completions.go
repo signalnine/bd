@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/beads/internal/beads"
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/project"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 // issueIDCompletion provides shell completion for issue IDs by querying the storage
@@ -23,12 +23,12 @@ func issueIDCompletion(cmd *cobra.Command, args []string, toComplete string) ([]
 	currentDBPath := dbPath
 	if currentDBPath == "" {
 		// Try to find database path
-		foundDB := beads.FindDatabasePath()
+		foundDB := project.FindDatabasePath()
 		if foundDB != "" {
 			currentDBPath = foundDB
 		} else {
 			// Default path
-			currentDBPath = filepath.Join(".beads", beads.CanonicalDatabaseName)
+			currentDBPath = filepath.Join(".bd", project.CanonicalDatabaseName)
 		}
 	}
 

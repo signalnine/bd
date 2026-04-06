@@ -5,15 +5,15 @@
 // Go-based extensions that want to use bd's storage layer programmatically.
 //
 // For detailed guidance on extending bd, see docs/EXTENDING.md.
-package beads
+package bd
 
 import (
 	"context"
 
-	"github.com/steveyegge/beads/internal/beads"
-	"github.com/steveyegge/beads/internal/storage"
-	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/project"
+	"github.com/steveyegge/bd/internal/storage"
+	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 // Store is the concrete embedded Dolt storage backend.
@@ -44,36 +44,36 @@ type (
 )
 
 // Open opens an embedded Dolt beads database at the given path.
-func Open(ctx context.Context, beadsDir string) (*Store, error) {
-	return embeddeddolt.New(ctx, beadsDir, "beads", "main")
+func Open(ctx context.Context, bdDir string) (*Store, error) {
+	return embeddeddolt.New(ctx, bdDir, "beads", "main")
 }
 
 // FindDatabasePath finds the beads database in the current directory tree
 func FindDatabasePath() string {
-	return beads.FindDatabasePath()
+	return project.FindDatabasePath()
 }
 
-// FindBeadsDir finds the .beads/ directory in the current directory tree.
+// FindBdDir finds the .bd/ directory in the current directory tree.
 // Returns empty string if not found.
-func FindBeadsDir() string {
-	return beads.FindBeadsDir()
+func FindBdDir() string {
+	return project.FindBdDir()
 }
 
 // DatabaseInfo contains information about a beads database
-type DatabaseInfo = beads.DatabaseInfo
+type DatabaseInfo = project.DatabaseInfo
 
 // FindAllDatabases finds all beads databases in the system
 func FindAllDatabases() []DatabaseInfo {
-	return beads.FindAllDatabases()
+	return project.FindAllDatabases()
 }
 
 // RedirectInfo contains information about a beads directory redirect
-type RedirectInfo = beads.RedirectInfo
+type RedirectInfo = project.RedirectInfo
 
 // GetRedirectInfo checks if the current beads directory is redirected.
 // Returns RedirectInfo with IsRedirected=true if a redirect is active.
 func GetRedirectInfo() RedirectInfo {
-	return beads.GetRedirectInfo()
+	return project.GetRedirectInfo()
 }
 
 // Core types from internal/types

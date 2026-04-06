@@ -13,12 +13,12 @@ import (
 // Diagnostics captures state information for debugging test failures.
 type Diagnostics struct {
 	t        *testing.T
-	beadsDir string
+	bdDir string
 }
 
 // NewDiagnostics creates a diagnostics collector for the given .beads directory.
-func NewDiagnostics(t *testing.T, beadsDir string) *Diagnostics {
-	return &Diagnostics{t: t, beadsDir: beadsDir}
+func NewDiagnostics(t *testing.T, bdDir string) *Diagnostics {
+	return &Diagnostics{t: t, bdDir: bdDir}
 }
 
 // CaptureOnFailure registers a t.Cleanup that dumps diagnostic info if the
@@ -38,7 +38,7 @@ func (d *Diagnostics) CaptureOnFailure() {
 // dumpStateFiles logs the content of PID and port files if they exist.
 func (d *Diagnostics) dumpStateFiles() {
 	for _, name := range []string{"dolt-server.pid", "dolt-server.port", "dolt-server.log"} {
-		path := filepath.Join(d.beadsDir, name)
+		path := filepath.Join(d.bdDir, name)
 		data, err := os.ReadFile(path)
 		if err != nil {
 			d.t.Logf("  %s: not found", name)

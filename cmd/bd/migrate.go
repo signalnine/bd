@@ -6,11 +6,11 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/beads/internal/beads"
-	"github.com/steveyegge/beads/internal/configfile"
-	"github.com/steveyegge/beads/internal/types"
-	"github.com/steveyegge/beads/internal/ui"
-	"github.com/steveyegge/beads/internal/utils"
+	"github.com/steveyegge/bd/internal/project"
+	"github.com/steveyegge/bd/internal/configfile"
+	"github.com/steveyegge/bd/internal/types"
+	"github.com/steveyegge/bd/internal/ui"
+	"github.com/steveyegge/bd/internal/utils"
 )
 
 var migrateCmd = &cobra.Command{
@@ -50,8 +50,8 @@ Subcommands:
 		}
 
 		// Find .beads directory
-		beadsDir := beads.FindBeadsDir()
-		if beadsDir == "" {
+		bdDir := project.FindBdDir()
+		if bdDir == "" {
 			if jsonOutput {
 				outputJSON(map[string]interface{}{
 					"error":   "no_beads_directory",
@@ -64,7 +64,7 @@ Subcommands:
 		}
 
 		// Load config
-		cfg, err := loadOrCreateConfig(beadsDir)
+		cfg, err := loadOrCreateConfig(bdDir)
 		if err != nil {
 			if jsonOutput {
 				outputJSON(map[string]interface{}{
@@ -89,7 +89,7 @@ func handleDoltMetadataUpdate(cfg *configfile.Config, dryRun bool) {
 		if jsonOutput {
 			outputJSON(map[string]interface{}{
 				"status":  "no_databases",
-				"message": "No Dolt database found in .beads/",
+				"message": "No Dolt database found in .bd/",
 			})
 		} else {
 			fmt.Fprintf(os.Stderr, "No Dolt database found. Run 'bd init' to create a new database.\n")
@@ -197,7 +197,7 @@ func handleDoltMetadataUpdate(cfg *configfile.Config, dryRun bool) {
 
 	// Set repo_id if missing (non-fatal — may fail in non-git environments)
 	if needsRepoID {
-		computed, err := beads.ComputeRepoID()
+		computed, err := project.ComputeRepoID()
 		if err != nil {
 			if !jsonOutput {
 				fmt.Fprintf(os.Stderr, "Warning: could not compute repo_id: %v\n", err)
@@ -218,7 +218,7 @@ func handleDoltMetadataUpdate(cfg *configfile.Config, dryRun bool) {
 
 	// Set clone_id if missing (non-fatal — may fail in non-git environments)
 	if needsCloneID {
-		computed, err := beads.GetCloneID()
+		computed, err := project.GetCloneID()
 		if err != nil {
 			if !jsonOutput {
 				fmt.Fprintf(os.Stderr, "Warning: could not compute clone_id: %v\n", err)
@@ -268,8 +268,8 @@ func truncateID(id string, maxLen int) string {
 }
 
 // loadOrCreateConfig loads metadata.json or creates default if not found
-func loadOrCreateConfig(beadsDir string) (*configfile.Config, error) {
-	cfg, err := configfile.Load(beadsDir)
+func loadOrCreateConfig(bdDir string) (*configfile.Config, error) {
+	cfg, err := configfile.Load(bdDir)
 	if err != nil {
 		return nil, err
 	}
@@ -284,8 +284,8 @@ func loadOrCreateConfig(beadsDir string) (*configfile.Config, error) {
 
 func handleUpdateRepoID(dryRun bool, autoYes bool) {
 	// Find .beads directory
-	beadsDir := beads.FindBeadsDir()
-	if beadsDir == "" {
+	bdDir := project.FindBdDir()
+	if bdDir == "" {
 		if jsonOutput {
 			outputJSON(map[string]interface{}{
 				"error":   "no_database",
@@ -297,7 +297,7 @@ func handleUpdateRepoID(dryRun bool, autoYes bool) {
 	}
 
 	// Compute new repo ID
-	newRepoID, err := beads.ComputeRepoID()
+	newRepoID, err := project.ComputeRepoID()
 	if err != nil {
 		if jsonOutput {
 			outputJSON(map[string]interface{}{
@@ -398,8 +398,8 @@ func handleUpdateRepoID(dryRun bool, autoYes bool) {
 // handleInspect shows migration plan and database state for AI agent analysis
 func handleInspect() {
 	// Find .beads directory
-	beadsDir := beads.FindBeadsDir()
-	if beadsDir == "" {
+	bdDir := project.FindBdDir()
+	if bdDir == "" {
 		if jsonOutput {
 			outputJSON(map[string]interface{}{
 				"error":   "no_beads_directory",
@@ -543,8 +543,8 @@ func handleToSeparateBranch(branch string, dryRun bool) {
 	}
 
 	// Find .beads directory
-	beadsDir := beads.FindBeadsDir()
-	if beadsDir == "" {
+	bdDir := project.FindBdDir()
+	if bdDir == "" {
 		if jsonOutput {
 			outputJSON(map[string]interface{}{
 				"error":   "no_beads_directory",

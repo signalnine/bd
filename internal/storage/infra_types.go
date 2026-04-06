@@ -1,6 +1,6 @@
 package storage
 
-import "github.com/steveyegge/beads/internal/types"
+import "github.com/steveyegge/bd/internal/types"
 
 // defaultInfraTypes are the built-in infrastructure types routed to the wisps table.
 // Override via DB config "types.infra" or config.yaml types.infra.

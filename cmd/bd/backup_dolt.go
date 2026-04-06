@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/beads/internal/beads"
-	"github.com/steveyegge/beads/internal/storage/versioncontrolops"
+	"github.com/steveyegge/bd/internal/project"
+	"github.com/steveyegge/bd/internal/storage/versioncontrolops"
 )
 
 // --- Dolt-native backup commands ---
@@ -178,7 +178,7 @@ func resolveDoltBackupURL(raw string) string {
 	return "file://" + abs
 }
 
-// doltBackupConfig stores the backup destination info in .beads/dolt-backup.json
+// doltBackupConfig stores the backup destination info in .bd/dolt-backup.json
 type doltBackupConfig struct {
 	BackupURL  string    `json:"backup_url"`
 	BackupName string    `json:"backup_name"`
@@ -192,19 +192,19 @@ type doltBackupState struct {
 }
 
 func doltBackupConfigPath() (string, error) {
-	beadsDir := beads.FindBeadsDir()
-	if beadsDir == "" {
+	bdDir := project.FindBdDir()
+	if bdDir == "" {
 		return "", fmt.Errorf("not in a beads repository")
 	}
-	return filepath.Join(beadsDir, "dolt-backup.json"), nil
+	return filepath.Join(bdDir, "dolt-backup.json"), nil
 }
 
 func doltBackupStatePath() (string, error) {
-	beadsDir := beads.FindBeadsDir()
-	if beadsDir == "" {
+	bdDir := project.FindBdDir()
+	if bdDir == "" {
 		return "", fmt.Errorf("not in a beads repository")
 	}
-	return filepath.Join(beadsDir, "dolt-backup-state.json"), nil
+	return filepath.Join(bdDir, "dolt-backup-state.json"), nil
 }
 
 func saveDoltBackupConfig(backupURL string) error {
@@ -328,11 +328,11 @@ func showDoltBackupStatusJSON() map[string]interface{} {
 
 // doltBackupSize returns the approximate size of the Dolt data directory in bytes.
 func doltBackupSize() (int64, error) {
-	beadsDir := beads.FindBeadsDir()
-	if beadsDir == "" {
+	bdDir := project.FindBdDir()
+	if bdDir == "" {
 		return 0, fmt.Errorf("not in a beads repository")
 	}
-	dataDir := filepath.Join(beadsDir, "embeddeddolt")
+	dataDir := filepath.Join(bdDir, "embeddeddolt")
 	return dirSize(dataDir)
 }
 

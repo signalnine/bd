@@ -11,16 +11,16 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/beads/internal/config"
-	"github.com/steveyegge/beads/internal/configfile"
-	"github.com/steveyegge/beads/internal/debug"
-	"github.com/steveyegge/beads/internal/routing"
-	"github.com/steveyegge/beads/internal/storage"
-	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
-	"github.com/steveyegge/beads/internal/timeparsing"
-	"github.com/steveyegge/beads/internal/types"
-	"github.com/steveyegge/beads/internal/ui"
-	"github.com/steveyegge/beads/internal/validation"
+	"github.com/steveyegge/bd/internal/config"
+	"github.com/steveyegge/bd/internal/configfile"
+	"github.com/steveyegge/bd/internal/debug"
+	"github.com/steveyegge/bd/internal/routing"
+	"github.com/steveyegge/bd/internal/storage"
+	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
+	"github.com/steveyegge/bd/internal/timeparsing"
+	"github.com/steveyegge/bd/internal/types"
+	"github.com/steveyegge/bd/internal/ui"
+	"github.com/steveyegge/bd/internal/validation"
 )
 
 var createCmd = &cobra.Command{
@@ -380,7 +380,7 @@ var createCmd = &cobra.Command{
 			}
 
 			// Open new store for target repo using factory to respect backend config
-			targetBeadsDirPath := filepath.Join(targetBeadsDir, ".beads")
+			targetBeadsDirPath := filepath.Join(targetBeadsDir, ".bd")
 			var err error
 			targetStore, err = newDoltStoreFromConfig(rootCtx, targetBeadsDirPath)
 			if err != nil {
@@ -768,8 +768,8 @@ func formatTimeForRPC(t *time.Time) string {
 // If the .beads directory doesn't exist, it creates it and initializes with
 // the same prefix as the source store (T010, T012: prefix inheritance).
 func ensureBeadsDirForPath(ctx context.Context, targetPath string, sourceStore *embeddeddolt.EmbeddedDoltStore) error {
-	beadsDir := filepath.Join(targetPath, ".beads")
-	metadataPath := filepath.Join(beadsDir, "metadata.json")
+	bdDir := filepath.Join(targetPath, ".bd")
+	metadataPath := filepath.Join(bdDir, "metadata.json")
 
 	// Check if beads directory already exists with a Dolt database.
 	// metadata.json is the canonical marker for an initialized beads dir.
@@ -778,7 +778,7 @@ func ensureBeadsDirForPath(ctx context.Context, targetPath string, sourceStore *
 	}
 
 	// Create .beads directory
-	if err := os.MkdirAll(beadsDir, 0750); err != nil {
+	if err := os.MkdirAll(bdDir, 0750); err != nil {
 		return fmt.Errorf("cannot create .beads directory: %w", err)
 	}
 
@@ -793,7 +793,7 @@ func ensureBeadsDirForPath(ctx context.Context, targetPath string, sourceStore *
 			// Open target store temporarily to set prefix.
 			// Use newDoltStore with explicit config since the target .beads
 			// directory was just created and has no metadata.json yet.
-			tempStore, err := newDoltStore(ctx, beadsDir, dbName)
+			tempStore, err := newDoltStore(ctx, bdDir, dbName)
 			if err != nil {
 				return fmt.Errorf("failed to initialize target database: %w", err)
 			}
@@ -812,7 +812,7 @@ func ensureBeadsDirForPath(ctx context.Context, targetPath string, sourceStore *
 			cfg.DoltDatabase = dbName
 			cfg.DoltMode = configfile.DoltModeEmbedded
 			cfg.ProjectID = configfile.GenerateProjectID()
-			if err := cfg.Save(beadsDir); err != nil {
+			if err := cfg.Save(bdDir); err != nil {
 				return fmt.Errorf("failed to write metadata.json: %w", err)
 			}
 		}

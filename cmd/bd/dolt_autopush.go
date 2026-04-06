@@ -8,12 +8,12 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/steveyegge/beads/internal/beads"
-	"github.com/steveyegge/beads/internal/config"
-	"github.com/steveyegge/beads/internal/debug"
+	"github.com/steveyegge/bd/internal/project"
+	"github.com/steveyegge/bd/internal/config"
+	"github.com/steveyegge/bd/internal/debug"
 )
 
-// pushState tracks auto-push state in a local file (.beads/push-state.json)
+// pushState tracks auto-push state in a local file (.bd/push-state.json)
 // instead of the Dolt metadata table, to avoid merge conflicts on multi-machine
 // setups (GH#2466).
 type pushState struct {
@@ -22,11 +22,11 @@ type pushState struct {
 }
 
 func pushStatePath() (string, error) {
-	beadsDir := beads.FindBeadsDir()
-	if beadsDir == "" {
+	bdDir := project.FindBdDir()
+	if bdDir == "" {
 		return "", fmt.Errorf("not in a beads repository")
 	}
-	return filepath.Join(beadsDir, "push-state.json"), nil
+	return filepath.Join(bdDir, "push-state.json"), nil
 }
 
 func loadPushState() (*pushState, error) {

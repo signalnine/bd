@@ -10,10 +10,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/steveyegge/beads/internal/storage/dolt"
-	"github.com/steveyegge/beads/internal/types"
-	"github.com/steveyegge/beads/internal/ui"
-	"github.com/steveyegge/beads/internal/utils"
+	"github.com/steveyegge/bd/internal/storage/dolt"
+	"github.com/steveyegge/bd/internal/types"
+	"github.com/steveyegge/bd/internal/ui"
+	"github.com/steveyegge/bd/internal/utils"
 )
 
 // listTestHelper provides test setup and assertion methods
@@ -97,7 +97,7 @@ func (h *listTestHelper) assertAtMost(count, maxCount int, desc string) {
 func TestListCommandSuite(t *testing.T) {
 	t.Parallel()
 	tmpDir := t.TempDir()
-	testDB := filepath.Join(tmpDir, ".beads", "beads.db")
+	testDB := filepath.Join(tmpDir, ".bd", "bd.db")
 	s := newTestStore(t, testDB)
 
 	t.Run("ListCommand", func(t *testing.T) {
@@ -232,7 +232,7 @@ func TestListCommandSuite(t *testing.T) {
 func TestListQueryCapabilitiesSuite(t *testing.T) {
 	t.Parallel()
 	tmpDir := t.TempDir()
-	testDB := filepath.Join(tmpDir, ".beads", "beads.db")
+	testDB := filepath.Join(tmpDir, ".bd", "bd.db")
 	s := newTestStore(t, testDB)
 	ctx := context.Background()
 
@@ -474,7 +474,7 @@ func TestListQueryCapabilitiesSuite(t *testing.T) {
 func TestStableTreeOrdering(t *testing.T) {
 	t.Parallel()
 	tmpDir := t.TempDir()
-	testDB := filepath.Join(tmpDir, ".beads", "beads.db")
+	testDB := filepath.Join(tmpDir, ".bd", "bd.db")
 	store := newTestStore(t, testDB)
 	ctx := context.Background()
 
@@ -1068,7 +1068,7 @@ func TestParseTimeFlag(t *testing.T) {
 func TestListTimeBasedFilters(t *testing.T) {
 	t.Parallel()
 	tmpDir := t.TempDir()
-	testDB := filepath.Join(tmpDir, ".beads", "beads.db")
+	testDB := filepath.Join(tmpDir, ".bd", "bd.db")
 	s := newTestStore(t, testDB)
 	ctx := context.Background()
 
@@ -1243,7 +1243,7 @@ func TestListTimeBasedFilters(t *testing.T) {
 func TestHierarchicalChildren(t *testing.T) {
 	t.Parallel()
 	tmpDir := t.TempDir()
-	testDB := filepath.Join(tmpDir, ".beads", "beads.db")
+	testDB := filepath.Join(tmpDir, ".bd", "bd.db")
 	store := newTestStore(t, testDB)
 	ctx := context.Background()
 
@@ -1429,7 +1429,7 @@ func TestFormatIssueCompactWithParent(t *testing.T) {
 func TestGetBlockingInfoForIssues_ParentChildSeparation(t *testing.T) {
 	t.Parallel()
 	tmpDir := t.TempDir()
-	testDB := filepath.Join(tmpDir, ".beads", "beads.db")
+	testDB := filepath.Join(tmpDir, ".bd", "bd.db")
 	store := newTestStore(t, testDB)
 	ctx := context.Background()
 
@@ -1505,7 +1505,7 @@ func TestGetBlockingInfoForIssues_ParentChildSeparation(t *testing.T) {
 func TestListJSON_ParentField(t *testing.T) {
 	t.Parallel()
 	tmpDir := t.TempDir()
-	testDB := filepath.Join(tmpDir, ".beads", "beads.db")
+	testDB := filepath.Join(tmpDir, ".bd", "bd.db")
 	store := newTestStore(t, testDB)
 	ctx := context.Background()
 

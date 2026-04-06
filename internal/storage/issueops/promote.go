@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/steveyegge/beads/internal/storage"
+	"github.com/steveyegge/bd/internal/storage"
 )
 
 // PromoteFromEphemeralInTx promotes a wisp to a permanent issue within a transaction.

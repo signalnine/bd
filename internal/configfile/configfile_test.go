@@ -9,25 +9,25 @@ import (
 func TestDefaultConfig(t *testing.T) {
 	cfg := DefaultConfig()
 
-	if cfg.Database != "beads.db" {
-		t.Errorf("Database = %q, want beads.db", cfg.Database)
+	if cfg.Database != "bd.db" {
+		t.Errorf("Database = %q, want bd.db", cfg.Database)
 	}
 }
 
 func TestLoadSaveRoundtrip(t *testing.T) {
 	tmpDir := t.TempDir()
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0750); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0750); err != nil {
 		t.Fatalf("failed to create .beads directory: %v", err)
 	}
 
 	cfg := DefaultConfig()
 
-	if err := cfg.Save(beadsDir); err != nil {
+	if err := cfg.Save(bdDir); err != nil {
 		t.Fatalf("Save() failed: %v", err)
 	}
 
-	loaded, err := Load(beadsDir)
+	loaded, err := Load(bdDir)
 	if err != nil {
 		t.Fatalf("Load() failed: %v", err)
 	}
@@ -55,12 +55,12 @@ func TestLoadNonexistent(t *testing.T) {
 }
 
 func TestDatabasePath(t *testing.T) {
-	beadsDir := "/home/user/project/.beads"
+	bdDir := "/home/user/project/.bd"
 	// DatabasePath always returns dolt path regardless of Database field
-	cfg := &Config{Database: "beads.db"}
+	cfg := &Config{Database: "bd.db"}
 
-	got := cfg.DatabasePath(beadsDir)
-	want := filepath.Join(beadsDir, "dolt")
+	got := cfg.DatabasePath(bdDir)
+	want := filepath.Join(bdDir, "dolt")
 
 	if got != want {
 		t.Errorf("DatabasePath() = %q, want %q", got, want)
@@ -68,21 +68,21 @@ func TestDatabasePath(t *testing.T) {
 }
 
 func TestDatabasePath_Dolt(t *testing.T) {
-	beadsDir := "/home/user/project/.beads"
+	bdDir := "/home/user/project/.bd"
 
 	t.Run("explicit dolt dir", func(t *testing.T) {
 		cfg := &Config{Database: "dolt", Backend: BackendDolt}
-		got := cfg.DatabasePath(beadsDir)
-		want := filepath.Join(beadsDir, "dolt")
+		got := cfg.DatabasePath(bdDir)
+		want := filepath.Join(bdDir, "dolt")
 		if got != want {
 			t.Errorf("DatabasePath() = %q, want %q", got, want)
 		}
 	})
 
-	t.Run("backward compat: dolt backend with beads.db field", func(t *testing.T) {
-		cfg := &Config{Database: "beads.db", Backend: BackendDolt}
-		got := cfg.DatabasePath(beadsDir)
-		want := filepath.Join(beadsDir, "dolt")
+	t.Run("backward compat: dolt backend with bd.db field", func(t *testing.T) {
+		cfg := &Config{Database: "bd.db", Backend: BackendDolt}
+		got := cfg.DatabasePath(bdDir)
+		want := filepath.Join(bdDir, "dolt")
 		if got != want {
 			t.Errorf("DatabasePath() = %q, want %q", got, want)
 		}
@@ -92,8 +92,8 @@ func TestDatabasePath_Dolt(t *testing.T) {
 		// Stale values like "town", "wyvern", "beads_rig" must resolve to "dolt"
 		for _, staleName := range []string{"town", "wyvern", "beads_rig", "random"} {
 			cfg := &Config{Database: staleName, Backend: BackendDolt}
-			got := cfg.DatabasePath(beadsDir)
-			want := filepath.Join(beadsDir, "dolt")
+			got := cfg.DatabasePath(bdDir)
+			want := filepath.Join(bdDir, "dolt")
 			if got != want {
 				t.Errorf("DatabasePath(%q) = %q, want %q", staleName, got, want)
 			}
@@ -102,8 +102,8 @@ func TestDatabasePath_Dolt(t *testing.T) {
 
 	t.Run("empty database field resolves to dolt", func(t *testing.T) {
 		cfg := &Config{Database: "", Backend: BackendDolt}
-		got := cfg.DatabasePath(beadsDir)
-		want := filepath.Join(beadsDir, "dolt")
+		got := cfg.DatabasePath(bdDir)
+		want := filepath.Join(bdDir, "dolt")
 		if got != want {
 			t.Errorf("DatabasePath() = %q, want %q", got, want)
 		}
@@ -111,7 +111,7 @@ func TestDatabasePath_Dolt(t *testing.T) {
 
 	t.Run("absolute path is honored", func(t *testing.T) {
 		cfg := &Config{Database: "/custom/path/dolt", Backend: BackendDolt}
-		got := cfg.DatabasePath(beadsDir)
+		got := cfg.DatabasePath(bdDir)
 		want := "/custom/path/dolt"
 		if got != want {
 			t.Errorf("DatabasePath() = %q, want %q", got, want)
@@ -120,9 +120,9 @@ func TestDatabasePath_Dolt(t *testing.T) {
 }
 
 func TestConfigPath(t *testing.T) {
-	beadsDir := "/home/user/project/.beads"
-	got := ConfigPath(beadsDir)
-	want := filepath.Join(beadsDir, "metadata.json")
+	bdDir := "/home/user/project/.bd"
+	got := ConfigPath(bdDir)
+	want := filepath.Join(bdDir, "metadata.json")
 
 	if got != want {
 		t.Errorf("ConfigPath() = %q, want %q", got, want)
@@ -328,7 +328,7 @@ func TestDoltServerMode(t *testing.T) {
 // TestIsDoltServerModeEnvVar tests env var overrides for IsDoltServerMode
 func TestIsDoltServerModeEnvVar(t *testing.T) {
 	t.Run("env var override with dolt backend", func(t *testing.T) {
-		t.Setenv("BEADS_DOLT_SERVER_MODE", "1")
+		t.Setenv("BD_DOLT_SERVER_MODE", "1")
 		cfg := &Config{Backend: BackendDolt}
 		if !cfg.IsDoltServerMode() {
 			t.Error("IsDoltServerMode() = false, want true when env var set with dolt backend")
@@ -336,7 +336,7 @@ func TestIsDoltServerModeEnvVar(t *testing.T) {
 	})
 
 	t.Run("env var with dolt backend enables server mode", func(t *testing.T) {
-		t.Setenv("BEADS_DOLT_SERVER_MODE", "1")
+		t.Setenv("BD_DOLT_SERVER_MODE", "1")
 		cfg := &Config{Backend: ""}
 		if !cfg.IsDoltServerMode() {
 			t.Error("IsDoltServerMode() = false, want true when env var set with default backend")
@@ -375,11 +375,11 @@ func TestGetBackendAlwaysDolt(t *testing.T) {
 
 // TestDatabasePathAlwaysDolt tests that DatabasePath always returns the dolt path.
 func TestDatabasePathAlwaysDolt(t *testing.T) {
-	beadsDir := "/home/user/project/.beads"
+	bdDir := "/home/user/project/.bd"
 
-	cfg := &Config{Database: "beads.db", Backend: BackendDolt}
-	got := cfg.DatabasePath(beadsDir)
-	want := filepath.Join(beadsDir, "dolt")
+	cfg := &Config{Database: "bd.db", Backend: BackendDolt}
+	got := cfg.DatabasePath(bdDir)
+	want := filepath.Join(bdDir, "dolt")
 	if got != want {
 		t.Errorf("DatabasePath() = %q, want %q", got, want)
 	}
@@ -431,8 +431,8 @@ func TestGetCapabilities(t *testing.T) {
 // TestDoltServerModeRoundtrip tests that server mode config survives save/load
 func TestDoltServerModeRoundtrip(t *testing.T) {
 	tmpDir := t.TempDir()
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0750); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0750); err != nil {
 		t.Fatalf("failed to create .beads directory: %v", err)
 	}
 
@@ -445,11 +445,11 @@ func TestDoltServerModeRoundtrip(t *testing.T) {
 		DoltServerUser: "beads_admin",
 	}
 
-	if err := cfg.Save(beadsDir); err != nil {
+	if err := cfg.Save(bdDir); err != nil {
 		t.Fatalf("Save() failed: %v", err)
 	}
 
-	loaded, err := Load(beadsDir)
+	loaded, err := Load(bdDir)
 	if err != nil {
 		t.Fatalf("Load() failed: %v", err)
 	}
@@ -474,7 +474,7 @@ func TestDoltServerModeRoundtrip(t *testing.T) {
 // TestEnvVarOverrides tests env var overrides for getter methods
 func TestEnvVarOverrides(t *testing.T) {
 	t.Run("host env var overrides config", func(t *testing.T) {
-		t.Setenv("BEADS_DOLT_SERVER_HOST", "192.168.1.1")
+		t.Setenv("BD_DOLT_SERVER_HOST", "192.168.1.1")
 		cfg := &Config{DoltServerHost: "10.0.0.1"}
 		if got := cfg.GetDoltServerHost(); got != "192.168.1.1" {
 			t.Errorf("GetDoltServerHost() = %q, want 192.168.1.1", got)
@@ -482,7 +482,7 @@ func TestEnvVarOverrides(t *testing.T) {
 	})
 
 	t.Run("port env var overrides config", func(t *testing.T) {
-		t.Setenv("BEADS_DOLT_SERVER_PORT", "3309")
+		t.Setenv("BD_DOLT_SERVER_PORT", "3309")
 		cfg := &Config{DoltServerPort: 3308}
 		if got := cfg.GetDoltServerPort(); got != 3309 {
 			t.Errorf("GetDoltServerPort() = %d, want 3309", got)
@@ -490,24 +490,24 @@ func TestEnvVarOverrides(t *testing.T) {
 	})
 
 	t.Run("invalid port env var falls through to config", func(t *testing.T) {
-		t.Setenv("BEADS_DOLT_SERVER_PORT", "not-a-number")
+		t.Setenv("BD_DOLT_SERVER_PORT", "not-a-number")
 		cfg := &Config{DoltServerPort: 3308}
 		if got := cfg.GetDoltServerPort(); got != 3308 {
 			t.Errorf("GetDoltServerPort() = %d, want 3308", got)
 		}
 	})
 
-	t.Run("BEADS_DOLT_PORT fallback when SERVER_PORT not set", func(t *testing.T) {
-		t.Setenv("BEADS_DOLT_PORT", "3307")
+	t.Run("BD_DOLT_PORT fallback when SERVER_PORT not set", func(t *testing.T) {
+		t.Setenv("BD_DOLT_PORT", "3307")
 		cfg := &Config{}
 		if got := cfg.GetDoltServerPort(); got != 3307 {
 			t.Errorf("GetDoltServerPort() = %d, want 3307", got)
 		}
 	})
 
-	t.Run("BEADS_DOLT_SERVER_PORT takes priority over BEADS_DOLT_PORT", func(t *testing.T) {
-		t.Setenv("BEADS_DOLT_SERVER_PORT", "3309")
-		t.Setenv("BEADS_DOLT_PORT", "3307")
+	t.Run("BD_DOLT_SERVER_PORT takes priority over BD_DOLT_PORT", func(t *testing.T) {
+		t.Setenv("BD_DOLT_SERVER_PORT", "3309")
+		t.Setenv("BD_DOLT_PORT", "3307")
 		cfg := &Config{}
 		if got := cfg.GetDoltServerPort(); got != 3309 {
 			t.Errorf("GetDoltServerPort() = %d, want 3309", got)
@@ -515,7 +515,7 @@ func TestEnvVarOverrides(t *testing.T) {
 	})
 
 	t.Run("user env var overrides config", func(t *testing.T) {
-		t.Setenv("BEADS_DOLT_SERVER_USER", "envuser")
+		t.Setenv("BD_DOLT_SERVER_USER", "envuser")
 		cfg := &Config{DoltServerUser: "admin"}
 		if got := cfg.GetDoltServerUser(); got != "envuser" {
 			t.Errorf("GetDoltServerUser() = %q, want envuser", got)
@@ -523,7 +523,7 @@ func TestEnvVarOverrides(t *testing.T) {
 	})
 
 	t.Run("database env var overrides config", func(t *testing.T) {
-		t.Setenv("BEADS_DOLT_SERVER_DATABASE", "envdb")
+		t.Setenv("BD_DOLT_SERVER_DATABASE", "envdb")
 		cfg := &Config{DoltDatabase: "mydb"}
 		if got := cfg.GetDoltDatabase(); got != "envdb" {
 			t.Errorf("GetDoltDatabase() = %q, want envdb", got)
@@ -549,28 +549,28 @@ func TestEnvVarOverrides(t *testing.T) {
 
 func TestIsDoltServerMode_SharedServerOverridesEmbedded(t *testing.T) {
 	// GH#2949: shared-server env var must override stale dolt_mode=embedded
-	t.Setenv("BEADS_DOLT_SHARED_SERVER", "1")
-	t.Setenv("BEADS_DOLT_SERVER_MODE", "")
+	t.Setenv("BD_DOLT_SHARED_SERVER", "1")
+	t.Setenv("BD_DOLT_SERVER_MODE", "")
 
 	cfg := &Config{Backend: BackendDolt, DoltMode: DoltModeEmbedded}
 	if !cfg.IsDoltServerMode() {
-		t.Error("IsDoltServerMode() = false with BEADS_DOLT_SHARED_SERVER=1 + stale embedded, want true")
+		t.Error("IsDoltServerMode() = false with BD_DOLT_SHARED_SERVER=1 + stale embedded, want true")
 	}
 }
 
 func TestIsDoltServerMode_SharedServerTrue(t *testing.T) {
-	t.Setenv("BEADS_DOLT_SHARED_SERVER", "true")
-	t.Setenv("BEADS_DOLT_SERVER_MODE", "")
+	t.Setenv("BD_DOLT_SHARED_SERVER", "true")
+	t.Setenv("BD_DOLT_SERVER_MODE", "")
 
 	cfg := &Config{Backend: BackendDolt, DoltMode: DoltModeEmbedded}
 	if !cfg.IsDoltServerMode() {
-		t.Error("IsDoltServerMode() = false with BEADS_DOLT_SHARED_SERVER=true + stale embedded, want true")
+		t.Error("IsDoltServerMode() = false with BD_DOLT_SHARED_SERVER=true + stale embedded, want true")
 	}
 }
 
 func TestIsDoltServerMode_NoEnvRespectsMetadata(t *testing.T) {
-	t.Setenv("BEADS_DOLT_SHARED_SERVER", "")
-	t.Setenv("BEADS_DOLT_SERVER_MODE", "")
+	t.Setenv("BD_DOLT_SHARED_SERVER", "")
+	t.Setenv("BD_DOLT_SERVER_MODE", "")
 
 	cfg := &Config{Backend: BackendDolt, DoltMode: DoltModeEmbedded}
 	if cfg.IsDoltServerMode() {

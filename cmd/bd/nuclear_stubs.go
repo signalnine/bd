@@ -13,12 +13,12 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/steveyegge/beads/internal/beads"
-	"github.com/steveyegge/beads/internal/config"
-	"github.com/steveyegge/beads/internal/storage"
-	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
-	"github.com/steveyegge/beads/internal/types"
-	"github.com/steveyegge/beads/internal/utils"
+	"github.com/steveyegge/bd/internal/project"
+	"github.com/steveyegge/bd/internal/config"
+	"github.com/steveyegge/bd/internal/storage"
+	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
+	"github.com/steveyegge/bd/internal/types"
+	"github.com/steveyegge/bd/internal/utils"
 )
 
 // ---------------------------------------------------------------------------
@@ -85,11 +85,11 @@ const lastTouchedFile = "last-touched"
 
 // GetLastTouchedID returns the ID of the last touched issue.
 func GetLastTouchedID() string {
-	beadsDir := beads.FindBeadsDir()
-	if beadsDir == "" {
+	bdDir := project.FindBdDir()
+	if bdDir == "" {
 		return ""
 	}
-	lastTouchedPath := filepath.Join(beadsDir, lastTouchedFile)
+	lastTouchedPath := filepath.Join(bdDir, lastTouchedFile)
 	data, err := os.ReadFile(lastTouchedPath) // #nosec G304
 	if err != nil {
 		return ""
@@ -102,21 +102,21 @@ func SetLastTouchedID(issueID string) {
 	if issueID == "" {
 		return
 	}
-	beadsDir := beads.FindBeadsDir()
-	if beadsDir == "" {
+	bdDir := project.FindBdDir()
+	if bdDir == "" {
 		return
 	}
-	lastTouchedPath := filepath.Join(beadsDir, lastTouchedFile)
+	lastTouchedPath := filepath.Join(bdDir, lastTouchedFile)
 	_ = os.WriteFile(lastTouchedPath, []byte(issueID+"\n"), 0600)
 }
 
 // ClearLastTouched removes the last touched file.
 func ClearLastTouched() {
-	beadsDir := beads.FindBeadsDir()
-	if beadsDir == "" {
+	bdDir := project.FindBdDir()
+	if bdDir == "" {
 		return
 	}
-	lastTouchedPath := filepath.Join(beadsDir, lastTouchedFile)
+	lastTouchedPath := filepath.Join(bdDir, lastTouchedFile)
 	_ = os.Remove(lastTouchedPath)
 }
 
@@ -317,17 +317,17 @@ func ensureStoreActive() error {
 		return nil
 	}
 
-	beadsDir := beads.FindBeadsDir()
-	if beadsDir == "" {
+	bdDir := project.FindBdDir()
+	if bdDir == "" {
 		return fmt.Errorf("no beads database found.\nHint: run 'bd init' to create a database in the current directory")
 	}
 
-	s, err := newDoltStoreFromConfig(getRootContext(), beadsDir)
+	s, err := newDoltStoreFromConfig(getRootContext(), bdDir)
 	if err != nil {
 		return fmt.Errorf("failed to open database: %w\nHint: %s", err, diagHint())
 	}
 
-	if dbPath := beads.FindDatabasePath(); dbPath != "" {
+	if dbPath := project.FindDatabasePath(); dbPath != "" {
 		setDBPath(dbPath)
 	}
 

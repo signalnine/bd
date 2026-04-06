@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/steveyegge/beads/internal/testutil"
+	"github.com/steveyegge/bd/internal/testutil"
 )
 
 // testServerPort is the port of the isolated test Dolt server (0 = not running).
@@ -20,7 +20,7 @@ func TestMain(m *testing.M) {
 }
 
 func testMainInner(m *testing.M) int {
-	os.Setenv("BEADS_TEST_MODE", "1")
+	os.Setenv("BD_TEST_MODE", "1")
 	if err := testutil.EnsureDoltContainerForTestMain(); err != nil {
 		fmt.Fprintf(os.Stderr, "WARN: %v, skipping Dolt tests\n", err)
 	} else {
@@ -31,7 +31,7 @@ func testMainInner(m *testing.M) int {
 	code := m.Run()
 
 	testServerPort = 0
-	os.Unsetenv("BEADS_DOLT_PORT")
-	os.Unsetenv("BEADS_TEST_MODE")
+	os.Unsetenv("BD_DOLT_PORT")
+	os.Unsetenv("BD_TEST_MODE")
 	return code
 }

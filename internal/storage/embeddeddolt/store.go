@@ -13,11 +13,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/steveyegge/beads/internal/config"
-	"github.com/steveyegge/beads/internal/storage"
-	"github.com/steveyegge/beads/internal/storage/issueops"
-	"github.com/steveyegge/beads/internal/storage/versioncontrolops"
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/config"
+	"github.com/steveyegge/bd/internal/storage"
+	"github.com/steveyegge/bd/internal/storage/issueops"
+	"github.com/steveyegge/bd/internal/storage/versioncontrolops"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 // EmbeddedDoltStore is the concrete storage backend backed by the embedded Dolt engine.
@@ -32,7 +32,7 @@ import (
 // DoltDB.SetCrashOnFatalError (GH#2571).
 type EmbeddedDoltStore struct {
 	dataDir       string
-	beadsDir      string
+	bdDir      string
 	database      string
 	branch        string
 	credentialKey []byte
@@ -60,7 +60,7 @@ func WithLock(lock Unlocker) Option {
 }
 
 // New creates an EmbeddedDoltStore using the embedded Dolt engine.
-// beadsDir is the .beads/ root; the data directory is derived as <beadsDir>/embeddeddolt/.
+// bdDir is the .bd/ root; the data directory is derived as <bdDir>/embeddeddolt/.
 // The database is created automatically if it doesn't exist (initSchema handles this).
 //
 // An exclusive flock is held on the data directory for the store's entire
@@ -69,7 +69,7 @@ func WithLock(lock Unlocker) Option {
 // canceled, instead of panicking during concurrent engine initialization
 // (GH#2571). The lock is released when Close is called, unless a pre-acquired
 // lock was supplied via WithLock (in which case the caller is responsible for it).
-func New(ctx context.Context, beadsDir, database, branch string, opts ...Option) (*EmbeddedDoltStore, error) {
+func New(ctx context.Context, bdDir, database, branch string, opts ...Option) (*EmbeddedDoltStore, error) {
 	var o options
 	for _, fn := range opts {
 		fn(&o)
@@ -78,7 +78,7 @@ func New(ctx context.Context, beadsDir, database, branch string, opts ...Option)
 	// Resolve to absolute path — the embedded dolt driver resolves file://
 	// DSN paths relative to its data directory, so relative paths cause
 	// doubled-path errors on subsequent opens.
-	absBeadsDir, err := filepath.Abs(beadsDir)
+	absBeadsDir, err := filepath.Abs(bdDir)
 	if err != nil {
 		return nil, fmt.Errorf("embeddeddolt: resolving beads dir: %w", err)
 	}
@@ -102,7 +102,7 @@ func New(ctx context.Context, beadsDir, database, branch string, opts ...Option)
 
 	s := &EmbeddedDoltStore{
 		dataDir:  dataDir,
-		beadsDir: absBeadsDir,
+		bdDir: absBeadsDir,
 		database: database,
 		branch:   branch,
 		lock:     lock,
@@ -457,7 +457,7 @@ func (s *EmbeddedDoltStore) Compact(ctx context.Context, initialHash, boundaryHa
 	})
 }
 
-// Path returns the embedded dolt data directory (.beads/embeddeddolt/).
+// Path returns the embedded dolt data directory (.bd/embeddeddolt/).
 func (s *EmbeddedDoltStore) Path() string {
 	return s.dataDir
 }

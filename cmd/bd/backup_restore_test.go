@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/steveyegge/beads/internal/testutil"
+	"github.com/steveyegge/bd/internal/testutil"
 )
 
 func TestBackupRestoreMissingDir(t *testing.T) {

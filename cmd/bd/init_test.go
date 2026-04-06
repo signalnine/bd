@@ -14,10 +14,10 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/steveyegge/beads/internal/beads"
-	"github.com/steveyegge/beads/internal/configfile"
-	"github.com/steveyegge/beads/internal/git"
-	"github.com/steveyegge/beads/internal/storage/dolt"
+	"github.com/steveyegge/bd/internal/project"
+	"github.com/steveyegge/bd/internal/configfile"
+	"github.com/steveyegge/bd/internal/git"
+	"github.com/steveyegge/bd/internal/storage/dolt"
 )
 
 // skipIfNoDolt skips the test when no Dolt server is available.
@@ -136,13 +136,13 @@ func TestInitCommand(t *testing.T) {
 			}
 
 			// Verify .beads directory was created
-			beadsDir := filepath.Join(tmpDir, ".beads")
-			if _, err := os.Stat(beadsDir); os.IsNotExist(err) {
+			bdDir := filepath.Join(tmpDir, ".bd")
+			if _, err := os.Stat(bdDir); os.IsNotExist(err) {
 				t.Error(".beads directory was not created")
 			}
 
 			// Verify .gitignore was created with proper content
-			gitignorePath := filepath.Join(beadsDir, ".gitignore")
+			gitignorePath := filepath.Join(bdDir, ".gitignore")
 			gitignoreContent, err := os.ReadFile(gitignorePath)
 			if err != nil {
 				t.Errorf(".gitignore file was not created: %v", err)
@@ -166,7 +166,7 @@ func TestInitCommand(t *testing.T) {
 			}
 
 			// Verify Dolt database directory was created
-			doltPath := filepath.Join(beadsDir, "dolt")
+			doltPath := filepath.Join(bdDir, "dolt")
 			if info, err := os.Stat(doltPath); os.IsNotExist(err) {
 				t.Errorf("Dolt database directory was not created at %s", doltPath)
 			} else if !info.IsDir() {
@@ -211,7 +211,7 @@ func TestInitAlreadyInitialized(t *testing.T) {
 	}
 
 	// Verify database still works
-	dbPath := filepath.Join(tmpDir, ".beads", "dolt")
+	dbPath := filepath.Join(tmpDir, ".bd", "dolt")
 	store, err := openExistingTestDB(t, dbPath)
 	if err != nil {
 		t.Fatalf("Failed to open database: %v", err)
@@ -230,7 +230,7 @@ func TestInitAlreadyInitialized(t *testing.T) {
 }
 
 func TestInitWithCustomDBPath(t *testing.T) {
-	t.Skip("BEADS_DB env var does not control Dolt store location; Dolt always uses .beads/dolt/")
+	t.Skip("BD_DB env var does not control Dolt store location; Dolt always uses .bd/dolt/")
 	// Save original state
 	origDBPath := dbPath
 	defer func() { dbPath = origDBPath }()
@@ -248,16 +248,16 @@ func TestInitWithCustomDBPath(t *testing.T) {
 
 	customDBPath := filepath.Join(customDBDir, "test.db")
 
-	// Test with BEADS_DB environment variable (replacing --db flag test)
-	t.Run("init with BEADS_DB pointing to custom path", func(t *testing.T) {
+	// Test with BD_DB environment variable (replacing --db flag test)
+	t.Run("init with BD_DB pointing to custom path", func(t *testing.T) {
 		dbPath = "" // Reset global
-		os.Setenv("BEADS_DB", customDBPath)
-		defer os.Unsetenv("BEADS_DB")
+		os.Setenv("BD_DB", customDBPath)
+		defer os.Unsetenv("BD_DB")
 
 		rootCmd.SetArgs([]string{"init", "--prefix", "custom", "--quiet"})
 
 		if err := rootCmd.Execute(); err != nil {
-			t.Fatalf("Init with BEADS_DB failed: %v", err)
+			t.Fatalf("Init with BD_DB failed: %v", err)
 		}
 
 		// Verify database was created at custom location
@@ -282,28 +282,28 @@ func TestInitWithCustomDBPath(t *testing.T) {
 			t.Errorf("Expected prefix 'custom', got %q", prefix)
 		}
 
-		// Verify .beads/ directory was NOT created in work directory
-		if _, err := os.Stat(filepath.Join(workDir, ".beads")); err == nil {
-			t.Error(".beads/ directory should not be created when using BEADS_DB env var")
+		// Verify .bd/ directory was NOT created in work directory
+		if _, err := os.Stat(filepath.Join(workDir, ".bd")); err == nil {
+			t.Error(".bd/ directory should not be created when using BD_DB env var")
 		}
 	})
 
-	// Test with BEADS_DB env var
-	t.Run("init with BEADS_DB env var", func(t *testing.T) {
+	// Test with BD_DB env var
+	t.Run("init with BD_DB env var", func(t *testing.T) {
 		dbPath = "" // Reset global
 		envDBPath := filepath.Join(tmpDir, "env", "location", "env.db")
-		os.Setenv("BEADS_DB", envDBPath)
-		defer os.Unsetenv("BEADS_DB")
+		os.Setenv("BD_DB", envDBPath)
+		defer os.Unsetenv("BD_DB")
 
 		rootCmd.SetArgs([]string{"init", "--prefix", "envtest", "--quiet"})
 
 		if err := rootCmd.Execute(); err != nil {
-			t.Fatalf("Init with BEADS_DB failed: %v", err)
+			t.Fatalf("Init with BD_DB failed: %v", err)
 		}
 
 		// Verify database was created at env location
 		if _, err := os.Stat(envDBPath); os.IsNotExist(err) {
-			t.Errorf("Database was not created at BEADS_DB path %s", envDBPath)
+			t.Errorf("Database was not created at BD_DB path %s", envDBPath)
 		}
 
 		// Verify database works
@@ -324,13 +324,13 @@ func TestInitWithCustomDBPath(t *testing.T) {
 		}
 	})
 
-	// Test that BEADS_DB path containing ".beads" doesn't create CWD/.beads
-	t.Run("init with BEADS_DB path containing .beads", func(t *testing.T) {
+	// Test that BD_DB path containing ".bd" doesn't create CWD/.bd
+	t.Run("init with BD_DB path containing .bd", func(t *testing.T) {
 		dbPath = "" // Reset global
-		// Path contains ".beads" but is outside work directory
+		// Path contains ".bd" but is outside work directory
 		customPath := filepath.Join(tmpDir, "storage", ".beads-backup", "test.db")
-		os.Setenv("BEADS_DB", customPath)
-		defer os.Unsetenv("BEADS_DB")
+		os.Setenv("BD_DB", customPath)
+		defer os.Unsetenv("BD_DB")
 
 		rootCmd.SetArgs([]string{"init", "--prefix", "beadstest", "--quiet"})
 
@@ -343,34 +343,34 @@ func TestInitWithCustomDBPath(t *testing.T) {
 			t.Errorf("Database was not created at custom path %s", customPath)
 		}
 
-		// Verify .beads/ directory was NOT created in work directory
-		if _, err := os.Stat(filepath.Join(workDir, ".beads")); err == nil {
-			t.Error(".beads/ directory should not be created in CWD when BEADS_DB path contains .beads")
+		// Verify .bd/ directory was NOT created in work directory
+		if _, err := os.Stat(filepath.Join(workDir, ".bd")); err == nil {
+			t.Error(".bd/ directory should not be created in CWD when BD_DB path contains .bd")
 		}
 	})
 
-	// Test with multiple BEADS_DB variations
-	t.Run("BEADS_DB with subdirectories", func(t *testing.T) {
+	// Test with multiple BD_DB variations
+	t.Run("BD_DB with subdirectories", func(t *testing.T) {
 		dbPath = "" // Reset global
 		envPath := filepath.Join(tmpDir, "env", "subdirs", "test.db")
 
-		os.Setenv("BEADS_DB", envPath)
-		defer os.Unsetenv("BEADS_DB")
+		os.Setenv("BD_DB", envPath)
+		defer os.Unsetenv("BD_DB")
 
 		rootCmd.SetArgs([]string{"init", "--prefix", "envtest2", "--quiet"})
 
 		if err := rootCmd.Execute(); err != nil {
-			t.Fatalf("Init with BEADS_DB subdirs failed: %v", err)
+			t.Fatalf("Init with BD_DB subdirs failed: %v", err)
 		}
 
 		// Verify database was created at env location
 		if _, err := os.Stat(envPath); os.IsNotExist(err) {
-			t.Errorf("Database was not created at BEADS_DB path %s", envPath)
+			t.Errorf("Database was not created at BD_DB path %s", envPath)
 		}
 
-		// Verify .beads/ directory was NOT created in work directory
-		if _, err := os.Stat(filepath.Join(workDir, ".beads")); err == nil {
-			t.Error(".beads/ directory should not be created in CWD when BEADS_DB is set")
+		// Verify .bd/ directory was NOT created in work directory
+		if _, err := os.Stat(filepath.Join(workDir, ".bd")); err == nil {
+			t.Error(".bd/ directory should not be created in CWD when BD_DB is set")
 		}
 	})
 }
@@ -562,7 +562,7 @@ func TestSetupGlobalGitIgnore_ReadOnly(t *testing.T) {
 		if !strings.Contains(output, "Unable to write") {
 			t.Error("expected instructions for manual addition")
 		}
-		if !strings.Contains(output, "/test/project/.beads/") {
+		if !strings.Contains(output, "/test/project/.bd/") {
 			t.Error("expected .beads pattern in output")
 		}
 	})
@@ -604,7 +604,7 @@ func TestSetupGlobalGitIgnore_ReadOnly(t *testing.T) {
 		if !strings.Contains(output, "Unable to write") {
 			t.Error("expected instructions for manual addition")
 		}
-		if !strings.Contains(output, "/test/project/.beads/") {
+		if !strings.Contains(output, "/test/project/.bd/") {
 			t.Error("expected .beads pattern in output")
 		}
 	})
@@ -635,7 +635,7 @@ func captureStdout(t *testing.T, fn func() error) string {
 	return buf.String()
 }
 
-// TestInitPromptRoleConfig tests the beads.role git config read/write functions
+// TestInitPromptRoleConfig tests the bd.role git config read/write functions
 func TestInitPromptRoleConfig(t *testing.T) {
 	t.Run("getBeadsRole returns empty when not configured", func(t *testing.T) {
 		tmpDir := newGitRepo(t)
@@ -656,7 +656,7 @@ func TestInitPromptRoleConfig(t *testing.T) {
 
 		// Set role to contributor
 		if err := setBeadsRole("contributor"); err != nil {
-			t.Fatalf("Failed to set beads.role: %v", err)
+			t.Fatalf("Failed to set bd.role: %v", err)
 		}
 
 		role, hasRole := getBeadsRole()
@@ -669,7 +669,7 @@ func TestInitPromptRoleConfig(t *testing.T) {
 
 		// Change to maintainer
 		if err := setBeadsRole("maintainer"); err != nil {
-			t.Fatalf("Failed to set beads.role: %v", err)
+			t.Fatalf("Failed to set bd.role: %v", err)
 		}
 
 		role, hasRole = getBeadsRole()
@@ -692,10 +692,10 @@ func TestInitPromptSkippedWithFlags(t *testing.T) {
 		dbPath = ""
 
 		// Reset caches so RepoContext picks up new directory
-		beads.ResetCaches()
+		project.ResetCaches()
 		git.ResetCaches()
 		defer func() {
-			beads.ResetCaches()
+			project.ResetCaches()
 			git.ResetCaches()
 		}()
 
@@ -717,7 +717,7 @@ func TestInitPromptSkippedWithFlags(t *testing.T) {
 		rootCmd.SetArgs([]string{"init", "--prefix", "test", "--contributor", "--quiet"})
 		_ = rootCmd.Execute() // Ignore error - wizard may fail
 
-		// The --contributor flag should NOT set beads.role (that's done by prompt, not flag)
+		// The --contributor flag should NOT set bd.role (that's done by prompt, not flag)
 		// The flag just triggers the wizard directly
 	})
 
@@ -728,10 +728,10 @@ func TestInitPromptSkippedWithFlags(t *testing.T) {
 		dbPath = ""
 
 		// Reset caches so RepoContext picks up new directory
-		beads.ResetCaches()
+		project.ResetCaches()
 		git.ResetCaches()
 		defer func() {
-			beads.ResetCaches()
+			project.ResetCaches()
 			git.ResetCaches()
 		}()
 
@@ -751,7 +751,7 @@ func TestInitPromptSkippedWithFlags(t *testing.T) {
 		rootCmd.SetArgs([]string{"init", "--prefix", "test", "--team", "--quiet"})
 		_ = rootCmd.Execute() // Ignore error - wizard may fail
 
-		// The --team flag should not set beads.role
+		// The --team flag should not set bd.role
 		// (team wizard is separate from contributor/maintainer roles)
 	})
 }
@@ -784,10 +784,10 @@ func TestInitPromptNonGitRepo(t *testing.T) {
 	dbPath = ""
 
 	// Reset caches so RepoContext picks up new directory
-	beads.ResetCaches()
+	project.ResetCaches()
 	git.ResetCaches()
 	defer func() {
-		beads.ResetCaches()
+		project.ResetCaches()
 		git.ResetCaches()
 	}()
 
@@ -807,13 +807,13 @@ func TestInitPromptNonGitRepo(t *testing.T) {
 	}
 
 	// Verify .beads was created
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if _, err := os.Stat(beadsDir); os.IsNotExist(err) {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if _, err := os.Stat(bdDir); os.IsNotExist(err) {
 		t.Error(".beads directory should be created even without git")
 	}
 }
 
-// TestInitPromptExistingRole verifies behavior when beads.role is already set
+// TestInitPromptExistingRole verifies behavior when bd.role is already set
 func TestInitPromptExistingRole(t *testing.T) {
 	skipIfNoDolt(t)
 	t.Run("existing role is preserved on reinit with --force", func(t *testing.T) {
@@ -823,10 +823,10 @@ func TestInitPromptExistingRole(t *testing.T) {
 		dbPath = ""
 
 		// Reset caches so RepoContext picks up new directory
-		beads.ResetCaches()
+		project.ResetCaches()
 		git.ResetCaches()
 		defer func() {
-			beads.ResetCaches()
+			project.ResetCaches()
 			git.ResetCaches()
 		}()
 
@@ -840,7 +840,7 @@ func TestInitPromptExistingRole(t *testing.T) {
 
 		// Set role before init
 		if err := setBeadsRole("contributor"); err != nil {
-			t.Fatalf("Failed to set beads.role: %v", err)
+			t.Fatalf("Failed to set bd.role: %v", err)
 		}
 
 		// Run bd init (non-interactive, so prompt is skipped)
@@ -852,7 +852,7 @@ func TestInitPromptExistingRole(t *testing.T) {
 		// Verify role is still set
 		role, hasRole := getBeadsRole()
 		if !hasRole {
-			t.Error("Expected beads.role to still be set after init")
+			t.Error("Expected bd.role to still be set after init")
 		}
 		if role != "contributor" {
 			t.Errorf("Expected role 'contributor' to be preserved, got %q", role)
@@ -870,7 +870,7 @@ func TestInitPromptExistingRole(t *testing.T) {
 		// Verify role is still set (not cleared by reinit)
 		role, hasRole = getBeadsRole()
 		if !hasRole {
-			t.Error("Expected beads.role to still be set after reinit")
+			t.Error("Expected bd.role to still be set after reinit")
 		}
 		if role != "contributor" {
 			t.Errorf("Expected role 'contributor' to be preserved after reinit, got %q", role)
@@ -885,10 +885,10 @@ func TestInitContributorSetsBeadsRoleContributor(t *testing.T) {
 	defer func() { dbPath = origDBPath }()
 	dbPath = ""
 
-	beads.ResetCaches()
+	project.ResetCaches()
 	git.ResetCaches()
 	defer func() {
-		beads.ResetCaches()
+		project.ResetCaches()
 		git.ResetCaches()
 	}()
 
@@ -917,7 +917,7 @@ func TestInitContributorSetsBeadsRoleContributor(t *testing.T) {
 
 	// Wizard answers:
 	// 1) "Do you want to use a separate planning repo anyway? [Y/n]" -> Enter (default yes)
-	// 2) "Planning repo path [press Enter for default]" -> Enter (default ~/.beads-planning)
+	// 2) "Planning repo path [press Enter for default]" -> Enter (default ~/.bd-planning)
 	r, w, err := os.Pipe()
 	if err != nil {
 		t.Fatalf("failed to create stdin pipe: %v", err)
@@ -936,15 +936,15 @@ func TestInitContributorSetsBeadsRoleContributor(t *testing.T) {
 
 	role, hasRole := getBeadsRole()
 	if !hasRole {
-		t.Fatal("expected beads.role to be configured")
+		t.Fatal("expected bd.role to be configured")
 	}
 	if role != "contributor" {
-		t.Fatalf("beads.role = %q, want %q", role, "contributor")
+		t.Fatalf("bd.role = %q, want %q", role, "contributor")
 	}
 }
 
 // TestInitNonInteractiveAlwaysSetsRole verifies that bd init --non-interactive
-// always leaves beads.role set, even when no --role flag is provided (GH#2950).
+// always leaves bd.role set, even when no --role flag is provided (GH#2950).
 // This is the safety net for the init flow.
 func TestInitNonInteractiveAlwaysSetsRole(t *testing.T) {
 	skipIfNoDolt(t)
@@ -953,10 +953,10 @@ func TestInitNonInteractiveAlwaysSetsRole(t *testing.T) {
 	defer func() { dbPath = origDBPath }()
 	dbPath = ""
 
-	beads.ResetCaches()
+	project.ResetCaches()
 	git.ResetCaches()
 	defer func() {
-		beads.ResetCaches()
+		project.ResetCaches()
 		git.ResetCaches()
 	}()
 
@@ -969,7 +969,7 @@ func TestInitNonInteractiveAlwaysSetsRole(t *testing.T) {
 	t.Chdir(tmpDir)
 
 	// Ensure no role is set before init
-	exec.Command("git", "config", "--unset", "beads.role").Run() //nolint:errcheck
+	exec.Command("git", "config", "--unset", "bd.role").Run() //nolint:errcheck
 
 	rootCmd.SetArgs([]string{"init", "--prefix", "test", "--quiet", "--non-interactive"})
 	if err := rootCmd.Execute(); err != nil {
@@ -978,10 +978,10 @@ func TestInitNonInteractiveAlwaysSetsRole(t *testing.T) {
 
 	role, hasRole := getBeadsRole()
 	if !hasRole {
-		t.Fatal("expected beads.role to be configured after non-interactive init (GH#2950)")
+		t.Fatal("expected bd.role to be configured after non-interactive init (GH#2950)")
 	}
 	if role != "maintainer" {
-		t.Fatalf("beads.role = %q, want %q (default for non-interactive)", role, "maintainer")
+		t.Fatalf("bd.role = %q, want %q (default for non-interactive)", role, "maintainer")
 	}
 }
 
@@ -993,17 +993,17 @@ func TestInitRedirect(t *testing.T) {
 	resetRedirectState := func(t *testing.T) {
 		t.Helper()
 		origDBPath := dbPath
-		origBeadsDir := os.Getenv("BEADS_DIR")
+		origBeadsDir := os.Getenv("BD_DIR")
 		t.Cleanup(func() {
 			dbPath = origDBPath
 			if origBeadsDir != "" {
-				os.Setenv("BEADS_DIR", origBeadsDir)
+				os.Setenv("BD_DIR", origBeadsDir)
 			} else {
-				os.Unsetenv("BEADS_DIR")
+				os.Unsetenv("BD_DIR")
 			}
 		})
 		dbPath = ""
-		os.Unsetenv("BEADS_DIR")
+		os.Unsetenv("BD_DIR")
 		initCmd.Flags().Set("prefix", "")
 		initCmd.Flags().Set("quiet", "false")
 		initCmd.Flags().Set("force", "false")
@@ -1019,18 +1019,18 @@ func TestInitRedirect(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		localBeadsDir := filepath.Join(projectDir, ".beads")
-		if err := os.MkdirAll(localBeadsDir, 0755); err != nil {
+		localBdDir := filepath.Join(projectDir, ".bd")
+		if err := os.MkdirAll(localBdDir, 0755); err != nil {
 			t.Fatal(err)
 		}
 
-		targetBeadsDir := filepath.Join(tmpDir, "canonical", ".beads")
+		targetBeadsDir := filepath.Join(tmpDir, "canonical", ".bd")
 		if err := os.MkdirAll(targetBeadsDir, 0755); err != nil {
 			t.Fatal(err)
 		}
 
-		redirectPath := filepath.Join(localBeadsDir, beads.RedirectFileName)
-		if err := os.WriteFile(redirectPath, []byte("../canonical/.beads\n"), 0644); err != nil {
+		redirectPath := filepath.Join(localBdDir, project.RedirectFileName)
+		if err := os.WriteFile(redirectPath, []byte("../canonical/.bd\n"), 0644); err != nil {
 			t.Fatal(err)
 		}
 
@@ -1046,7 +1046,7 @@ func TestInitRedirect(t *testing.T) {
 			t.Errorf("Dolt database was NOT created in redirect target: %s", targetDBPath)
 		}
 
-		localDBPath := filepath.Join(localBeadsDir, "dolt")
+		localDBPath := filepath.Join(localBdDir, "dolt")
 		if _, err := os.Stat(localDBPath); err == nil {
 			t.Errorf("Database was incorrectly created in local .beads: %s (should be in redirect target)", localDBPath)
 		}
@@ -1075,25 +1075,25 @@ func TestInitRedirect(t *testing.T) {
 		tmpDir := t.TempDir()
 
 		canonicalDir := filepath.Join(tmpDir, "canonical")
-		canonicalBeadsDir := filepath.Join(canonicalDir, ".beads")
+		canonicalBeadsDir := filepath.Join(canonicalDir, ".bd")
 		if err := os.MkdirAll(canonicalBeadsDir, 0755); err != nil {
 			t.Fatal(err)
 		}
 
-		canonicalDBPath := filepath.Join(canonicalBeadsDir, "beads.db")
+		canonicalDBPath := filepath.Join(canonicalBeadsDir, "bd.db")
 		// Create the db file so checkExistingBeadsData detects it
 		if err := os.WriteFile(canonicalDBPath, []byte{}, 0644); err != nil {
 			t.Fatalf("Failed to create canonical db file: %v", err)
 		}
 
 		projectDir := filepath.Join(tmpDir, "project")
-		projectBeadsDir := filepath.Join(projectDir, ".beads")
+		projectBeadsDir := filepath.Join(projectDir, ".bd")
 		if err := os.MkdirAll(projectBeadsDir, 0755); err != nil {
 			t.Fatal(err)
 		}
 
-		redirectPath := filepath.Join(projectBeadsDir, beads.RedirectFileName)
-		if err := os.WriteFile(redirectPath, []byte("../canonical/.beads\n"), 0644); err != nil {
+		redirectPath := filepath.Join(projectBeadsDir, project.RedirectFileName)
+		if err := os.WriteFile(redirectPath, []byte("../canonical/.bd\n"), 0644); err != nil {
 			t.Fatal(err)
 		}
 
@@ -1122,12 +1122,12 @@ func TestInitRedirect(t *testing.T) {
 }
 
 // =============================================================================
-// BEADS_DIR Tests
+// BD_DIR Tests
 // =============================================================================
-// These tests verify that bd init respects the BEADS_DIR environment variable
+// These tests verify that bd init respects the BD_DIR environment variable
 // for both safety checks and database creation.
 
-// TestInitBEADS_DIR groups BEADS_DIR-related init tests.
+// TestInitBEADS_DIR groups BD_DIR-related init tests.
 // Tests requirements FR-001, FR-002, FR-004, NFR-001.
 func TestInitBEADS_DIR(t *testing.T) {
 	skipIfNoDolt(t)
@@ -1137,11 +1137,11 @@ func TestInitBEADS_DIR(t *testing.T) {
 		origDBPath := dbPath
 		t.Cleanup(func() {
 			dbPath = origDBPath
-			beads.ResetCaches()
+			project.ResetCaches()
 			git.ResetCaches()
 		})
 		dbPath = ""
-		beads.ResetCaches()
+		project.ResetCaches()
 		git.ResetCaches()
 		initCmd.Flags().Set("prefix", "")
 		initCmd.Flags().Set("quiet", "false")
@@ -1153,16 +1153,16 @@ func TestInitBEADS_DIR(t *testing.T) {
 		resetBeadsDirState(t)
 
 		tmpDir := t.TempDir()
-		beadsDirPath := filepath.Join(tmpDir, "external", ".beads")
+		beadsDirPath := filepath.Join(tmpDir, "external", ".bd")
 		os.MkdirAll(beadsDirPath, 0755)
 
-		os.Setenv("BEADS_DIR", beadsDirPath)
-		t.Cleanup(func() { os.Unsetenv("BEADS_DIR") })
-		beads.ResetCaches()
+		os.Setenv("BD_DIR", beadsDirPath)
+		t.Cleanup(func() { os.Unsetenv("BD_DIR") })
+		project.ResetCaches()
 
 		err := checkExistingBeadsData("test")
 		if err != nil {
-			t.Errorf("Expected no error when BEADS_DIR has no database, got: %v", err)
+			t.Errorf("Expected no error when BD_DIR has no database, got: %v", err)
 		}
 	})
 
@@ -1172,21 +1172,21 @@ func TestInitBEADS_DIR(t *testing.T) {
 		tmpDir := t.TempDir()
 
 		// Create CWD with existing database (should be ignored)
-		cwdBeadsDir := filepath.Join(tmpDir, "cwd", ".beads")
+		cwdBeadsDir := filepath.Join(tmpDir, "cwd", ".bd")
 		os.MkdirAll(cwdBeadsDir, 0755)
-		cwdDBPath := filepath.Join(cwdBeadsDir, beads.CanonicalDatabaseName)
+		cwdDBPath := filepath.Join(cwdBeadsDir, project.CanonicalDatabaseName)
 		// Create the db file so checkExistingBeadsData detects it
 		if err := os.WriteFile(cwdDBPath, []byte{}, 0644); err != nil {
 			t.Fatal(err)
 		}
 
-		// Create BEADS_DIR location (no database)
-		beadsDirPath := filepath.Join(tmpDir, "external", ".beads")
+		// Create BD_DIR location (no database)
+		beadsDirPath := filepath.Join(tmpDir, "external", ".bd")
 		os.MkdirAll(beadsDirPath, 0755)
 
-		os.Setenv("BEADS_DIR", beadsDirPath)
-		t.Cleanup(func() { os.Unsetenv("BEADS_DIR") })
-		beads.ResetCaches()
+		os.Setenv("BD_DIR", beadsDirPath)
+		t.Cleanup(func() { os.Unsetenv("BD_DIR") })
+		project.ResetCaches()
 
 		origWd, _ := os.Getwd()
 		os.Chdir(filepath.Join(tmpDir, "cwd"))
@@ -1194,7 +1194,7 @@ func TestInitBEADS_DIR(t *testing.T) {
 
 		err := checkExistingBeadsData("test")
 		if err != nil {
-			t.Errorf("Expected no error when BEADS_DIR has no database (CWD should be ignored), got: %v", err)
+			t.Errorf("Expected no error when BD_DIR has no database (CWD should be ignored), got: %v", err)
 		}
 	})
 
@@ -1203,43 +1203,43 @@ func TestInitBEADS_DIR(t *testing.T) {
 
 		tmpDir := t.TempDir()
 
-		beadsDirPath := filepath.Join(tmpDir, "external", ".beads")
+		beadsDirPath := filepath.Join(tmpDir, "external", ".bd")
 		os.MkdirAll(beadsDirPath, 0755)
-		testDBPath := filepath.Join(beadsDirPath, beads.CanonicalDatabaseName)
+		testDBPath := filepath.Join(beadsDirPath, project.CanonicalDatabaseName)
 		// Create the db file so checkExistingBeadsData detects it
 		if err := os.WriteFile(testDBPath, []byte{}, 0644); err != nil {
 			t.Fatal(err)
 		}
 
-		os.Setenv("BEADS_DIR", beadsDirPath)
-		t.Cleanup(func() { os.Unsetenv("BEADS_DIR") })
-		beads.ResetCaches()
+		os.Setenv("BD_DIR", beadsDirPath)
+		t.Cleanup(func() { os.Unsetenv("BD_DIR") })
+		project.ResetCaches()
 
 		err := checkExistingBeadsData("test")
 		if err == nil {
-			t.Error("Expected error when BEADS_DIR already has database")
+			t.Error("Expected error when BD_DIR already has database")
 		}
 		if !strings.Contains(err.Error(), beadsDirPath) {
-			t.Errorf("Expected error to mention BEADS_DIR path %s, got: %v", beadsDirPath, err)
+			t.Errorf("Expected error to mention BD_DIR path %s, got: %v", beadsDirPath, err)
 		}
 	})
 
-	// FR-002: init creates database at BEADS_DIR
+	// FR-002: init creates database at BD_DIR
 	t.Run("InitCreatesDBAtBeadsDir", func(t *testing.T) {
 		if runtime.GOOS == "windows" {
-			t.Skip("Skipping BEADS_DIR test on Windows")
+			t.Skip("Skipping BD_DIR test on Windows")
 		}
 
 		resetBeadsDirState(t)
 
 		tmpDir := t.TempDir()
 
-		beadsDirPath := filepath.Join(tmpDir, "external", ".beads")
+		beadsDirPath := filepath.Join(tmpDir, "external", ".bd")
 		os.MkdirAll(filepath.Dir(beadsDirPath), 0755)
 
-		os.Setenv("BEADS_DIR", beadsDirPath)
-		t.Cleanup(func() { os.Unsetenv("BEADS_DIR") })
-		beads.ResetCaches()
+		os.Setenv("BD_DIR", beadsDirPath)
+		t.Cleanup(func() { os.Unsetenv("BD_DIR") })
+		project.ResetCaches()
 		git.ResetCaches()
 
 		cwdPath := filepath.Join(tmpDir, "workdir")
@@ -1248,24 +1248,24 @@ func TestInitBEADS_DIR(t *testing.T) {
 
 		rootCmd.SetArgs([]string{"init", "--prefix", "beadsdir-test", "--quiet"})
 		if err := rootCmd.Execute(); err != nil {
-			t.Fatalf("Init with BEADS_DIR failed: %v", err)
+			t.Fatalf("Init with BD_DIR failed: %v", err)
 		}
 
 		expectedDBPath := filepath.Join(beadsDirPath, "dolt")
 		if info, err := os.Stat(expectedDBPath); os.IsNotExist(err) {
-			t.Errorf("Dolt database was not created at BEADS_DIR path: %s", expectedDBPath)
+			t.Errorf("Dolt database was not created at BD_DIR path: %s", expectedDBPath)
 		} else if !info.IsDir() {
 			t.Errorf("Expected %s to be a directory", expectedDBPath)
 		}
 
-		cwdDBPath := filepath.Join(cwdPath, ".beads", "dolt")
+		cwdDBPath := filepath.Join(cwdPath, ".bd", "dolt")
 		if _, err := os.Stat(cwdDBPath); err == nil {
 			t.Errorf("Database should NOT have been created at CWD: %s", cwdDBPath)
 		}
 
 		store, err := openExistingTestDB(t, expectedDBPath)
 		if err != nil {
-			t.Fatalf("Failed to open database at BEADS_DIR: %v", err)
+			t.Fatalf("Failed to open database at BD_DIR: %v", err)
 		}
 		defer store.Close()
 
@@ -1279,12 +1279,12 @@ func TestInitBEADS_DIR(t *testing.T) {
 		}
 	})
 
-	// NFR-001: existing behavior unchanged when BEADS_DIR not set
+	// NFR-001: existing behavior unchanged when BD_DIR not set
 	t.Run("WithoutBeadsDirNoBehaviorChange", func(t *testing.T) {
 		resetBeadsDirState(t)
 
-		os.Unsetenv("BEADS_DIR")
-		beads.ResetCaches()
+		os.Unsetenv("BD_DIR")
+		project.ResetCaches()
 		git.ResetCaches()
 
 		tmpDir := t.TempDir()
@@ -1292,12 +1292,12 @@ func TestInitBEADS_DIR(t *testing.T) {
 
 		rootCmd.SetArgs([]string{"init", "--prefix", "no-beadsdir", "--quiet"})
 		if err := rootCmd.Execute(); err != nil {
-			t.Fatalf("Init without BEADS_DIR failed: %v", err)
+			t.Fatalf("Init without BD_DIR failed: %v", err)
 		}
 
-		expectedDBPath := filepath.Join(tmpDir, ".beads", "dolt")
+		expectedDBPath := filepath.Join(tmpDir, ".bd", "dolt")
 		if info, err := os.Stat(expectedDBPath); os.IsNotExist(err) {
-			t.Errorf("Dolt database was not created at default CWD/.beads path: %s", expectedDBPath)
+			t.Errorf("Dolt database was not created at default CWD/.bd path: %s", expectedDBPath)
 		} else if !info.IsDir() {
 			t.Errorf("Expected %s to be a directory", expectedDBPath)
 		}
@@ -1318,7 +1318,7 @@ func TestInitBEADS_DIR(t *testing.T) {
 		}
 	})
 
-	// Worktree bypass: BEADS_DIR skips the worktree guard and git init
+	// Worktree bypass: BD_DIR skips the worktree guard and git init
 	t.Run("WorktreeBypassWhenBeadsDirSet", func(t *testing.T) {
 		if runtime.GOOS == "windows" {
 			t.Skip("Skipping worktree test on Windows")
@@ -1351,70 +1351,70 @@ func TestInitBEADS_DIR(t *testing.T) {
 		worktreeDir := filepath.Join(tmpDir, "my-worktree")
 		runGit(mainRepo, "worktree", "add", worktreeDir, "-b", "test-wt")
 
-		// Set BEADS_DIR to a standalone location outside the repo
-		beadsDirPath := filepath.Join(tmpDir, "standalone", ".beads")
+		// Set BD_DIR to a standalone location outside the repo
+		beadsDirPath := filepath.Join(tmpDir, "standalone", ".bd")
 		if err := os.MkdirAll(filepath.Dir(beadsDirPath), 0755); err != nil {
 			t.Fatalf("Failed to create standalone dir: %v", err)
 		}
-		os.Setenv("BEADS_DIR", beadsDirPath)
-		t.Cleanup(func() { os.Unsetenv("BEADS_DIR") })
-		beads.ResetCaches()
+		os.Setenv("BD_DIR", beadsDirPath)
+		t.Cleanup(func() { os.Unsetenv("BD_DIR") })
+		project.ResetCaches()
 		git.ResetCaches()
 
-		// cd into the worktree — without BEADS_DIR this would fail
+		// cd into the worktree — without BD_DIR this would fail
 		t.Chdir(worktreeDir)
 
 		rootCmd.SetArgs([]string{"init", "--prefix", "wt-bypass", "--skip-hooks", "--quiet"})
 		err := rootCmd.Execute()
 		if err != nil {
-			t.Fatalf("Init with BEADS_DIR from worktree should succeed, got: %v", err)
+			t.Fatalf("Init with BD_DIR from worktree should succeed, got: %v", err)
 		}
 
-		// Verify database was created at BEADS_DIR, not in the worktree
+		// Verify database was created at BD_DIR, not in the worktree
 		expectedDBPath := filepath.Join(beadsDirPath, "dolt")
 		if _, statErr := os.Stat(expectedDBPath); os.IsNotExist(statErr) {
-			t.Errorf("Dolt database was not created at BEADS_DIR path: %s", expectedDBPath)
+			t.Errorf("Dolt database was not created at BD_DIR path: %s", expectedDBPath)
 		}
 
-		worktreeDBPath := filepath.Join(worktreeDir, ".beads", "dolt")
+		worktreeDBPath := filepath.Join(worktreeDir, ".bd", "dolt")
 		if _, statErr := os.Stat(worktreeDBPath); statErr == nil {
 			t.Errorf("Database should NOT have been created in worktree: %s", worktreeDBPath)
 		}
 	})
 
-	// Precedence: BEADS_DB > BEADS_DIR
+	// Precedence: BD_DB > BD_DIR
 	t.Run("BEADS_DB_OverridesBeadsDir", func(t *testing.T) {
-		t.Skip("BEADS_DB env var does not control Dolt store location; Dolt always uses .beads/dolt/")
+		t.Skip("BD_DB env var does not control Dolt store location; Dolt always uses .bd/dolt/")
 		resetBeadsDirState(t)
 
 		beadsDirTarget := t.TempDir()
 		beadsDBTarget := t.TempDir()
 
-		beadsDirBeads := filepath.Join(beadsDirTarget, ".beads")
+		beadsDirBeads := filepath.Join(beadsDirTarget, ".bd")
 		if err := os.MkdirAll(beadsDirBeads, 0750); err != nil {
 			t.Fatal(err)
 		}
 
 		beadsDBPath := filepath.Join(beadsDBTarget, "override.db")
 
-		t.Setenv("BEADS_DIR", beadsDirBeads)
-		t.Setenv("BEADS_DB", beadsDBPath)
+		t.Setenv("BD_DIR", beadsDirBeads)
+		t.Setenv("BD_DB", beadsDBPath)
 
 		tmpDir := t.TempDir()
 		t.Chdir(tmpDir)
 
 		rootCmd.SetArgs([]string{"init", "--prefix", "precedence", "--quiet"})
 		if err := rootCmd.Execute(); err != nil {
-			t.Fatalf("Init with BEADS_DB + BEADS_DIR failed: %v", err)
+			t.Fatalf("Init with BD_DB + BD_DIR failed: %v", err)
 		}
 
 		if _, err := os.Stat(beadsDBPath); os.IsNotExist(err) {
-			t.Errorf("Database was NOT created at BEADS_DB path: %s", beadsDBPath)
+			t.Errorf("Database was NOT created at BD_DB path: %s", beadsDBPath)
 		}
 
-		beadsDirDBPath := filepath.Join(beadsDirBeads, beads.CanonicalDatabaseName)
+		beadsDirDBPath := filepath.Join(beadsDirBeads, project.CanonicalDatabaseName)
 		if _, err := os.Stat(beadsDirDBPath); err == nil {
-			t.Errorf("Database was incorrectly created at BEADS_DIR path: %s (BEADS_DB should override)", beadsDirDBPath)
+			t.Errorf("Database was incorrectly created at BD_DIR path: %s (BD_DB should override)", beadsDirDBPath)
 		}
 
 		store, err := openExistingTestDB(t, beadsDBPath)
@@ -1435,12 +1435,12 @@ func TestInitBEADS_DIR(t *testing.T) {
 }
 
 // TestInit_WithBEADS_DIR_DoltBackend verifies that bd init with Dolt backend
-// creates the database at BEADS_DIR when the environment variable is set.
+// creates the database at BD_DIR when the environment variable is set.
 // This tests requirements FR-002 for Dolt backend.
 func TestInit_WithBEADS_DIR_DoltBackend(t *testing.T) {
 	// Skip on Windows
 	if runtime.GOOS == "windows" {
-		t.Skip("Skipping BEADS_DIR Dolt test on Windows")
+		t.Skip("Skipping BD_DIR Dolt test on Windows")
 	}
 
 	// Check if dolt is available
@@ -1453,15 +1453,15 @@ func TestInit_WithBEADS_DIR_DoltBackend(t *testing.T) {
 	defer func() { dbPath = origDBPath }()
 	dbPath = ""
 
-	// Save and restore BEADS_DIR
-	origBeadsDir := os.Getenv("BEADS_DIR")
+	// Save and restore BD_DIR
+	origBeadsDir := os.Getenv("BD_DIR")
 	defer func() {
 		if origBeadsDir != "" {
-			os.Setenv("BEADS_DIR", origBeadsDir)
+			os.Setenv("BD_DIR", origBeadsDir)
 		} else {
-			os.Unsetenv("BEADS_DIR")
+			os.Unsetenv("BD_DIR")
 		}
-		beads.ResetCaches()
+		project.ResetCaches()
 		git.ResetCaches()
 	}()
 
@@ -1472,12 +1472,12 @@ func TestInit_WithBEADS_DIR_DoltBackend(t *testing.T) {
 
 	tmpDir := t.TempDir()
 
-	// Create external BEADS_DIR location
-	beadsDirPath := filepath.Join(tmpDir, "external", ".beads")
+	// Create external BD_DIR location
+	beadsDirPath := filepath.Join(tmpDir, "external", ".bd")
 	os.MkdirAll(filepath.Dir(beadsDirPath), 0755)
 
-	os.Setenv("BEADS_DIR", beadsDirPath)
-	beads.ResetCaches()
+	os.Setenv("BD_DIR", beadsDirPath)
+	project.ResetCaches()
 	git.ResetCaches()
 
 	// Change to a different working directory
@@ -1488,18 +1488,18 @@ func TestInit_WithBEADS_DIR_DoltBackend(t *testing.T) {
 	// Run bd init with Dolt backend
 	rootCmd.SetArgs([]string{"init", "--prefix", "dolt-test", "--quiet"})
 	if err := rootCmd.Execute(); err != nil {
-		t.Fatalf("Init with BEADS_DIR and Dolt backend failed: %v", err)
+		t.Fatalf("Init with BD_DIR and Dolt backend failed: %v", err)
 	}
 
-	// In embedded mode (default), the engine creates .beads/embeddeddolt/ —
-	// .beads/dolt/ should NOT be created (GH#2903).
+	// In embedded mode (default), the engine creates .bd/embeddeddolt/ —
+	// .bd/dolt/ should NOT be created (GH#2903).
 	unexpectedDoltPath := filepath.Join(beadsDirPath, "dolt")
 	if _, err := os.Stat(unexpectedDoltPath); err == nil {
-		t.Errorf("Empty .beads/dolt/ should not be created in embedded mode: %s", unexpectedDoltPath)
+		t.Errorf("Empty .bd/dolt/ should not be created in embedded mode: %s", unexpectedDoltPath)
 	}
 
 	// Verify database was NOT created at CWD
-	cwdDoltPath := filepath.Join(cwdPath, ".beads", "dolt")
+	cwdDoltPath := filepath.Join(cwdPath, ".bd", "dolt")
 	if _, err := os.Stat(cwdDoltPath); err == nil {
 		t.Errorf("Dolt database should NOT have been created at CWD: %s", cwdDoltPath)
 	}
@@ -1524,10 +1524,10 @@ func TestInitDoltMetadata(t *testing.T) {
 	dbPath = ""
 
 	// Reset caches to avoid stale state
-	beads.ResetCaches()
+	project.ResetCaches()
 	git.ResetCaches()
 	t.Cleanup(func() {
-		beads.ResetCaches()
+		project.ResetCaches()
 		git.ResetCaches()
 	})
 
@@ -1549,7 +1549,7 @@ func TestInitDoltMetadata(t *testing.T) {
 
 	// Open the dolt store to verify metadata was written
 	ctx := context.Background()
-	doltPath := filepath.Join(tmpDir, ".beads", "dolt")
+	doltPath := filepath.Join(tmpDir, ".bd", "dolt")
 	doltStore, err := openDoltStoreForTest(t, ctx, doltPath, "test")
 	if err != nil {
 		t.Fatalf("failed to open dolt store for verification: %v", err)
@@ -1637,10 +1637,10 @@ func TestInitDoltMetadataNoGit(t *testing.T) {
 	saveAndRestoreGlobals(t)
 	dbPath = ""
 
-	beads.ResetCaches()
+	project.ResetCaches()
 	git.ResetCaches()
 	t.Cleanup(func() {
-		beads.ResetCaches()
+		project.ResetCaches()
 		git.ResetCaches()
 	})
 
@@ -1664,8 +1664,8 @@ func TestInitDoltMetadataNoGit(t *testing.T) {
 	// creates a brand-new git repo with no remotes, and the upstream warning
 	// is intentionally skipped for repos with no remotes (not noise-worthy).
 
-	// Verify .beads/dolt directory was created (init succeeded)
-	doltPath := filepath.Join(tmpDir, ".beads", "dolt")
+	// Verify .bd/dolt directory was created (init succeeded)
+	doltPath := filepath.Join(tmpDir, ".bd", "dolt")
 	if info, err := os.Stat(doltPath); os.IsNotExist(err) {
 		t.Errorf("Dolt database directory was not created: %s", doltPath)
 	} else if !info.IsDir() {
@@ -1673,7 +1673,7 @@ func TestInitDoltMetadataNoGit(t *testing.T) {
 	}
 
 	// Verify no SQLite database was created (backend-specific)
-	sqlitePath := filepath.Join(tmpDir, ".beads", "beads.db")
+	sqlitePath := filepath.Join(tmpDir, ".bd", "bd.db")
 	if _, err := os.Stat(sqlitePath); err == nil {
 		t.Errorf("unexpected sqlite database created in dolt mode")
 	}
@@ -1786,8 +1786,8 @@ func TestInitDatabaseFlag(t *testing.T) {
 		}
 
 		// Verify metadata.json contains the correct database name
-		beadsDir := filepath.Join(tmpDir, ".beads")
-		cfg, err := configfile.Load(beadsDir)
+		bdDir := filepath.Join(tmpDir, ".bd")
+		cfg, err := configfile.Load(bdDir)
 		if err != nil {
 			t.Fatalf("Failed to load metadata.json: %v", err)
 		}
@@ -1812,19 +1812,19 @@ func TestInitDatabaseFlag(t *testing.T) {
 		origDBPath := dbPath
 		t.Cleanup(func() {
 			dbPath = origDBPath
-			beads.ResetCaches()
+			project.ResetCaches()
 			git.ResetCaches()
 		})
 		dbPath = ""
-		beads.ResetCaches()
+		project.ResetCaches()
 		git.ResetCaches()
 		bd := buildBDForInitTests(t)
 		bareDir, worktreeDir := setupBareParentInitWorktree(t)
-		bareBeadsDir := filepath.Join(bareDir, ".beads")
+		bareBeadsDir := filepath.Join(bareDir, ".bd")
 
 		cmd := exec.Command(bd, "init", "--prefix", "bare-fallback", "--skip-hooks", "--quiet")
 		cmd.Dir = worktreeDir
-		cmd.Env = append(os.Environ(), "BEADS_DOLT_SHARED_SERVER=1")
+		cmd.Env = append(os.Environ(), "BD_DOLT_SHARED_SERVER=1")
 		out, err := cmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("bd init from bare-parent worktree failed: %v\n%s", err, out)
@@ -1833,16 +1833,16 @@ func TestInitDatabaseFlag(t *testing.T) {
 		if _, err := os.Stat(filepath.Join(bareBeadsDir, "metadata.json")); err != nil {
 			t.Fatalf("expected bare parent metadata.json to exist: %v", err)
 		}
-		if _, err := os.Stat(filepath.Join(worktreeDir, ".beads")); !os.IsNotExist(err) {
+		if _, err := os.Stat(filepath.Join(worktreeDir, ".bd")); !os.IsNotExist(err) {
 			t.Fatalf("worktree should not get a local .beads directory, stat err=%v", err)
 		}
 
 		retry := exec.Command(bd, "init", "--prefix", "bare-fallback", "--skip-hooks", "--quiet")
 		retry.Dir = worktreeDir
-		retry.Env = append(os.Environ(), "BEADS_DOLT_SHARED_SERVER=1")
+		retry.Env = append(os.Environ(), "BD_DOLT_SHARED_SERVER=1")
 		retryOut, retryErr := retry.CombinedOutput()
 		if retryErr == nil {
-			t.Fatal("expected second bd init to fail against existing bare-parent .beads")
+			t.Fatal("expected second bd init to fail against existing bare-parent .bd")
 		}
 		if !strings.Contains(string(retryOut), "already initialized") && !strings.Contains(string(retryOut), "already exists") {
 			t.Fatalf("expected existing-data guard on second init, got:\n%s", retryOut)
@@ -1863,8 +1863,8 @@ func TestInitDatabaseFlag(t *testing.T) {
 		}
 
 		// Verify metadata.json
-		beadsDir := filepath.Join(tmpDir, ".beads")
-		cfg, err := configfile.Load(beadsDir)
+		bdDir := filepath.Join(tmpDir, ".bd")
+		cfg, err := configfile.Load(bdDir)
 		if err != nil {
 			t.Fatalf("Failed to load metadata.json: %v", err)
 		}
@@ -1879,7 +1879,7 @@ func TestInitDatabaseFlag(t *testing.T) {
 
 		// Verify the database was opened and issue_prefix was set
 		// by reopening the store and checking config
-		dbPath := filepath.Join(beadsDir, "dolt")
+		dbPath := filepath.Join(bdDir, "dolt")
 		s, err := openExistingTestDB(t, dbPath)
 		if err != nil {
 			t.Fatalf("Failed to reopen database: %v", err)
@@ -1909,8 +1909,8 @@ func TestInitDatabaseFlag(t *testing.T) {
 		}
 
 		// Verify metadata.json has both dolt_database and dolt_mode: server
-		beadsDir := filepath.Join(tmpDir, ".beads")
-		cfg, err := configfile.Load(beadsDir)
+		bdDir := filepath.Join(tmpDir, ".bd")
+		cfg, err := configfile.Load(bdDir)
 		if err != nil {
 			t.Fatalf("Failed to load metadata.json: %v", err)
 		}
@@ -1940,8 +1940,8 @@ func TestInitDatabaseFlag(t *testing.T) {
 			t.Fatalf("bd init --shared-server failed: %v\n%s", err, out)
 		}
 
-		beadsDir := filepath.Join(tmpDir, ".beads")
-		cfg, err := configfile.Load(beadsDir)
+		bdDir := filepath.Join(tmpDir, ".bd")
+		cfg, err := configfile.Load(bdDir)
 		if err != nil {
 			t.Fatalf("Failed to load metadata.json: %v", err)
 		}
@@ -1953,7 +1953,7 @@ func TestInitDatabaseFlag(t *testing.T) {
 			t.Errorf("Expected DoltMode %q, got %q", configfile.DoltModeServer, cfg.DoltMode)
 		}
 
-		configYAML, err := os.ReadFile(filepath.Join(beadsDir, "config.yaml"))
+		configYAML, err := os.ReadFile(filepath.Join(bdDir, "config.yaml"))
 		if err != nil {
 			t.Fatalf("Failed to read config.yaml: %v", err)
 		}
@@ -1991,8 +1991,8 @@ func TestInitDatabaseFlag(t *testing.T) {
 		}
 
 		// Verify no .beads directory was created (early validation prevents side effects)
-		beadsDir := filepath.Join(tmpDir, ".beads")
-		if _, err := os.Stat(beadsDir); err == nil {
+		bdDir := filepath.Join(tmpDir, ".bd")
+		if _, err := os.Stat(bdDir); err == nil {
 			t.Error(".beads directory should not be created when validation fails")
 		}
 	})
@@ -2042,8 +2042,8 @@ func TestBareParentWorktreeCoreCommandsWithoutRedirect(t *testing.T) {
 
 	bd := buildBDForInitTests(t)
 	bareDir, worktreeDir := setupBareParentInitWorktree(t)
-	bareBeadsDir := filepath.Join(bareDir, ".beads")
-	sharedEnv := append(os.Environ(), "BEADS_DOLT_SHARED_SERVER=1")
+	bareBeadsDir := filepath.Join(bareDir, ".bd")
+	sharedEnv := append(os.Environ(), "BD_DOLT_SHARED_SERVER=1")
 
 	initCmd := exec.Command(bd, "init", "--prefix", "bare-core", "--skip-hooks", "--quiet")
 	initCmd.Dir = worktreeDir
@@ -2105,8 +2105,8 @@ func TestInitBackendFlag(t *testing.T) {
 		}
 
 		// Verify no .beads directory was created
-		beadsDir := filepath.Join(tmpDir, ".beads")
-		if _, err := os.Stat(beadsDir); err == nil {
+		bdDir := filepath.Join(tmpDir, ".bd")
+		if _, err := os.Stat(bdDir); err == nil {
 			t.Error(".beads directory should not be created when --backend=sqlite is used")
 		}
 	})
@@ -2154,8 +2154,8 @@ func TestInitBackendFlag(t *testing.T) {
 		}
 
 		// Verify metadata.json has backend: dolt
-		beadsDir := filepath.Join(tmpDir, ".beads")
-		cfg, err := configfile.Load(beadsDir)
+		bdDir := filepath.Join(tmpDir, ".bd")
+		cfg, err := configfile.Load(bdDir)
 		if err != nil {
 			t.Fatalf("Failed to load metadata.json: %v", err)
 		}
@@ -2192,7 +2192,7 @@ func TestInitDatabaseAdoptsExistingProjectID(t *testing.T) {
 
 	// Create a database with a known _project_id (simulates first user's init)
 	database := uniqueTestDBName(t)
-	firstBeadsDir := filepath.Join(t.TempDir(), ".beads")
+	firstBeadsDir := filepath.Join(t.TempDir(), ".bd")
 	if err := os.MkdirAll(firstBeadsDir, 0o755); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
@@ -2200,7 +2200,7 @@ func TestInitDatabaseAdoptsExistingProjectID(t *testing.T) {
 	doltNewMutex.Lock()
 	firstStore, err := dolt.New(ctx, &dolt.Config{
 		Path:            filepath.Join(firstBeadsDir, "dolt"),
-		BeadsDir:        firstBeadsDir,
+		BdDir:        firstBeadsDir,
 		ServerHost:      "127.0.0.1",
 		ServerPort:      testDoltServerPort,
 		Database:        database,
@@ -2252,7 +2252,7 @@ func TestInitDatabaseAdoptsExistingProjectID(t *testing.T) {
 	}
 
 	// Verify the second user's metadata.json adopted the existing project_id
-	secondBeadsDir := filepath.Join(secondDir, ".beads")
+	secondBeadsDir := filepath.Join(secondDir, ".bd")
 	cfg, err := configfile.Load(secondBeadsDir)
 	if err != nil {
 		t.Fatalf("load metadata.json: %v", err)

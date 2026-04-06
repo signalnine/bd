@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/steveyegge/beads/internal/storage/dolt"
+	"github.com/steveyegge/bd/internal/storage/dolt"
 )
 
 // TestNocgoNewDoltStore_ErrorSuggestsCorrectFlag verifies that newDoltStore
@@ -31,8 +31,8 @@ func TestNocgoNewDoltStore_ErrorSuggestsCorrectFlag(t *testing.T) {
 // newDoltStoreFromConfig suggests "bd init --server" when no server-mode
 // config exists.
 func TestNocgoNewDoltStoreFromConfig_ErrorSuggestsCorrectFlag(t *testing.T) {
-	beadsDir := t.TempDir() // empty dir — no config.json
-	_, err := newDoltStoreFromConfig(t.Context(), beadsDir)
+	bdDir := t.TempDir() // empty dir — no config.json
+	_, err := newDoltStoreFromConfig(t.Context(), bdDir)
 	if err == nil {
 		t.Fatal("expected error for empty beads dir without server config")
 	}
@@ -49,8 +49,8 @@ func TestNocgoNewDoltStoreFromConfig_ErrorSuggestsCorrectFlag(t *testing.T) {
 // newReadOnlyStoreFromConfig suggests "bd init --server" when no server-mode
 // config exists.
 func TestNocgoNewReadOnlyStoreFromConfig_ErrorSuggestsCorrectFlag(t *testing.T) {
-	beadsDir := t.TempDir() // empty dir — no config.json
-	_, err := newReadOnlyStoreFromConfig(t.Context(), beadsDir)
+	bdDir := t.TempDir() // empty dir — no config.json
+	_, err := newReadOnlyStoreFromConfig(t.Context(), bdDir)
 	if err == nil {
 		t.Fatal("expected error for empty beads dir without server config")
 	}

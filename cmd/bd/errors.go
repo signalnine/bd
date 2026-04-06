@@ -88,7 +88,7 @@ func FatalErrorWithHint(message, hint string) {
 //
 // Example:
 //
-//	if err := createConfigYaml(beadsDir, false); err != nil {
+//	if err := createConfigYaml(bdDir, false); err != nil {
 //	    WarnError("failed to create config.yaml: %v", err)
 //	}
 func WarnError(format string, args ...interface{}) {

@@ -1,4 +1,4 @@
-package beads
+package project
 
 import (
 	"os"
@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/steveyegge/beads/internal/git"
+	"github.com/steveyegge/bd/internal/git"
 )
 
 // TestFindDatabaseInBeadsDir_DoltDir tests finding the dolt database directory
@@ -85,31 +85,31 @@ func TestFindDatabaseInBeadsDir_DoltBackend(t *testing.T) {
 // TestFindAllDatabases_Unit tests FindAllDatabases without the integration tag
 func TestFindAllDatabases_Unit(t *testing.T) {
 	// Save original env
-	originalDir := os.Getenv("BEADS_DIR")
+	originalDir := os.Getenv("BD_DIR")
 	t.Cleanup(func() {
 		if originalDir != "" {
-			os.Setenv("BEADS_DIR", originalDir)
+			os.Setenv("BD_DIR", originalDir)
 		} else {
-			os.Unsetenv("BEADS_DIR")
+			os.Unsetenv("BD_DIR")
 		}
 		git.ResetCaches()
 	})
-	os.Unsetenv("BEADS_DIR")
+	os.Unsetenv("BD_DIR")
 
 	t.Run("finds closest database", func(t *testing.T) {
 		tmpDir := t.TempDir()
 		tmpDir, _ = filepath.EvalSymlinks(tmpDir)
 
-		beadsDir := filepath.Join(tmpDir, ".beads")
-		if err := os.MkdirAll(beadsDir, 0755); err != nil {
+		bdDir := filepath.Join(tmpDir, ".bd")
+		if err := os.MkdirAll(bdDir, 0755); err != nil {
 			t.Fatal(err)
 		}
 		// Create metadata.json so hasBeadsProjectFiles returns true
-		if err := os.WriteFile(filepath.Join(beadsDir, "metadata.json"), []byte(`{"backend":"dolt"}`), 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(bdDir, "metadata.json"), []byte(`{"backend":"dolt"}`), 0644); err != nil {
 			t.Fatal(err)
 		}
 		// Create dolt directory (canonical database location)
-		doltDir := filepath.Join(beadsDir, "dolt")
+		doltDir := filepath.Join(bdDir, "dolt")
 		if err := os.MkdirAll(doltDir, 0755); err != nil {
 			t.Fatal(err)
 		}
@@ -121,8 +121,8 @@ func TestFindAllDatabases_Unit(t *testing.T) {
 		if len(databases) != 1 {
 			t.Fatalf("expected 1 database, got %d", len(databases))
 		}
-		if databases[0].BeadsDir != beadsDir {
-			t.Errorf("BeadsDir = %q, want %q", databases[0].BeadsDir, beadsDir)
+		if databases[0].BdDir != bdDir {
+			t.Errorf("BdDir = %q, want %q", databases[0].BdDir, bdDir)
 		}
 	})
 
@@ -145,18 +145,18 @@ func TestFindAllDatabases_Unit(t *testing.T) {
 func TestFindLocalBeadsDir_WithBEADS_DIR(t *testing.T) {
 	tmpDir := t.TempDir()
 
-	// Save and set BEADS_DIR
-	originalDir := os.Getenv("BEADS_DIR")
+	// Save and set BD_DIR
+	originalDir := os.Getenv("BD_DIR")
 	t.Cleanup(func() {
 		if originalDir != "" {
-			os.Setenv("BEADS_DIR", originalDir)
+			os.Setenv("BD_DIR", originalDir)
 		} else {
-			os.Unsetenv("BEADS_DIR")
+			os.Unsetenv("BD_DIR")
 		}
 		git.ResetCaches()
 	})
 
-	os.Setenv("BEADS_DIR", tmpDir)
+	os.Setenv("BD_DIR", tmpDir)
 
 	result := findLocalBeadsDir()
 	resultResolved, _ := filepath.EvalSymlinks(result)
@@ -168,22 +168,22 @@ func TestFindLocalBeadsDir_WithBEADS_DIR(t *testing.T) {
 
 // TestFindLocalBeadsDir_WalksUpTree tests that findLocalBeadsDir walks up the directory tree
 func TestFindLocalBeadsDir_WalksUpTree(t *testing.T) {
-	originalDir := os.Getenv("BEADS_DIR")
+	originalDir := os.Getenv("BD_DIR")
 	t.Cleanup(func() {
 		if originalDir != "" {
-			os.Setenv("BEADS_DIR", originalDir)
+			os.Setenv("BD_DIR", originalDir)
 		} else {
-			os.Unsetenv("BEADS_DIR")
+			os.Unsetenv("BD_DIR")
 		}
 		git.ResetCaches()
 	})
-	os.Unsetenv("BEADS_DIR")
+	os.Unsetenv("BD_DIR")
 
 	tmpDir := t.TempDir()
 
 	// Create .beads dir at root
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0755); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0755); err != nil {
 		t.Fatal(err)
 	}
 
@@ -199,9 +199,9 @@ func TestFindLocalBeadsDir_WalksUpTree(t *testing.T) {
 	result := findLocalBeadsDir()
 
 	resultResolved, _ := filepath.EvalSymlinks(result)
-	expectedResolved, _ := filepath.EvalSymlinks(beadsDir)
+	expectedResolved, _ := filepath.EvalSymlinks(bdDir)
 	if resultResolved != expectedResolved {
-		t.Errorf("findLocalBeadsDir() = %q, want %q", result, beadsDir)
+		t.Errorf("findLocalBeadsDir() = %q, want %q", result, bdDir)
 	}
 }
 
@@ -212,16 +212,16 @@ func TestRepoContext_GitCmdCWD(t *testing.T) {
 		t.Skipf("git not available: %v", err)
 	}
 
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0755); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0755); err != nil {
 		t.Fatal(err)
 	}
 	// Create metadata.json so hasBeadsProjectFiles returns true
-	if err := os.WriteFile(filepath.Join(beadsDir, "metadata.json"), []byte(`{"backend":"dolt"}`), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(bdDir, "metadata.json"), []byte(`{"backend":"dolt"}`), 0644); err != nil {
 		t.Fatal(err)
 	}
 	// Create dolt directory for database detection
-	if err := os.MkdirAll(filepath.Join(beadsDir, "dolt"), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Join(bdDir, "dolt"), 0755); err != nil {
 		t.Fatal(err)
 	}
 
@@ -258,7 +258,7 @@ func TestRepoContext_GitCmdCWD(t *testing.T) {
 // TestRepoContext_GitCmdCWD_NoCWDRepo tests GitCmdCWD when CWDRepoRoot is empty
 func TestRepoContext_GitCmdCWD_NoCWDRepo(t *testing.T) {
 	rc := &RepoContext{
-		BeadsDir:    "/some/path/.beads",
+		BdDir:    "/some/path/.bd",
 		RepoRoot:    "/some/path",
 		CWDRepoRoot: "", // Not in a git repo
 	}
@@ -282,9 +282,9 @@ func TestRepoContext_RelPath(t *testing.T) {
 		wantErr  bool
 	}{
 		{
-			name:     "file in .beads",
-			absPath:  "/home/user/project/.beads/beads.db",
-			expected: ".beads/beads.db",
+			name:     "file in .bd",
+			absPath:  "/home/user/project/.bd/bd.db",
+			expected: ".bd/bd.db",
 		},
 		{
 			name:     "file in subdirectory",
@@ -317,33 +317,33 @@ func TestRepoContext_RelPath(t *testing.T) {
 	}
 }
 
-// TestFindDatabasePath_BEADS_DIR_NoDatabase tests FindDatabasePath when BEADS_DIR is set
+// TestFindDatabasePath_BEADS_DIR_NoDatabase tests FindDatabasePath when BD_DIR is set
 // but no database exists in it (--no-db mode)
 func TestFindDatabasePath_BEADS_DIR_NoDatabase(t *testing.T) {
-	originalDir := os.Getenv("BEADS_DIR")
-	originalDB := os.Getenv("BEADS_DB")
+	originalDir := os.Getenv("BD_DIR")
+	originalDB := os.Getenv("BD_DB")
 	t.Cleanup(func() {
 		if originalDir != "" {
-			os.Setenv("BEADS_DIR", originalDir)
+			os.Setenv("BD_DIR", originalDir)
 		} else {
-			os.Unsetenv("BEADS_DIR")
+			os.Unsetenv("BD_DIR")
 		}
 		if originalDB != "" {
-			os.Setenv("BEADS_DB", originalDB)
+			os.Setenv("BD_DB", originalDB)
 		} else {
-			os.Unsetenv("BEADS_DB")
+			os.Unsetenv("BD_DB")
 		}
 	})
-	os.Unsetenv("BEADS_DB")
+	os.Unsetenv("BD_DB")
 
 	tmpDir := t.TempDir()
-	// Set BEADS_DIR to an empty directory (no database)
-	os.Setenv("BEADS_DIR", tmpDir)
+	// Set BD_DIR to an empty directory (no database)
+	os.Setenv("BD_DIR", tmpDir)
 
 	t.Chdir(tmpDir)
 
 	result := FindDatabasePath()
-	// Should return empty when BEADS_DIR has no database
+	// Should return empty when BD_DIR has no database
 	if result != "" {
 		t.Errorf("FindDatabasePath() = %q, want empty string for no-db mode", result)
 	}
@@ -353,29 +353,29 @@ func TestFindDatabasePath_BEADS_DIR_NoDatabase(t *testing.T) {
 func TestCheckRedirectInDir(t *testing.T) {
 	t.Run("no redirect file", func(t *testing.T) {
 		tmpDir := t.TempDir()
-		beadsDir := filepath.Join(tmpDir, ".beads")
-		if err := os.MkdirAll(beadsDir, 0755); err != nil {
+		bdDir := filepath.Join(tmpDir, ".bd")
+		if err := os.MkdirAll(bdDir, 0755); err != nil {
 			t.Fatal(err)
 		}
 
-		info := checkRedirectInDir(beadsDir)
+		info := checkRedirectInDir(bdDir)
 		if info.IsRedirected {
 			t.Error("IsRedirected should be false without redirect file")
 		}
-		if info.LocalDir != beadsDir {
-			t.Errorf("LocalDir = %q, want %q", info.LocalDir, beadsDir)
+		if info.LocalDir != bdDir {
+			t.Errorf("LocalDir = %q, want %q", info.LocalDir, bdDir)
 		}
 	})
 
 	t.Run("valid redirect", func(t *testing.T) {
 		tmpDir := t.TempDir()
 
-		stubDir := filepath.Join(tmpDir, "stub", ".beads")
+		stubDir := filepath.Join(tmpDir, "stub", ".bd")
 		if err := os.MkdirAll(stubDir, 0755); err != nil {
 			t.Fatal(err)
 		}
 
-		targetDir := filepath.Join(tmpDir, "target", ".beads")
+		targetDir := filepath.Join(tmpDir, "target", ".bd")
 		if err := os.MkdirAll(targetDir, 0755); err != nil {
 			t.Fatal(err)
 		}
@@ -399,17 +399,17 @@ func TestCheckRedirectInDir(t *testing.T) {
 
 	t.Run("invalid redirect target", func(t *testing.T) {
 		tmpDir := t.TempDir()
-		beadsDir := filepath.Join(tmpDir, ".beads")
-		if err := os.MkdirAll(beadsDir, 0755); err != nil {
+		bdDir := filepath.Join(tmpDir, ".bd")
+		if err := os.MkdirAll(bdDir, 0755); err != nil {
 			t.Fatal(err)
 		}
 
 		// Write redirect to non-existent path
-		if err := os.WriteFile(filepath.Join(beadsDir, "redirect"), []byte("/nonexistent/path\n"), 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(bdDir, "redirect"), []byte("/nonexistent/path\n"), 0644); err != nil {
 			t.Fatal(err)
 		}
 
-		info := checkRedirectInDir(beadsDir)
+		info := checkRedirectInDir(bdDir)
 		if info.IsRedirected {
 			t.Error("IsRedirected should be false for invalid redirect target")
 		}
@@ -421,8 +421,8 @@ func TestFollowRedirect_ChainPrevention(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	// Create first .beads that redirects to second
-	dir1 := filepath.Join(tmpDir, "a", ".beads")
-	dir2 := filepath.Join(tmpDir, "b", ".beads")
+	dir1 := filepath.Join(tmpDir, "a", ".bd")
+	dir2 := filepath.Join(tmpDir, "b", ".bd")
 	if err := os.MkdirAll(dir1, 0755); err != nil {
 		t.Fatal(err)
 	}
@@ -448,25 +448,25 @@ func TestFollowRedirect_ChainPrevention(t *testing.T) {
 	}
 }
 
-// TestFindDatabaseInTree_WithBEADS_DIR tests findDatabaseInTree with BEADS_DIR set
+// TestFindDatabaseInTree_WithBEADS_DIR tests findDatabaseInTree with BD_DIR set
 func TestFindDatabaseInTree_WithBEADS_DIR(t *testing.T) {
-	originalDir := os.Getenv("BEADS_DIR")
-	originalDB := os.Getenv("BEADS_DB")
+	originalDir := os.Getenv("BD_DIR")
+	originalDB := os.Getenv("BD_DB")
 	t.Cleanup(func() {
 		if originalDir != "" {
-			os.Setenv("BEADS_DIR", originalDir)
+			os.Setenv("BD_DIR", originalDir)
 		} else {
-			os.Unsetenv("BEADS_DIR")
+			os.Unsetenv("BD_DIR")
 		}
 		if originalDB != "" {
-			os.Setenv("BEADS_DB", originalDB)
+			os.Setenv("BD_DB", originalDB)
 		} else {
-			os.Unsetenv("BEADS_DB")
+			os.Unsetenv("BD_DB")
 		}
 		git.ResetCaches()
 	})
-	os.Unsetenv("BEADS_DB")
-	os.Unsetenv("BEADS_DIR")
+	os.Unsetenv("BD_DB")
+	os.Unsetenv("BD_DIR")
 
 	tmpDir := t.TempDir()
 	tmpDir, _ = filepath.EvalSymlinks(tmpDir)
@@ -479,11 +479,11 @@ func TestFindDatabaseInTree_WithBEADS_DIR(t *testing.T) {
 	}
 
 	// Create .beads with dolt directory
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0755); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0755); err != nil {
 		t.Fatal(err)
 	}
-	doltDir := filepath.Join(beadsDir, "dolt")
+	doltDir := filepath.Join(bdDir, "dolt")
 	if err := os.MkdirAll(doltDir, 0755); err != nil {
 		t.Fatal(err)
 	}
@@ -508,14 +508,14 @@ func TestFindDatabaseInTree_WithBEADS_DIR(t *testing.T) {
 	}
 }
 
-// TestFindBeadsDir_BEADS_DIR_WithProjectFiles tests FindBeadsDir with BEADS_DIR env var
+// TestFindBeadsDir_BEADS_DIR_WithProjectFiles tests FindBdDir with BD_DIR env var
 func TestFindBeadsDir_BEADS_DIR_WithProjectFiles(t *testing.T) {
-	originalDir := os.Getenv("BEADS_DIR")
+	originalDir := os.Getenv("BD_DIR")
 	t.Cleanup(func() {
 		if originalDir != "" {
-			os.Setenv("BEADS_DIR", originalDir)
+			os.Setenv("BD_DIR", originalDir)
 		} else {
-			os.Unsetenv("BEADS_DIR")
+			os.Unsetenv("BD_DIR")
 		}
 	})
 
@@ -526,12 +526,12 @@ func TestFindBeadsDir_BEADS_DIR_WithProjectFiles(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	os.Setenv("BEADS_DIR", tmpDir)
+	os.Setenv("BD_DIR", tmpDir)
 
-	result := FindBeadsDir()
+	result := FindBdDir()
 	resultResolved, _ := filepath.EvalSymlinks(result)
 	expectedResolved, _ := filepath.EvalSymlinks(tmpDir)
 	if resultResolved != expectedResolved {
-		t.Errorf("FindBeadsDir() = %q, want %q", result, tmpDir)
+		t.Errorf("FindBdDir() = %q, want %q", result, tmpDir)
 	}
 }

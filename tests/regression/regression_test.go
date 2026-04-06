@@ -28,7 +28,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/steveyegge/beads/internal/testutil"
+	"github.com/steveyegge/bd/internal/testutil"
 )
 
 // baselineBin is the path to the pinned baseline bd binary.
@@ -52,7 +52,7 @@ func TestMain(m *testing.M) {
 		fmt.Fprintln(os.Stderr, "SKIP: dolt not found in PATH; regression tests require dolt")
 		os.Exit(0)
 	}
-	os.Setenv("BEADS_TEST_MODE", "1")
+	os.Setenv("BD_TEST_MODE", "1")
 	if err := testutil.EnsureDoltContainerForTestMain(); err != nil {
 		fmt.Fprintf(os.Stderr, "WARN: %v, skipping Dolt tests\n", err)
 	} else {
@@ -178,7 +178,7 @@ func getBaseline() (string, error) {
 	}
 	ver := strings.TrimPrefix(version, "v")
 	asset := fmt.Sprintf("beads_%s_%s_%s.tar.gz", ver, runtime.GOOS, runtime.GOARCH)
-	url := fmt.Sprintf("https://github.com/steveyegge/beads/releases/download/%s/%s", version, asset)
+	url := fmt.Sprintf("https://github.com/steveyegge/bd/releases/download/%s/%s", version, asset)
 
 	fmt.Fprintf(os.Stderr, "Downloading baseline: %s\n", url)
 	if err := downloadAndExtract(url, cachedBin); err != nil {
@@ -271,14 +271,14 @@ func (w *workspace) runEnv() []string {
 	env := []string{
 		"PATH=" + os.Getenv("PATH"),
 		"HOME=" + w.dir,
-		"BEADS_TEST_MODE=1",
+		"BD_TEST_MODE=1",
 		"GIT_CONFIG_NOSYSTEM=1",
 	}
 	if testDoltServerPort != 0 {
 		portStr := strconv.Itoa(testDoltServerPort)
 		env = append(env,
-			"BEADS_DOLT_PORT="+portStr,
-			"BEADS_DOLT_SERVER_PORT="+portStr,
+			"BD_DOLT_PORT="+portStr,
+			"BD_DOLT_SERVER_PORT="+portStr,
 		)
 	}
 	if v := os.Getenv("TMPDIR"); v != "" {

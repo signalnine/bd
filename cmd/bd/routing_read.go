@@ -6,15 +6,15 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/steveyegge/beads/internal/config"
-	"github.com/steveyegge/beads/internal/debug"
-	"github.com/steveyegge/beads/internal/routing"
-	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
+	"github.com/steveyegge/bd/internal/config"
+	"github.com/steveyegge/bd/internal/debug"
+	"github.com/steveyegge/bd/internal/routing"
+	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
 )
 
 // getRoutingConfigValue resolves routing config from YAML/env first, then DB config.
 // Only uses the YAML value if it was explicitly set (not a Viper default), so that
-// DB-stored values aren't shadowed by defaults like "~/.beads-planning".
+// DB-stored values aren't shadowed by defaults like "~/.bd-planning".
 func getRoutingConfigValue(ctx context.Context, store *embeddeddolt.EmbeddedDoltStore, key string) string {
 	// Only trust YAML/env values that were explicitly set, not Viper defaults.
 	if src := config.GetValueSource(key); src != config.SourceDefault {
@@ -78,7 +78,7 @@ func openRoutedReadStore(ctx context.Context, store *embeddeddolt.EmbeddedDoltSt
 	}
 
 	targetRepoPath := routing.ExpandPath(repoPath)
-	targetBeadsDir := filepath.Join(targetRepoPath, ".beads")
+	targetBeadsDir := filepath.Join(targetRepoPath, ".bd")
 	targetStore, err := newReadOnlyStoreFromConfig(ctx, targetBeadsDir)
 	if err != nil {
 		return nil, false, fmt.Errorf("failed to open routed store at %s: %w", targetRepoPath, err)

@@ -16,7 +16,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 // runHook executes the hook and enforces a timeout, killing the process group
@@ -27,7 +27,7 @@ func (r *Runner) runHook(hookPath, event string, issue *types.Issue) (retErr err
 
 	// Hooks are fire-and-forget so they have no parent span; we create a root span
 	// to track execution time and errors for observability.
-	tracer := otel.Tracer("github.com/steveyegge/beads/hooks")
+	tracer := otel.Tracer("github.com/steveyegge/bd/hooks")
 	ctx, span := tracer.Start(ctx, "hook.exec",
 		trace.WithAttributes(
 			attribute.String("hook.event", event),
@@ -50,7 +50,7 @@ func (r *Runner) runHook(hookPath, event string, issue *types.Issue) (retErr err
 	}
 
 	// Create command: hook_script <issue_id> <event_type>
-	// #nosec G204 -- hookPath is from controlled .beads/hooks directory
+	// #nosec G204 -- hookPath is from controlled .bd/hooks directory
 	cmd := exec.CommandContext(ctx, hookPath, issue.ID, event)
 	cmd.Stdin = bytes.NewReader(issueJSON)
 

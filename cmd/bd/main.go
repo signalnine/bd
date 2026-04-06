@@ -19,13 +19,13 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/subosito/gotenv"
 
-	"github.com/steveyegge/beads/internal/beads"
-	"github.com/steveyegge/beads/internal/config"
-	"github.com/steveyegge/beads/internal/configfile"
-	"github.com/steveyegge/beads/internal/debug"
-	"github.com/steveyegge/beads/internal/hooks"
-	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
-	"github.com/steveyegge/beads/internal/utils"
+	"github.com/steveyegge/bd/internal/project"
+	"github.com/steveyegge/bd/internal/config"
+	"github.com/steveyegge/bd/internal/configfile"
+	"github.com/steveyegge/bd/internal/debug"
+	"github.com/steveyegge/bd/internal/hooks"
+	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
+	"github.com/steveyegge/bd/internal/utils"
 )
 
 var (
@@ -98,7 +98,7 @@ var readOnlyCommands = map[string]bool{
 	"duplicates": true,
 	"comments":   true, // list comments (not add)
 	"current":    true, // bd sync mode current
-	"backup":     true, // reads from Dolt, writes only to .beads/backup/
+	"backup":     true, // reads from Dolt, writes only to .bd/backup/
 	"export":     true, // reads from Dolt, writes JSONL to file/stdout
 }
 
@@ -109,15 +109,15 @@ func isReadOnlyCommand(cmdName string) bool {
 	return readOnlyCommands[cmdName]
 }
 
-// loadBeadsEnvFile loads .beads/.env into process environment for per-project
+// loadBeadsEnvFile loads .bd/.env into process environment for per-project
 // Dolt credentials (GH#2520). Uses gotenv.Load which is non-overriding —
 // existing shell env vars always take precedence.
-// Safe to call with an empty beadsDir (no-op).
-func loadBeadsEnvFile(beadsDir string) {
-	if beadsDir == "" {
+// Safe to call with an empty bdDir (no-op).
+func loadBeadsEnvFile(bdDir string) {
+	if bdDir == "" {
 		return
 	}
-	envFile := filepath.Join(beadsDir, ".env")
+	envFile := filepath.Join(bdDir, ".env")
 	if _, err := os.Stat(envFile); err != nil {
 		return
 	}
@@ -126,30 +126,30 @@ func loadBeadsEnvFile(beadsDir string) {
 
 // loadEnvironment runs the lightweight, always-needed environment setup that
 // must happen before the noDbCommands early return. This ensures commands like
-// "bd doctor --server" pick up per-project Dolt credentials from .beads/.env.
+// "bd doctor --server" pick up per-project Dolt credentials from .bd/.env.
 //
 // This function intentionally does NOT do any store initialization, auto-migrate,
 // or telemetry setup — those belong in the store-init phase that runs after the
 // noDbCommands check.
 func loadEnvironment() {
-	// FindBeadsDir is lightweight (filesystem walk, no git subprocesses)
-	// and resolves BEADS_DIR, redirects, and worktree paths.
-	if beadsDir := beads.FindBeadsDir(); beadsDir != "" {
-		loadBeadsEnvFile(beadsDir)
-		// Non-fatal warning if .beads/ directory has overly permissive access.
-		config.CheckBeadsDirPermissions(beadsDir)
+	// FindBdDir is lightweight (filesystem walk, no git subprocesses)
+	// and resolves BD_DIR, redirects, and worktree paths.
+	if bdDir := project.FindBdDir(); bdDir != "" {
+		loadBeadsEnvFile(bdDir)
+		// Non-fatal warning if .bd/ directory has overly permissive access.
+		config.CheckBeadsDirPermissions(bdDir)
 	}
 }
 
 
-func preserveRedirectSourceDatabase(beadsDir string) {
-	if beadsDir == "" || os.Getenv("BEADS_DOLT_SERVER_DATABASE") != "" {
+func preserveRedirectSourceDatabase(bdDir string) {
+	if bdDir == "" || os.Getenv("BD_DOLT_SERVER_DATABASE") != "" {
 		return
 	}
 
-	rInfo := beads.ResolveRedirect(beadsDir)
+	rInfo := project.ResolveRedirect(bdDir)
 	if rInfo.WasRedirected && rInfo.SourceDatabase != "" {
-		_ = os.Setenv("BEADS_DOLT_SERVER_DATABASE", rInfo.SourceDatabase)
+		_ = os.Setenv("BD_DOLT_SERVER_DATABASE", rInfo.SourceDatabase)
 		if os.Getenv("BD_DEBUG_ROUTING") != "" {
 			fmt.Fprintf(os.Stderr, "[routing] Preserved source dolt_database %q across redirect\n", rInfo.SourceDatabase)
 		}
@@ -160,7 +160,7 @@ func selectedNoDBBeadsDir() string {
 	selectedDBPath := ""
 	if rootCmd.PersistentFlags().Changed("db") && dbPath != "" {
 		selectedDBPath = dbPath
-	} else if envDB := os.Getenv("BEADS_DB"); envDB != "" {
+	} else if envDB := os.Getenv("BD_DB"); envDB != "" {
 		selectedDBPath = envDB
 	} else if envDB := os.Getenv("BD_DB"); envDB != "" {
 		selectedDBPath = envDB
@@ -172,7 +172,7 @@ func selectedNoDBBeadsDir() string {
 			return selectedBeadsDir
 		}
 	}
-	return beads.FindBeadsDir()
+	return project.FindBdDir()
 }
 
 func isSelectedNoDBCommand(cmd *cobra.Command) bool {
@@ -193,13 +193,13 @@ func isSelectedNoDBCommand(cmd *cobra.Command) bool {
 	}
 }
 
-func prepareSelectedNoDBContext(beadsDir string) {
-	if beadsDir == "" {
+func prepareSelectedNoDBContext(bdDir string) {
+	if bdDir == "" {
 		return
 	}
-	_ = os.Setenv("BEADS_DIR", beadsDir)
-	loadBeadsEnvFile(beadsDir)
-	preserveRedirectSourceDatabase(beadsDir)
+	_ = os.Setenv("BD_DIR", bdDir)
+	loadBeadsEnvFile(bdDir)
+	preserveRedirectSourceDatabase(bdDir)
 	if err := config.Initialize(); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: failed to reinitialize config for selected beads dir: %v\n", err)
 	}
@@ -207,7 +207,7 @@ func prepareSelectedNoDBContext(beadsDir string) {
 
 // resolveCommandBeadsDir maps a discovered Dolt data path back to the owning
 // .beads directory. filepath.Dir(dbPath) only works when the Dolt data lives
-// under .beads/dolt; custom dolt_data_dir values can place it elsewhere.
+// under .bd/dolt; custom dolt_data_dir values can place it elsewhere.
 func resolveCommandBeadsDir(dbPath string) string {
 	if dbPath == "" {
 		return ""
@@ -215,15 +215,15 @@ func resolveCommandBeadsDir(dbPath string) string {
 
 	// Use the same validated candidate logic as the helper/reopen path
 	// (GH#2627). This checks filepath.Dir, canonicalized paths, AND
-	// FindBeadsDir — but only returns a candidate whose metadata.json
+	// FindBdDir — but only returns a candidate whose metadata.json
 	// actually points to dbPath, preventing CWD discovery from overriding
 	// an explicit --db flag.
-	if beadsDir := resolveBeadsDirForDBPath(dbPath); beadsDir != "" {
-		return beadsDir
+	if bdDir := resolveBeadsDirForDBPath(dbPath); bdDir != "" {
+		return bdDir
 	}
 
 	for dir := filepath.Dir(dbPath); dir != "" && dir != filepath.Dir(dir); dir = filepath.Dir(dir) {
-		candidate := filepath.Join(dir, ".beads")
+		candidate := filepath.Join(dir, ".bd")
 		if info, err := os.Stat(candidate); err == nil && info.IsDir() {
 			return candidate
 		}
@@ -235,7 +235,7 @@ func resolveCommandBeadsDir(dbPath string) string {
 }
 
 // getActorWithGit returns the actor for audit trails with git config fallback.
-// Priority: --actor flag > BEADS_ACTOR env > BD_ACTOR env (deprecated) > git config user.name > $USER > "unknown"
+// Priority: --actor flag > BD_ACTOR env > BD_ACTOR env (deprecated) > git config user.name > $USER > "unknown"
 // This provides a sensible default for developers: their git identity is used unless
 // explicitly overridden
 func getActorWithGit() string {
@@ -244,8 +244,8 @@ func getActorWithGit() string {
 		return actor
 	}
 
-	// Check BEADS_ACTOR env var (primary env override)
-	if beadsActor := os.Getenv("BEADS_ACTOR"); beadsActor != "" {
+	// Check BD_ACTOR env var (primary env override)
+	if beadsActor := os.Getenv("BD_ACTOR"); beadsActor != "" {
 		return beadsActor
 	}
 
@@ -297,8 +297,8 @@ func init() {
 	}
 
 	// Register persistent flags
-	rootCmd.PersistentFlags().StringVar(&dbPath, "db", "", "Database path (default: auto-discover .beads/*.db)")
-	rootCmd.PersistentFlags().StringVar(&actor, "actor", "", "Actor name for audit trail (default: $BEADS_ACTOR, git user.name, $USER)")
+	rootCmd.PersistentFlags().StringVar(&dbPath, "db", "", "Database path (default: auto-discover .bd/*.db)")
+	rootCmd.PersistentFlags().StringVar(&actor, "actor", "", "Actor name for audit trail (default: $BD_ACTOR, git user.name, $USER)")
 	rootCmd.PersistentFlags().BoolVar(&jsonOutput, "json", false, "Output in JSON format")
 	rootCmd.PersistentFlags().String("format", "", "Output format (json). Alias for --json")
 	_ = rootCmd.PersistentFlags().MarkHidden("format") // Hidden alias for CLI ergonomics
@@ -438,7 +438,7 @@ var rootCmd = &cobra.Command{
 			FatalError("%v", err)
 		}
 
-		// GH#2677: Load .beads/.env before the noDbCommands early return so that
+		// GH#2677: Load .bd/.env before the noDbCommands early return so that
 		// commands like "bd doctor --server" pick up per-project Dolt credentials.
 		if !isSelectedNoDBCommand(cmd) {
 			loadEnvironment()
@@ -533,15 +533,15 @@ var rootCmd = &cobra.Command{
 		}
 
 		// Capture redirect info BEFORE FindDatabasePath() follows the redirect.
-		// When .beads/redirect points to a shared directory with a different
+		// When .bd/redirect points to a shared directory with a different
 		// dolt_database, the source's database name would be lost. Capture it
-		// early and set BEADS_DOLT_SERVER_DATABASE so all store opens use it.
-		preserveRedirectSourceDatabase(beads.GetRedirectInfo().LocalDir)
+		// early and set BD_DOLT_SERVER_DATABASE so all store opens use it.
+		preserveRedirectSourceDatabase(project.GetRedirectInfo().LocalDir)
 
 		// Initialize database path
 		if dbPath == "" {
 			// Use public API to find database (same logic as extensions)
-			if foundDB := beads.FindDatabasePath(); foundDB != "" {
+			if foundDB := project.FindDatabasePath(); foundDB != "" {
 				dbPath = foundDB
 			} else {
 				// No database found — allow some commands to run without a database
@@ -559,22 +559,22 @@ var rootCmd = &cobra.Command{
 					// No database found - provide context-aware error message
 					fmt.Fprintf(os.Stderr, "Error: no beads database found\n")
 					fmt.Fprintf(os.Stderr, "Hint: %s\n", diagHint())
-					fmt.Fprintf(os.Stderr, "      or set BEADS_DIR to point to your .beads directory\n")
+					fmt.Fprintf(os.Stderr, "      or set BD_DIR to point to your .beads directory\n")
 					os.Exit(1)
 				}
 				// For import/setup commands, set default database path
 				// Invariant: dbPath must always be absolute. Use CanonicalizePath for OS-agnostic
 				// handling (symlinks, case normalization on macOS).
 				//
-				// IMPORTANT: Use FindBeadsDir() to get the correct .beads directory,
+				// IMPORTANT: Use FindBdDir() to get the correct .beads directory,
 				// which follows redirect files. Without this, a redirected .beads
 				// would create a local database instead of using the redirect target.
 				// (GH#bd-0qel)
-				targetBeadsDir := beads.FindBeadsDir()
+				targetBeadsDir := project.FindBdDir()
 				if targetBeadsDir == "" {
-					targetBeadsDir = ".beads"
+					targetBeadsDir = ".bd"
 				}
-				dbPath = utils.CanonicalizePath(filepath.Join(targetBeadsDir, beads.CanonicalDatabaseName))
+				dbPath = utils.CanonicalizePath(filepath.Join(targetBeadsDir, project.CanonicalDatabaseName))
 			}
 		}
 
@@ -595,24 +595,24 @@ var rootCmd = &cobra.Command{
 		// opens its own store connection, writes the version metadata, commits it,
 		// and closes BEFORE the main store is opened. This ensures bd doctor and
 		// read-only commands see the correct version after a CLI upgrade.
-		beadsDir := resolveCommandBeadsDir(dbPath)
+		bdDir := resolveCommandBeadsDir(dbPath)
 
-		autoMigrateOnVersionBump(beadsDir)
+		autoMigrateOnVersionBump(bdDir)
 
 		// Initialize direct storage access
 		var err error
 
 		// Load config to get database name
-		cfg, cfgErr := configfile.Load(beadsDir)
+		cfg, cfgErr := configfile.Load(bdDir)
 		if cfgErr != nil {
-			fmt.Fprintf(os.Stderr, "warning: failed to load beads config from %s: %v\n", beadsDir, cfgErr)
+			fmt.Fprintf(os.Stderr, "warning: failed to load beads config from %s: %v\n", bdDir, cfgErr)
 		}
 
 		database := configfile.DefaultDoltDatabase
 		if cfg != nil {
 			database = cfg.GetDoltDatabase()
 		} else if cfgErr == nil {
-			fmt.Fprintf(os.Stderr, "warning: no beads configuration found in %s; database name may default incorrectly\n", beadsDir)
+			fmt.Fprintf(os.Stderr, "warning: no beads configuration found in %s; database name may default incorrectly\n", bdDir)
 		}
 
 		// Default auto-commit to OFF
@@ -621,12 +621,12 @@ var rootCmd = &cobra.Command{
 		}
 
 		// Acquire embedded lock before opening
-		embLock, lockErr := acquireEmbeddedLock(beadsDir)
+		embLock, lockErr := acquireEmbeddedLock(bdDir)
 		if lockErr != nil {
 			FatalError("failed to acquire embedded lock: %v", lockErr)
 		}
 
-		store, err = newDoltStore(rootCtx, beadsDir, database, embeddeddolt.WithLock(embLock))
+		store, err = newDoltStore(rootCtx, bdDir, database, embeddeddolt.WithLock(embLock))
 
 		// Track final read-only state for staleness checks (GH#1089)
 		storeIsReadOnly = useReadOnly
@@ -651,15 +651,15 @@ var rootCmd = &cobra.Command{
 		// Skip auto-import when the user is explicitly running "bd import" —
 		// Validate workspace identity for write commands (GH#2438, GH#2372)
 		// Skip for read-only commands since they can't corrupt data
-		if !useReadOnly && os.Getenv("BEADS_SKIP_IDENTITY_CHECK") != "1" {
-			validateWorkspaceIdentity(rootCtx, beadsDir)
+		if !useReadOnly && os.Getenv("BD_SKIP_IDENTITY_CHECK") != "1" {
+			validateWorkspaceIdentity(rootCtx, bdDir)
 		}
 
 		// Initialize hook runner
-		// dbPath is .beads/something.db, so workspace root is parent of .beads
+		// dbPath is .bd/something.db, so workspace root is parent of .beads
 		if dbPath != "" {
-			beadsDir := filepath.Dir(dbPath)
-			hookRunner = hooks.NewRunner(filepath.Join(beadsDir, "hooks"))
+			bdDir := filepath.Dir(dbPath)
+			hookRunner = hooks.NewRunner(filepath.Join(bdDir, "hooks"))
 		}
 
 		// Hook-firing decorator removed during nuclear simplification.
@@ -710,7 +710,7 @@ var rootCmd = &cobra.Command{
 			}
 		}
 
-		// Auto-backup: export JSONL to .beads/backup/ if enabled and due
+		// Auto-backup: export JSONL to .bd/backup/ if enabled and due
 		maybeAutoBackup(rootCtx)
 
 		// Auto-export: write git-tracked JSONL for portability if enabled and due
@@ -758,7 +758,7 @@ func checkBlockedEnvVars() error {
 	for _, name := range blockedEnvVars {
 		if os.Getenv(name) != "" {
 			return fmt.Errorf("%s env var is not supported and has been removed to prevent data fragmentation.\n"+
-				"The storage backend is set in .beads/metadata.json. To change it, use: bd migrate dolt", name)
+				"The storage backend is set in .bd/metadata.json. To change it, use: bd migrate dolt", name)
 		}
 	}
 	return nil
@@ -827,13 +827,13 @@ func flushBatchCommitOnShutdown() {
 // 1. Read commands are safe even against wrong databases (no data mutation)
 // 2. The check requires an open store connection
 // 3. New databases won't have _project_id yet (bootstrap case)
-func validateWorkspaceIdentity(ctx context.Context, beadsDir string) {
+func validateWorkspaceIdentity(ctx context.Context, bdDir string) {
 	if store == nil {
 		return // No store connection, nothing to validate
 	}
 
 	// Load project_id from metadata.json
-	cfg, err := configfile.Load(beadsDir)
+	cfg, err := configfile.Load(bdDir)
 	if err != nil || cfg == nil {
 		return // No config, skip validation (fresh init)
 	}
@@ -855,11 +855,11 @@ func validateWorkspaceIdentity(ctx context.Context, beadsDir string) {
 		fmt.Fprintf(os.Stderr, "  database _project_id:     %s\n\n", dbProjectID)
 		fmt.Fprintf(os.Stderr, "This means the CLI config and database belong to different projects.\n")
 		fmt.Fprintf(os.Stderr, "Possible causes:\n")
-		fmt.Fprintf(os.Stderr, "  • BEADS_DIR points to a different project's .beads/\n")
+		fmt.Fprintf(os.Stderr, "  • BD_DIR points to a different project's .bd/\n")
 		fmt.Fprintf(os.Stderr, "  • Dolt server endpoint changed and now serves a different database\n")
 		fmt.Fprintf(os.Stderr, "  • metadata.json was copied from another project\n\n")
 		fmt.Fprintf(os.Stderr, "To diagnose: bd context --json\n")
-		fmt.Fprintf(os.Stderr, "To override: set BEADS_SKIP_IDENTITY_CHECK=1\n")
+		fmt.Fprintf(os.Stderr, "To override: set BD_SKIP_IDENTITY_CHECK=1\n")
 		os.Exit(1)
 	}
 }
@@ -867,7 +867,7 @@ func validateWorkspaceIdentity(ctx context.Context, beadsDir string) {
 func main() {
 	// BD_NAME overrides the binary name in help text (e.g. BD_NAME=ops makes
 	// "ops --help" show "ops" instead of "bd"). Useful for multi-instance
-	// setups where wrapper scripts set BEADS_DIR for routing.
+	// setups where wrapper scripts set BD_DIR for routing.
 	if name := os.Getenv("BD_NAME"); name != "" {
 		rootCmd.Use = name
 	}

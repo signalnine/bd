@@ -1,7 +1,7 @@
 // Package beads context.go provides centralized repository context resolution.
 //
 // Problem: 50+ git commands across the codebase assume CWD is the repository root.
-// When BEADS_DIR points to a different repo, or when running from a worktree,
+// When BD_DIR points to a different repo, or when running from a worktree,
 // these commands execute in the wrong directory.
 //
 // Solution: RepoContext provides a single source of truth for repository paths,
@@ -9,14 +9,14 @@
 //
 // Usage:
 //
-//	rc, err := beads.GetRepoContext()
+//	rc, err := project.GetRepoContext()
 //	if err != nil {
 //	    return err
 //	}
 //	cmd := rc.GitCmd(ctx, "status")  // Runs in beads repo, not CWD
 //
 // See docs/REPO_CONTEXT.md for detailed documentation.
-package beads
+package project
 
 import (
 	"context"
@@ -28,7 +28,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/steveyegge/beads/internal/git"
+	"github.com/steveyegge/bd/internal/git"
 )
 
 // UserRole represents the user's relationship to a repository.
@@ -38,39 +38,39 @@ type UserRole string
 // Role constants for user relationship to repository.
 const (
 	// Contributor indicates the user is contributing to a fork (not the maintainer).
-	// BEADS_DIR redirection implies contributor role automatically.
+	// BD_DIR redirection implies contributor role automatically.
 	Contributor UserRole = "contributor"
 
 	// Maintainer indicates the user owns/maintains the repository.
 	Maintainer UserRole = "maintainer"
 )
 
-// ErrRoleNotConfigured is returned when beads.role is not set in git config.
+// ErrRoleNotConfigured is returned when bd.role is not set in git config.
 // This signals that the init prompt should be shown to configure the role.
-var ErrRoleNotConfigured = errors.New("beads.role not configured in git config")
+var ErrRoleNotConfigured = errors.New("bd.role not configured in git config")
 
 // RepoContext holds resolved repository paths for beads operations.
 //
 // The struct distinguishes between:
-//   - RepoRoot: where .beads/ lives (for git operations on beads data)
+//   - RepoRoot: where .bd/ lives (for git operations on beads data)
 //   - CWDRepoRoot: where user is working (for status display, etc.)
 //
-// These may differ when BEADS_DIR points to a different repository,
+// These may differ when BD_DIR points to a different repository,
 // or when running from a git worktree.
 type RepoContext struct {
-	// BeadsDir is the actual .beads directory path (after following redirects).
-	BeadsDir string
+	// BdDir is the actual .beads directory path (after following redirects).
+	BdDir string
 
-	// RepoRoot is the repository root containing BeadsDir.
+	// RepoRoot is the repository root containing BdDir.
 	// Git commands for beads operations should run here.
 	RepoRoot string
 
 	// CWDRepoRoot is the repository root containing the current working directory.
-	// May differ from RepoRoot when BEADS_DIR points elsewhere.
+	// May differ from RepoRoot when BD_DIR points elsewhere.
 	CWDRepoRoot string
 
-	// IsRedirected is true if BeadsDir resolves to a different repository than CWD.
-	// This covers explicit BEADS_DIR usage and redirect files.
+	// IsRedirected is true if BdDir resolves to a different repository than CWD.
+	// This covers explicit BD_DIR usage and redirect files.
 	IsRedirected bool
 
 	// IsWorktree is true if CWD is in a git worktree.
@@ -87,7 +87,7 @@ var (
 //
 // The context is cached because:
 // 1. CWD doesn't change during command execution
-// 2. BEADS_DIR doesn't change during command execution
+// 2. BD_DIR doesn't change during command execution
 // 3. Repeated filesystem access would be wasteful
 //
 // Returns an error if no .beads directory can be found.
@@ -101,15 +101,15 @@ func GetRepoContext() (*RepoContext, error) {
 // buildRepoContext constructs the RepoContext by resolving all paths.
 // This is called once per process via sync.Once.
 func buildRepoContext() (*RepoContext, error) {
-	// 1. Find .beads directory (respects BEADS_DIR env var)
-	beadsDir := FindBeadsDir()
-	if beadsDir == "" {
+	// 1. Find .beads directory (respects BD_DIR env var)
+	bdDir := FindBdDir()
+	if bdDir == "" {
 		return nil, fmt.Errorf("no .beads directory found")
 	}
 
 	// 2. Security: Validate path boundary (SEC-003)
-	if !isPathInSafeBoundary(beadsDir) {
-		return nil, fmt.Errorf("BEADS_DIR points to unsafe location: %s", beadsDir)
+	if !isPathInSafeBoundary(bdDir) {
+		return nil, fmt.Errorf("BD_DIR points to unsafe location: %s", bdDir)
 	}
 
 	// 3. Check for redirect file in the local repo
@@ -119,14 +119,14 @@ func buildRepoContext() (*RepoContext, error) {
 	var repoRoot string
 	isExternal := redirectInfo.IsRedirected
 	if !isExternal {
-		if external, err := isExternalBeadsDir(beadsDir); err == nil {
+		if external, err := isExternalBeadsDir(bdDir); err == nil {
 			isExternal = external
 		}
 	}
 
 	if isExternal {
 		// Beads dir is in a different repo - use that repo's root
-		repoRoot = repoRootForBeadsDir(beadsDir)
+		repoRoot = repoRootForBeadsDir(bdDir)
 	} else {
 		// Normal case - find repo root via git
 		var err error
@@ -143,7 +143,7 @@ func buildRepoContext() (*RepoContext, error) {
 	isWorktree := git.IsWorktree()
 
 	return &RepoContext{
-		BeadsDir:     beadsDir,
+		BdDir:     bdDir,
 		RepoRoot:     repoRoot,
 		CWDRepoRoot:  cwdRepoRoot,
 		IsRedirected: isExternal,
@@ -151,15 +151,15 @@ func buildRepoContext() (*RepoContext, error) {
 	}, nil
 }
 
-// isExternalBeadsDir returns true if beadsDir is in a different git repo than CWD.
+// isExternalBeadsDir returns true if bdDir is in a different git repo than CWD.
 // Uses git common dir to correctly handle worktrees and bare repos.
-func isExternalBeadsDir(beadsDir string) (bool, error) {
+func isExternalBeadsDir(bdDir string) (bool, error) {
 	cwdCommonDir, err := git.GetGitCommonDir()
 	if err != nil {
 		return false, err
 	}
 
-	beadsCommonDir, err := getGitCommonDirForPath(beadsDir)
+	beadsCommonDir, err := getGitCommonDirForPath(bdDir)
 	if err != nil {
 		return false, err
 	}
@@ -194,13 +194,13 @@ func getGitCommonDirForPath(path string) (string, error) {
 }
 
 // repoRootForBeadsDir returns the repository root for a beads directory.
-// Falls back to the beadsDir parent if git lookup fails.
-func repoRootForBeadsDir(beadsDir string) string {
-	repoRoot, err := getRepoRootFromPath(beadsDir)
+// Falls back to the bdDir parent if git lookup fails.
+func repoRootForBeadsDir(bdDir string) string {
+	repoRoot, err := getRepoRootFromPath(bdDir)
 	if err == nil && repoRoot != "" {
 		return repoRoot
 	}
-	return filepath.Dir(beadsDir)
+	return filepath.Dir(bdDir)
 }
 
 // getRepoRootFromPath returns the git repository root for a given path.
@@ -223,15 +223,15 @@ func getRepoRootFromPath(path string) (string, error) {
 //
 // Pattern:
 //
-//	cmd := rc.GitCmd(ctx, "add", ".beads/")
+//	cmd := rc.GitCmd(ctx, "add", ".bd/")
 //	output, err := cmd.Output()
 //
-// Equivalent to running: cd $RepoRoot && git add .beads/
+// Equivalent to running: cd $RepoRoot && git add .bd/
 //
 // GH#2538: When running from a git worktree, git may inherit environment
 // variables that point to the worktree's .git instead of the main repo.
 // We explicitly set GIT_DIR and GIT_WORK_TREE to ensure git operates on
-// the correct repository (the one containing .beads/).
+// the correct repository (the one containing .bd/).
 func (rc *RepoContext) GitCmd(ctx context.Context, args ...string) *exec.Cmd {
 	cmd := exec.CommandContext(ctx, "git", args...)
 	cmd.Dir = rc.RepoRoot
@@ -275,7 +275,7 @@ func (rc *RepoContext) RelPath(absPath string) (string, error) {
 
 // ResetCaches clears the cached RepoContext, forcing re-resolution on next call.
 //
-// This is intended for tests that need to change directory or BEADS_DIR
+// This is intended for tests that need to change directory or BD_DIR
 // between test cases. In production, the cache is safe because these
 // values don't change during command execution.
 //
@@ -284,7 +284,7 @@ func (rc *RepoContext) RelPath(absPath string) (string, error) {
 // Usage in tests:
 //
 //	t.Cleanup(func() {
-//	    beads.ResetCaches()
+//	    project.ResetCaches()
 //	    git.ResetCaches()
 //	})
 func ResetCaches() {
@@ -293,7 +293,7 @@ func ResetCaches() {
 	repoCtxErr = nil
 }
 
-// unsafePrefixes lists system directories that BEADS_DIR should never point to.
+// unsafePrefixes lists system directories that BD_DIR should never point to.
 // This prevents path traversal attacks (SEC-003).
 var unsafePrefixes = []string{
 	"/etc", "/usr", "/var", "/root", "/System", "/Library",
@@ -345,7 +345,7 @@ func isPathInSafeBoundary(path string) bool {
 //
 // Unlike GetRepoContext(), this function:
 //   - Does NOT cache results (caller may handle multiple workspaces)
-//   - Does NOT respect BEADS_DIR (workspace path is explicit)
+//   - Does NOT respect BD_DIR (workspace path is explicit)
 //   - Resolves worktree relationships correctly
 //
 // This is designed for processes that need to handle
@@ -374,12 +374,12 @@ func GetRepoContextForWorkspace(workspacePath string) (*RepoContext, error) {
 	// Clear git caches for fresh resolution
 	git.ResetCaches()
 
-	// Build context fresh, specifically for this workspace (ignores BEADS_DIR)
+	// Build context fresh, specifically for this workspace (ignores BD_DIR)
 	return buildRepoContextForWorkspace(absWorkspace)
 }
 
 // buildRepoContextForWorkspace constructs RepoContext for a specific workspace.
-// Unlike buildRepoContext(), this ignores BEADS_DIR env var since the workspace
+// Unlike buildRepoContext(), this ignores BD_DIR env var since the workspace
 // path is explicitly provided.
 func buildRepoContextForWorkspace(workspacePath string) (*RepoContext, error) {
 	// 1. Determine if we're in a worktree and find the main repo root
@@ -402,31 +402,31 @@ func buildRepoContextForWorkspace(workspacePath string) (*RepoContext, error) {
 	}
 
 	// 2. Find .beads directory in the appropriate location
-	beadsDir := filepath.Join(repoRoot, ".beads")
+	bdDir := filepath.Join(repoRoot, ".bd")
 
 	// Check if .beads exists
-	if _, err := os.Stat(beadsDir); os.IsNotExist(err) {
-		return nil, fmt.Errorf("no .beads directory found at %s", beadsDir)
+	if _, err := os.Stat(bdDir); os.IsNotExist(err) {
+		return nil, fmt.Errorf("no .beads directory found at %s", bdDir)
 	}
 
 	// 3. Follow redirect if present
-	beadsDir = FollowRedirect(beadsDir)
+	bdDir = FollowRedirect(bdDir)
 
 	// 4. Security: Validate path boundary (SEC-003)
-	if !isPathInSafeBoundary(beadsDir) {
-		return nil, fmt.Errorf("beads directory in unsafe location: %s", beadsDir)
+	if !isPathInSafeBoundary(bdDir) {
+		return nil, fmt.Errorf("beads directory in unsafe location: %s", bdDir)
 	}
 
 	// 5. Validate directory contains actual project files
-	if !hasBeadsProjectFiles(beadsDir) {
-		return nil, fmt.Errorf("beads directory missing required files: %s", beadsDir)
+	if !hasBeadsProjectFiles(bdDir) {
+		return nil, fmt.Errorf("beads directory missing required files: %s", bdDir)
 	}
 
 	// 6. Get CWD's repo root (same as workspace in this case)
 	cwdRepoRoot := git.GetRepoRoot()
 
 	return &RepoContext{
-		BeadsDir:     beadsDir,
+		BdDir:     bdDir,
 		RepoRoot:     repoRoot,
 		CWDRepoRoot:  cwdRepoRoot,
 		IsRedirected: false, // Workspace-specific context is never "redirected"
@@ -436,11 +436,11 @@ func buildRepoContextForWorkspace(workspacePath string) (*RepoContext, error) {
 
 // Validate checks if the cached context is still valid.
 //
-// Returns an error if BeadsDir or RepoRoot no longer exist. This is useful
+// Returns an error if BdDir or RepoRoot no longer exist. This is useful
 // for long-running processes that need to detect when context becomes stale (DMN-002).
 func (rc *RepoContext) Validate() error {
-	if _, err := os.Stat(rc.BeadsDir); os.IsNotExist(err) {
-		return fmt.Errorf("BeadsDir no longer exists: %s", rc.BeadsDir)
+	if _, err := os.Stat(rc.BdDir); os.IsNotExist(err) {
+		return fmt.Errorf("BdDir no longer exists: %s", rc.BdDir)
 	}
 	if _, err := os.Stat(rc.RepoRoot); os.IsNotExist(err) {
 		return fmt.Errorf("RepoRoot no longer exists: %s", rc.RepoRoot)
@@ -455,7 +455,7 @@ func (rc *RepoContext) Validate() error {
 //
 // Pattern:
 //
-//	output, err := rc.GitOutput(ctx, "config", "--get", "beads.role")
+//	output, err := rc.GitOutput(ctx, "config", "--get", "bd.role")
 //	if err != nil {
 //	    // Config key not set or git error
 //	}
@@ -468,20 +468,20 @@ func (rc *RepoContext) GitOutput(ctx context.Context, args ...string) (string, e
 	return string(output), nil
 }
 
-// Role reads beads.role from git config (fresh each call, ~1ms).
+// Role reads bd.role from git config (fresh each call, ~1ms).
 //
-// If BEADS_DIR is set (IsRedirected), returns Contributor implicitly
+// If BD_DIR is set (IsRedirected), returns Contributor implicitly
 // because external repo mode always indicates a contributor workflow.
 //
 // Returns ("", false) if role is not configured and not redirected.
 // The bool return indicates whether a role was determined.
 func (rc *RepoContext) Role() (UserRole, bool) {
-	// BEADS_DIR implies contributor (external repo mode)
+	// BD_DIR implies contributor (external repo mode)
 	if rc.IsRedirected {
 		return Contributor, true
 	}
 
-	output, err := rc.GitOutput(context.Background(), "config", "--get", "beads.role")
+	output, err := rc.GitOutput(context.Background(), "config", "--get", "bd.role")
 	if err != nil {
 		return "", false // Not configured
 	}
@@ -490,8 +490,8 @@ func (rc *RepoContext) Role() (UserRole, bool) {
 
 // IsContributor returns true if user is configured as contributor.
 //
-// This includes both explicit configuration (git config beads.role contributor)
-// and implicit detection (BEADS_DIR redirect active).
+// This includes both explicit configuration (git config bd.role contributor)
+// and implicit detection (BD_DIR redirect active).
 func (rc *RepoContext) IsContributor() bool {
 	role, ok := rc.Role()
 	return ok && role == Contributor
@@ -499,8 +499,8 @@ func (rc *RepoContext) IsContributor() bool {
 
 // IsMaintainer returns true if user is configured as maintainer.
 //
-// Only returns true for explicit configuration (git config beads.role maintainer).
-// BEADS_DIR redirect always implies contributor, never maintainer.
+// Only returns true for explicit configuration (git config bd.role maintainer).
+// BD_DIR redirect always implies contributor, never maintainer.
 func (rc *RepoContext) IsMaintainer() bool {
 	role, ok := rc.Role()
 	return ok && role == Maintainer
@@ -509,7 +509,7 @@ func (rc *RepoContext) IsMaintainer() bool {
 // RequireRole returns error if role not configured (forces init prompt).
 //
 // Use this at command entry points that need role-aware behavior.
-// If BEADS_DIR is set, role is implicitly determined (contributor),
+// If BD_DIR is set, role is implicitly determined (contributor),
 // so this will not return an error.
 func (rc *RepoContext) RequireRole() error {
 	if _, ok := rc.Role(); !ok {

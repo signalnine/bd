@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/steveyegge/beads/internal/storage/dolt"
-	"github.com/steveyegge/beads/internal/testutil"
+	"github.com/steveyegge/bd/internal/storage/dolt"
+	"github.com/steveyegge/bd/internal/testutil"
 )
 
 func init() {
@@ -27,13 +27,13 @@ var testSharedConn *sql.DB
 // from creating testdb_* databases on the production Dolt server.
 // Returns a cleanup function that stops the server and removes the container.
 //
-// Skipped when only embedded tests are requested (BEADS_TEST_EMBEDDED_DOLT=1
+// Skipped when only embedded tests are requested (BD_TEST_EMBEDDED_DOLT=1
 // without the server test flag) — embedded tests use subprocess binaries and
 // don't need a Docker container.
 func startTestDoltServer() func() {
 	// Skip Docker container when only embedded tests are requested.
 	// Embedded tests build and run subprocess binaries; they don't need a server.
-	if os.Getenv("BEADS_TEST_EMBEDDED_DOLT") == "1" {
+	if os.Getenv("BD_TEST_EMBEDDED_DOLT") == "1" {
 		return func() {}
 	}
 	if err := testutil.EnsureDoltContainerForTestMain(); err != nil {
@@ -68,7 +68,7 @@ func startTestDoltServer() func() {
 		}
 		testSharedDB = ""
 		testDoltServerPort = 0
-		os.Unsetenv("BEADS_DOLT_PORT")
+		os.Unsetenv("BD_DOLT_PORT")
 		testutil.TerminateDoltContainer()
 	}
 }

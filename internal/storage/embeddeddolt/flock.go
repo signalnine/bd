@@ -10,7 +10,7 @@ import (
 	"time"
 
 	backoff "github.com/cenkalti/backoff/v4"
-	"github.com/steveyegge/beads/internal/lockfile"
+	"github.com/steveyegge/bd/internal/lockfile"
 )
 
 // Unlocker is the interface for releasing an acquired lock.

@@ -1,4 +1,4 @@
-package beads
+package project
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/steveyegge/beads/internal/git"
+	"github.com/steveyegge/bd/internal/git"
 )
 
 // TestGetRepoContextForWorkspace_NormalRepo tests context resolution for a normal git repository
@@ -20,13 +20,13 @@ func TestGetRepoContextForWorkspace_NormalRepo(t *testing.T) {
 	}
 
 	// Create .beads directory with required files
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0750); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0750); err != nil {
 		t.Fatalf("failed to create .beads dir: %v", err)
 	}
 	// Create a database file (required for hasBeadsProjectFiles)
-	if err := os.WriteFile(filepath.Join(beadsDir, "beads.db"), []byte{}, 0644); err != nil {
-		t.Fatalf("failed to create beads.db: %v", err)
+	if err := os.WriteFile(filepath.Join(bdDir, "bd.db"), []byte{}, 0644); err != nil {
+		t.Fatalf("failed to create bd.db: %v", err)
 	}
 
 	// Reset caches before test
@@ -45,8 +45,8 @@ func TestGetRepoContextForWorkspace_NormalRepo(t *testing.T) {
 	if rc.RepoRoot != resolveSymlinks(tmpDir) {
 		t.Errorf("RepoRoot mismatch: expected %s, got %s", resolveSymlinks(tmpDir), rc.RepoRoot)
 	}
-	if rc.BeadsDir != resolveSymlinks(beadsDir) {
-		t.Errorf("BeadsDir mismatch: expected %s, got %s", resolveSymlinks(beadsDir), rc.BeadsDir)
+	if rc.BdDir != resolveSymlinks(bdDir) {
+		t.Errorf("BdDir mismatch: expected %s, got %s", resolveSymlinks(bdDir), rc.BdDir)
 	}
 	if rc.IsRedirected {
 		t.Error("IsRedirected should be false for workspace-specific context")
@@ -57,15 +57,15 @@ func TestGetRepoContextForWorkspace_NormalRepo(t *testing.T) {
 }
 
 // TestGetRepoContextForWorkspace_IgnoresBEADS_DIR verifies that workspace-specific
-// context resolution ignores the BEADS_DIR environment variable (DMN-001)
+// context resolution ignores the BD_DIR environment variable (DMN-001)
 func TestGetRepoContextForWorkspace_IgnoresBEADS_DIR(t *testing.T) {
 	// Save original env var
-	originalBeadsDir := os.Getenv("BEADS_DIR")
+	originalBeadsDir := os.Getenv("BD_DIR")
 	t.Cleanup(func() {
 		if originalBeadsDir != "" {
-			os.Setenv("BEADS_DIR", originalBeadsDir)
+			os.Setenv("BD_DIR", originalBeadsDir)
 		} else {
-			os.Unsetenv("BEADS_DIR")
+			os.Unsetenv("BD_DIR")
 		}
 		ResetCaches()
 		git.ResetCaches()
@@ -83,17 +83,17 @@ func TestGetRepoContextForWorkspace_IgnoresBEADS_DIR(t *testing.T) {
 		if err := initGitRepo(repo); err != nil {
 			t.Fatalf("failed to init git repo in %s: %v", repo, err)
 		}
-		beadsDir := filepath.Join(repo, ".beads")
-		if err := os.MkdirAll(beadsDir, 0750); err != nil {
+		bdDir := filepath.Join(repo, ".bd")
+		if err := os.MkdirAll(bdDir, 0750); err != nil {
 			t.Fatalf("failed to create .beads in %s: %v", repo, err)
 		}
-		if err := os.WriteFile(filepath.Join(beadsDir, "beads.db"), []byte{}, 0644); err != nil {
-			t.Fatalf("failed to create beads.db: %v", err)
+		if err := os.WriteFile(filepath.Join(bdDir, "bd.db"), []byte{}, 0644); err != nil {
+			t.Fatalf("failed to create bd.db: %v", err)
 		}
 	}
 
-	// Set BEADS_DIR to repo2's .beads
-	os.Setenv("BEADS_DIR", filepath.Join(repo2, ".beads"))
+	// Set BD_DIR to repo2's .beads
+	os.Setenv("BD_DIR", filepath.Join(repo2, ".bd"))
 
 	// Get context for repo1 - should find repo1's .beads, NOT repo2's
 	rc, err := GetRepoContextForWorkspace(repo1)
@@ -102,9 +102,9 @@ func TestGetRepoContextForWorkspace_IgnoresBEADS_DIR(t *testing.T) {
 	}
 
 	// Verify we got repo1, not repo2
-	expectedBeadsDir := resolveSymlinks(filepath.Join(repo1, ".beads"))
-	if rc.BeadsDir != expectedBeadsDir {
-		t.Errorf("BEADS_DIR was not ignored: expected %s, got %s", expectedBeadsDir, rc.BeadsDir)
+	expectedBeadsDir := resolveSymlinks(filepath.Join(repo1, ".bd"))
+	if rc.BdDir != expectedBeadsDir {
+		t.Errorf("BD_DIR was not ignored: expected %s, got %s", expectedBeadsDir, rc.BdDir)
 	}
 	expectedRepoRoot := resolveSymlinks(repo1)
 	if rc.RepoRoot != expectedRepoRoot {
@@ -167,12 +167,12 @@ func TestRepoContext_Validate(t *testing.T) {
 		t.Fatalf("failed to init git repo: %v", err)
 	}
 
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0750); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0750); err != nil {
 		t.Fatalf("failed to create .beads: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(beadsDir, "beads.db"), []byte{}, 0644); err != nil {
-		t.Fatalf("failed to create beads.db: %v", err)
+	if err := os.WriteFile(filepath.Join(bdDir, "bd.db"), []byte{}, 0644); err != nil {
+		t.Fatalf("failed to create bd.db: %v", err)
 	}
 
 	t.Cleanup(func() {
@@ -192,13 +192,13 @@ func TestRepoContext_Validate(t *testing.T) {
 	}
 
 	// Remove the .beads directory to make context stale
-	if err := os.RemoveAll(beadsDir); err != nil {
+	if err := os.RemoveAll(bdDir); err != nil {
 		t.Fatalf("failed to remove .beads: %v", err)
 	}
 
 	// Validate should now fail (stale context)
 	if err := rc.Validate(); err == nil {
-		t.Error("Validate should fail when BeadsDir no longer exists")
+		t.Error("Validate should fail when BdDir no longer exists")
 	}
 }
 
@@ -214,12 +214,12 @@ func TestRepoContext_Validate_RepoRootRemoved(t *testing.T) {
 		t.Fatalf("failed to init git repo: %v", err)
 	}
 
-	beadsDir := filepath.Join(repoDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0750); err != nil {
+	bdDir := filepath.Join(repoDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0750); err != nil {
 		t.Fatalf("failed to create .beads: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(beadsDir, "beads.db"), []byte{}, 0644); err != nil {
-		t.Fatalf("failed to create beads.db: %v", err)
+	if err := os.WriteFile(filepath.Join(bdDir, "bd.db"), []byte{}, 0644); err != nil {
+		t.Fatalf("failed to create bd.db: %v", err)
 	}
 
 	t.Cleanup(func() {
@@ -243,7 +243,7 @@ func TestRepoContext_Validate_RepoRootRemoved(t *testing.T) {
 		t.Fatalf("failed to remove repo: %v", err)
 	}
 
-	// Validate should now fail (both BeadsDir and RepoRoot are gone)
+	// Validate should now fail (both BdDir and RepoRoot are gone)
 	if err := rc.Validate(); err == nil {
 		t.Error("Validate should fail when RepoRoot no longer exists")
 	}
@@ -256,12 +256,12 @@ func TestGetRepoContextForWorkspace_CacheReset(t *testing.T) {
 		t.Fatalf("failed to init git repo: %v", err)
 	}
 
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0750); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0750); err != nil {
 		t.Fatalf("failed to create .beads: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(beadsDir, "beads.db"), []byte{}, 0644); err != nil {
-		t.Fatalf("failed to create beads.db: %v", err)
+	if err := os.WriteFile(filepath.Join(bdDir, "bd.db"), []byte{}, 0644); err != nil {
+		t.Fatalf("failed to create bd.db: %v", err)
 	}
 
 	t.Cleanup(func() {
@@ -282,8 +282,8 @@ func TestGetRepoContextForWorkspace_CacheReset(t *testing.T) {
 	}
 
 	// Both should return valid contexts
-	if rc1.BeadsDir != rc2.BeadsDir {
-		t.Errorf("BeadsDir mismatch between calls: %s vs %s", rc1.BeadsDir, rc2.BeadsDir)
+	if rc1.BdDir != rc2.BdDir {
+		t.Errorf("BdDir mismatch between calls: %s vs %s", rc1.BdDir, rc2.BdDir)
 	}
 }
 
@@ -305,12 +305,12 @@ func TestGetRepoContextForWorkspace_RelativePath(t *testing.T) {
 		t.Fatalf("failed to init git repo: %v", err)
 	}
 
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0750); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0750); err != nil {
 		t.Fatalf("failed to create .beads: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(beadsDir, "beads.db"), []byte{}, 0644); err != nil {
-		t.Fatalf("failed to create beads.db: %v", err)
+	if err := os.WriteFile(filepath.Join(bdDir, "bd.db"), []byte{}, 0644); err != nil {
+		t.Fatalf("failed to create bd.db: %v", err)
 	}
 
 	// Change to parent directory
@@ -325,9 +325,9 @@ func TestGetRepoContextForWorkspace_RelativePath(t *testing.T) {
 	}
 
 	// Verify we got the correct absolute path
-	expectedBeadsDir := resolveSymlinks(beadsDir)
-	if rc.BeadsDir != expectedBeadsDir {
-		t.Errorf("BeadsDir mismatch: expected %s, got %s", expectedBeadsDir, rc.BeadsDir)
+	expectedBeadsDir := resolveSymlinks(bdDir)
+	if rc.BdDir != expectedBeadsDir {
+		t.Errorf("BdDir mismatch: expected %s, got %s", expectedBeadsDir, rc.BdDir)
 	}
 }
 
@@ -364,16 +364,16 @@ func TestIsPathInSafeBoundary(t *testing.T) {
 		{"system /etc", "/etc/beads", false},
 		{"system /usr", "/usr/local/beads", false},
 		{"system /var", "/var/lib/beads", false},
-		{"system /root", "/root/.beads", false},
-		{"system /bin", "/bin/.beads", false},
-		{"system /sbin", "/sbin/.beads", false},
+		{"system /root", "/root/.bd", false},
+		{"system /bin", "/bin/.bd", false},
+		{"system /sbin", "/sbin/.bd", false},
 		{"system /opt", "/opt/beads", false},
-		{"macOS /System", "/System/Library/.beads", false},
-		{"macOS /Library", "/Library/Application Support/.beads", false},
-		{"macOS /private", "/private/etc/.beads", false},
+		{"macOS /System", "/System/Library/.bd", false},
+		{"macOS /Library", "/Library/Application Support/.bd", false},
+		{"macOS /private", "/private/etc/.bd", false},
 
 		// Safe paths - should be accepted
-		{"user home directory", filepath.Join(homeDir, "projects/.beads"), true},
+		{"user home directory", filepath.Join(homeDir, "projects/.bd"), true},
 		{"temp directory", os.TempDir(), true},
 	}
 
@@ -391,12 +391,12 @@ func TestIsPathInSafeBoundary(t *testing.T) {
 // to unsafe locations are rejected (TS-SEC-003 integration test).
 func TestGetRepoContextForWorkspace_RedirectToUnsafeLocation(t *testing.T) {
 	// Save original env
-	originalBeadsDir := os.Getenv("BEADS_DIR")
+	originalBeadsDir := os.Getenv("BD_DIR")
 	t.Cleanup(func() {
 		if originalBeadsDir != "" {
-			os.Setenv("BEADS_DIR", originalBeadsDir)
+			os.Setenv("BD_DIR", originalBeadsDir)
 		} else {
-			os.Unsetenv("BEADS_DIR")
+			os.Unsetenv("BD_DIR")
 		}
 		ResetCaches()
 		git.ResetCaches()
@@ -409,24 +409,24 @@ func TestGetRepoContextForWorkspace_RedirectToUnsafeLocation(t *testing.T) {
 	}
 
 	// Create .beads directory with a redirect file pointing outside safe boundary
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0750); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0750); err != nil {
 		t.Fatalf("failed to create .beads dir: %v", err)
 	}
 
 	// Write redirect pointing to /etc (unsafe location)
-	// Note: FollowRedirect won't follow non-existent paths, but if /etc/.beads existed
+	// Note: FollowRedirect won't follow non-existent paths, but if /etc/.bd existed
 	// and contained beads files, this security check would catch it
-	redirectFile := filepath.Join(beadsDir, "redirect")
-	if err := os.WriteFile(redirectFile, []byte("/etc/.beads\n"), 0644); err != nil {
+	redirectFile := filepath.Join(bdDir, "redirect")
+	if err := os.WriteFile(redirectFile, []byte("/etc/.bd\n"), 0644); err != nil {
 		t.Fatalf("failed to write redirect file: %v", err)
 	}
 
-	// Since /etc/.beads doesn't exist, FollowRedirect returns original path
-	// So create a valid beads.db in the local .beads to get past initial validation,
+	// Since /etc/.bd doesn't exist, FollowRedirect returns original path
+	// So create a valid bd.db in the local .beads to get past initial validation,
 	// then test the boundary check directly via the isPathInSafeBoundary function
-	if err := os.WriteFile(filepath.Join(beadsDir, "beads.db"), []byte{}, 0644); err != nil {
-		t.Fatalf("failed to create beads.db: %v", err)
+	if err := os.WriteFile(filepath.Join(bdDir, "bd.db"), []byte{}, 0644); err != nil {
+		t.Fatalf("failed to create bd.db: %v", err)
 	}
 
 	// GetRepoContextForWorkspace should succeed because FollowRedirect
@@ -440,23 +440,23 @@ func TestGetRepoContextForWorkspace_RedirectToUnsafeLocation(t *testing.T) {
 	}
 
 	// If we get here, the context was created with the safe local path
-	// (because /etc/.beads doesn't exist and FollowRedirect fell back)
+	// (because /etc/.bd doesn't exist and FollowRedirect fell back)
 	// Verify it's using the local beads dir, not the unsafe redirect target
-	expectedBeadsDir := resolveSymlinks(beadsDir)
-	if rc.BeadsDir != expectedBeadsDir {
-		t.Errorf("BeadsDir = %q, want safe local path %q", rc.BeadsDir, expectedBeadsDir)
+	expectedBeadsDir := resolveSymlinks(bdDir)
+	if rc.BdDir != expectedBeadsDir {
+		t.Errorf("BdDir = %q, want safe local path %q", rc.BdDir, expectedBeadsDir)
 	}
 }
 
 // TestGetRepoContextForWorkspace_RedirectWithinRepo tests that redirects
 // staying within the same repo or user's directories are allowed.
 func TestGetRepoContextForWorkspace_RedirectWithinRepo(t *testing.T) {
-	originalBeadsDir := os.Getenv("BEADS_DIR")
+	originalBeadsDir := os.Getenv("BD_DIR")
 	t.Cleanup(func() {
 		if originalBeadsDir != "" {
-			os.Setenv("BEADS_DIR", originalBeadsDir)
+			os.Setenv("BD_DIR", originalBeadsDir)
 		} else {
-			os.Unsetenv("BEADS_DIR")
+			os.Unsetenv("BD_DIR")
 		}
 		ResetCaches()
 		git.ResetCaches()
@@ -477,16 +477,16 @@ func TestGetRepoContextForWorkspace_RedirectWithinRepo(t *testing.T) {
 	}
 
 	// Create .beads with actual files in repo2
-	beadsDir2 := filepath.Join(repo2, ".beads")
+	beadsDir2 := filepath.Join(repo2, ".bd")
 	if err := os.MkdirAll(beadsDir2, 0750); err != nil {
 		t.Fatalf("failed to create .beads in repo2: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(beadsDir2, "beads.db"), []byte{}, 0644); err != nil {
-		t.Fatalf("failed to create beads.db in repo2: %v", err)
+	if err := os.WriteFile(filepath.Join(beadsDir2, "bd.db"), []byte{}, 0644); err != nil {
+		t.Fatalf("failed to create bd.db in repo2: %v", err)
 	}
 
 	// Create .beads in repo1 with redirect to repo2
-	beadsDir1 := filepath.Join(repo1, ".beads")
+	beadsDir1 := filepath.Join(repo1, ".bd")
 	if err := os.MkdirAll(beadsDir1, 0750); err != nil {
 		t.Fatalf("failed to create .beads in repo1: %v", err)
 	}
@@ -496,7 +496,7 @@ func TestGetRepoContextForWorkspace_RedirectWithinRepo(t *testing.T) {
 	}
 
 	// GetRepoContextForWorkspace for repo1 should work
-	// Note: GetRepoContextForWorkspace ignores BEADS_DIR and looks for .beads in workspace
+	// Note: GetRepoContextForWorkspace ignores BD_DIR and looks for .beads in workspace
 	// But it does follow the redirect file in the local .beads
 	rc, err := GetRepoContextForWorkspace(repo1)
 	if err != nil {
@@ -505,8 +505,8 @@ func TestGetRepoContextForWorkspace_RedirectWithinRepo(t *testing.T) {
 
 	// Verify the redirect was followed to repo2's .beads
 	expectedBeadsDir := resolveSymlinks(beadsDir2)
-	if rc.BeadsDir != expectedBeadsDir {
-		t.Errorf("BeadsDir = %q, want redirected path %q", rc.BeadsDir, expectedBeadsDir)
+	if rc.BdDir != expectedBeadsDir {
+		t.Errorf("BdDir = %q, want redirected path %q", rc.BdDir, expectedBeadsDir)
 	}
 }
 
@@ -520,7 +520,7 @@ func resolveSymlinks(path string) string {
 	return resolved
 }
 
-// TestRole_ExplicitConfig tests Role() when beads.role is set in git config.
+// TestRole_ExplicitConfig tests Role() when bd.role is set in git config.
 func TestRole_ExplicitConfig(t *testing.T) {
 	tests := map[string]struct {
 		configValue  string
@@ -538,16 +538,16 @@ func TestRole_ExplicitConfig(t *testing.T) {
 			}
 
 			// Create .beads directory with required files
-			beadsDir := filepath.Join(tmpDir, ".beads")
-			if err := os.MkdirAll(beadsDir, 0750); err != nil {
+			bdDir := filepath.Join(tmpDir, ".bd")
+			if err := os.MkdirAll(bdDir, 0750); err != nil {
 				t.Fatalf("failed to create .beads: %v", err)
 			}
-			if err := os.WriteFile(filepath.Join(beadsDir, "beads.db"), []byte{}, 0644); err != nil {
-				t.Fatalf("failed to create beads.db: %v", err)
+			if err := os.WriteFile(filepath.Join(bdDir, "bd.db"), []byte{}, 0644); err != nil {
+				t.Fatalf("failed to create bd.db: %v", err)
 			}
 
-			// Set beads.role in git config
-			cmd := exec.Command("git", "config", "beads.role", tt.configValue)
+			// Set bd.role in git config
+			cmd := exec.Command("git", "config", "bd.role", tt.configValue)
 			cmd.Dir = tmpDir
 			if err := cmd.Run(); err != nil {
 				t.Fatalf("failed to set git config: %v", err)
@@ -574,7 +574,7 @@ func TestRole_ExplicitConfig(t *testing.T) {
 	}
 }
 
-// TestRole_NoConfig tests Role() when beads.role is not set.
+// TestRole_NoConfig tests Role() when bd.role is not set.
 func TestRole_NoConfig(t *testing.T) {
 	tmpDir := t.TempDir()
 	if err := initGitRepo(tmpDir); err != nil {
@@ -582,12 +582,12 @@ func TestRole_NoConfig(t *testing.T) {
 	}
 
 	// Create .beads directory with required files (no git config set)
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0750); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0750); err != nil {
 		t.Fatalf("failed to create .beads: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(beadsDir, "beads.db"), []byte{}, 0644); err != nil {
-		t.Fatalf("failed to create beads.db: %v", err)
+	if err := os.WriteFile(filepath.Join(bdDir, "bd.db"), []byte{}, 0644); err != nil {
+		t.Fatalf("failed to create bd.db: %v", err)
 	}
 
 	t.Cleanup(func() {
@@ -610,12 +610,12 @@ func TestRole_NoConfig(t *testing.T) {
 }
 
 func TestGetRepoContext_BEADS_DIR_ExternalRepo(t *testing.T) {
-	originalBeadsDir := os.Getenv("BEADS_DIR")
+	originalBeadsDir := os.Getenv("BD_DIR")
 	t.Cleanup(func() {
 		if originalBeadsDir != "" {
-			os.Setenv("BEADS_DIR", originalBeadsDir)
+			os.Setenv("BD_DIR", originalBeadsDir)
 		} else {
-			os.Unsetenv("BEADS_DIR")
+			os.Unsetenv("BD_DIR")
 		}
 		ResetCaches()
 		git.ResetCaches()
@@ -634,15 +634,15 @@ func TestGetRepoContext_BEADS_DIR_ExternalRepo(t *testing.T) {
 		}
 	}
 
-	targetBeadsDir := filepath.Join(targetRepo, ".beads")
+	targetBeadsDir := filepath.Join(targetRepo, ".bd")
 	if err := os.MkdirAll(targetBeadsDir, 0750); err != nil {
 		t.Fatalf("failed to create .beads in target: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(targetBeadsDir, "beads.db"), []byte{}, 0644); err != nil {
-		t.Fatalf("failed to create beads.db: %v", err)
+	if err := os.WriteFile(filepath.Join(targetBeadsDir, "bd.db"), []byte{}, 0644); err != nil {
+		t.Fatalf("failed to create bd.db: %v", err)
 	}
 
-	os.Setenv("BEADS_DIR", targetBeadsDir)
+	os.Setenv("BD_DIR", targetBeadsDir)
 
 	originalWd, _ := os.Getwd()
 	if err := os.Chdir(sourceRepo); err != nil {
@@ -661,8 +661,8 @@ func TestGetRepoContext_BEADS_DIR_ExternalRepo(t *testing.T) {
 	}
 
 	expectedBeadsDir := resolveSymlinks(targetBeadsDir)
-	if rc.BeadsDir != expectedBeadsDir {
-		t.Errorf("BeadsDir mismatch: expected %s, got %s", expectedBeadsDir, rc.BeadsDir)
+	if rc.BdDir != expectedBeadsDir {
+		t.Errorf("BdDir mismatch: expected %s, got %s", expectedBeadsDir, rc.BdDir)
 	}
 
 	expectedRepoRoot := resolveSymlinks(targetRepo)
@@ -671,20 +671,20 @@ func TestGetRepoContext_BEADS_DIR_ExternalRepo(t *testing.T) {
 	}
 
 	if !rc.IsRedirected {
-		t.Error("IsRedirected should be true when BEADS_DIR points to a different repo")
+		t.Error("IsRedirected should be true when BD_DIR points to a different repo")
 	}
 }
 
-// TestRole_BEADS_DIR_ImpliesContributor tests that BEADS_DIR redirect
+// TestRole_BEADS_DIR_ImpliesContributor tests that BD_DIR redirect
 // implicitly returns Contributor role without requiring git config.
 func TestRole_BEADS_DIR_ImpliesContributor(t *testing.T) {
 	// Save original env var
-	originalBeadsDir := os.Getenv("BEADS_DIR")
+	originalBeadsDir := os.Getenv("BD_DIR")
 	t.Cleanup(func() {
 		if originalBeadsDir != "" {
-			os.Setenv("BEADS_DIR", originalBeadsDir)
+			os.Setenv("BD_DIR", originalBeadsDir)
 		} else {
-			os.Unsetenv("BEADS_DIR")
+			os.Unsetenv("BD_DIR")
 		}
 		ResetCaches()
 		git.ResetCaches()
@@ -705,16 +705,16 @@ func TestRole_BEADS_DIR_ImpliesContributor(t *testing.T) {
 	}
 
 	// Create .beads with files in target repo
-	targetBeadsDir := filepath.Join(targetRepo, ".beads")
+	targetBeadsDir := filepath.Join(targetRepo, ".bd")
 	if err := os.MkdirAll(targetBeadsDir, 0750); err != nil {
 		t.Fatalf("failed to create .beads in target: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(targetBeadsDir, "beads.db"), []byte{}, 0644); err != nil {
-		t.Fatalf("failed to create beads.db: %v", err)
+	if err := os.WriteFile(filepath.Join(targetBeadsDir, "bd.db"), []byte{}, 0644); err != nil {
+		t.Fatalf("failed to create bd.db: %v", err)
 	}
 
 	// Create .beads in source repo with redirect to target
-	sourceBeadsDir := filepath.Join(sourceRepo, ".beads")
+	sourceBeadsDir := filepath.Join(sourceRepo, ".bd")
 	if err := os.MkdirAll(sourceBeadsDir, 0750); err != nil {
 		t.Fatalf("failed to create .beads in source: %v", err)
 	}
@@ -723,8 +723,8 @@ func TestRole_BEADS_DIR_ImpliesContributor(t *testing.T) {
 		t.Fatalf("failed to write redirect file: %v", err)
 	}
 
-	// Set BEADS_DIR to the target (simulating direnv setup)
-	os.Setenv("BEADS_DIR", targetBeadsDir)
+	// Set BD_DIR to the target (simulating direnv setup)
+	os.Setenv("BD_DIR", targetBeadsDir)
 
 	// Change to source repo to trigger redirect detection
 	originalWd, _ := os.Getwd()
@@ -743,7 +743,7 @@ func TestRole_BEADS_DIR_ImpliesContributor(t *testing.T) {
 
 	// IsRedirected should be true
 	if !rc.IsRedirected {
-		t.Error("IsRedirected should be true when BEADS_DIR points elsewhere")
+		t.Error("IsRedirected should be true when BD_DIR points elsewhere")
 	}
 
 	// Role should implicitly return Contributor
@@ -752,7 +752,7 @@ func TestRole_BEADS_DIR_ImpliesContributor(t *testing.T) {
 		t.Error("Role() returned ok=false, expected ok=true for redirected context")
 	}
 	if role != Contributor {
-		t.Errorf("Role() = %q, want %q (implicit contributor for BEADS_DIR)", role, Contributor)
+		t.Errorf("Role() = %q, want %q (implicit contributor for BD_DIR)", role, Contributor)
 	}
 
 	// IsContributor should return true
@@ -773,16 +773,16 @@ func TestIsContributor(t *testing.T) {
 		t.Fatalf("failed to init git repo: %v", err)
 	}
 
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0750); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0750); err != nil {
 		t.Fatalf("failed to create .beads: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(beadsDir, "beads.db"), []byte{}, 0644); err != nil {
-		t.Fatalf("failed to create beads.db: %v", err)
+	if err := os.WriteFile(filepath.Join(bdDir, "bd.db"), []byte{}, 0644); err != nil {
+		t.Fatalf("failed to create bd.db: %v", err)
 	}
 
 	// Set role to contributor
-	cmd := exec.Command("git", "config", "beads.role", "contributor")
+	cmd := exec.Command("git", "config", "bd.role", "contributor")
 	cmd.Dir = tmpDir
 	if err := cmd.Run(); err != nil {
 		t.Fatalf("failed to set git config: %v", err)
@@ -813,16 +813,16 @@ func TestIsMaintainer(t *testing.T) {
 		t.Fatalf("failed to init git repo: %v", err)
 	}
 
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0750); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0750); err != nil {
 		t.Fatalf("failed to create .beads: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(beadsDir, "beads.db"), []byte{}, 0644); err != nil {
-		t.Fatalf("failed to create beads.db: %v", err)
+	if err := os.WriteFile(filepath.Join(bdDir, "bd.db"), []byte{}, 0644); err != nil {
+		t.Fatalf("failed to create bd.db: %v", err)
 	}
 
 	// Set role to maintainer
-	cmd := exec.Command("git", "config", "beads.role", "maintainer")
+	cmd := exec.Command("git", "config", "bd.role", "maintainer")
 	cmd.Dir = tmpDir
 	if err := cmd.Run(); err != nil {
 		t.Fatalf("failed to set git config: %v", err)
@@ -853,16 +853,16 @@ func TestRequireRole_Configured(t *testing.T) {
 		t.Fatalf("failed to init git repo: %v", err)
 	}
 
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0750); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0750); err != nil {
 		t.Fatalf("failed to create .beads: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(beadsDir, "beads.db"), []byte{}, 0644); err != nil {
-		t.Fatalf("failed to create beads.db: %v", err)
+	if err := os.WriteFile(filepath.Join(bdDir, "bd.db"), []byte{}, 0644); err != nil {
+		t.Fatalf("failed to create bd.db: %v", err)
 	}
 
 	// Set role
-	cmd := exec.Command("git", "config", "beads.role", "contributor")
+	cmd := exec.Command("git", "config", "bd.role", "contributor")
 	cmd.Dir = tmpDir
 	if err := cmd.Run(); err != nil {
 		t.Fatalf("failed to set git config: %v", err)
@@ -890,12 +890,12 @@ func TestRequireRole_NotConfigured(t *testing.T) {
 		t.Fatalf("failed to init git repo: %v", err)
 	}
 
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0750); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0750); err != nil {
 		t.Fatalf("failed to create .beads: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(beadsDir, "beads.db"), []byte{}, 0644); err != nil {
-		t.Fatalf("failed to create beads.db: %v", err)
+	if err := os.WriteFile(filepath.Join(bdDir, "bd.db"), []byte{}, 0644); err != nil {
+		t.Fatalf("failed to create bd.db: %v", err)
 	}
 
 	// Don't set any role config
@@ -926,12 +926,12 @@ func TestGitOutput(t *testing.T) {
 		t.Fatalf("failed to init git repo: %v", err)
 	}
 
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0750); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0750); err != nil {
 		t.Fatalf("failed to create .beads: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(beadsDir, "beads.db"), []byte{}, 0644); err != nil {
-		t.Fatalf("failed to create beads.db: %v", err)
+	if err := os.WriteFile(filepath.Join(bdDir, "bd.db"), []byte{}, 0644); err != nil {
+		t.Fatalf("failed to create bd.db: %v", err)
 	}
 
 	// Set a test config value
@@ -987,16 +987,16 @@ func TestGitCmd_WorktreeContext(t *testing.T) {
 	}
 
 	// Create .beads directory with required files
-	beadsDir := filepath.Join(mainRepo, ".beads")
-	if err := os.MkdirAll(beadsDir, 0750); err != nil {
+	bdDir := filepath.Join(mainRepo, ".bd")
+	if err := os.MkdirAll(bdDir, 0750); err != nil {
 		t.Fatalf("failed to create .beads dir: %v", err)
 	}
-	testFile := filepath.Join(beadsDir, "test.jsonl")
+	testFile := filepath.Join(bdDir, "test.jsonl")
 	if err := os.WriteFile(testFile, []byte(`{"id":"test-1"}`), 0644); err != nil {
 		t.Fatalf("failed to create test file: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(beadsDir, "beads.db"), []byte{}, 0644); err != nil {
-		t.Fatalf("failed to create beads.db: %v", err)
+	if err := os.WriteFile(filepath.Join(bdDir, "bd.db"), []byte{}, 0644); err != nil {
+		t.Fatalf("failed to create bd.db: %v", err)
 	}
 
 	// Create a git worktree
@@ -1032,9 +1032,9 @@ func TestGitCmd_WorktreeContext(t *testing.T) {
 		t.Fatalf("GetRepoContext failed: %v", err)
 	}
 
-	expectedBeadsDir := resolveSymlinks(beadsDir)
-	if rc.BeadsDir != expectedBeadsDir {
-		t.Errorf("BeadsDir = %q, want %q", rc.BeadsDir, expectedBeadsDir)
+	expectedBeadsDir := resolveSymlinks(bdDir)
+	if rc.BdDir != expectedBeadsDir {
+		t.Errorf("BdDir = %q, want %q", rc.BdDir, expectedBeadsDir)
 	}
 
 	// GH#2538: The key test - use GitCmd to add a file in the main repo

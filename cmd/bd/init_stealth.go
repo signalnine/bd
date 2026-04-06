@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/steveyegge/beads/internal/ui"
+	"github.com/steveyegge/bd/internal/ui"
 )
 
 // setupStealthMode configures git settings for stealth operation.
@@ -17,7 +17,7 @@ import (
 // Uses .git/info/exclude (per-repository) instead of global gitignore because:
 // - Global gitignore doesn't support absolute paths (GitHub #704)
 // - .git/info/exclude is designed for user-specific, repo-local ignores
-// - Patterns are relative to repo root, so ".beads/" works correctly
+// - Patterns are relative to repo root, so ".bd/" works correctly
 func setupStealthMode(verbose bool) error {
 	// Setup per-repository git exclude file (skip if not in a git repo)
 	if err := setupGitExclude(verbose); err != nil {
@@ -69,7 +69,7 @@ func setupGitExclude(verbose bool) error {
 	}
 
 	// Use relative patterns (these work correctly in .git/info/exclude)
-	beadsPattern := ".beads/"
+	beadsPattern := ".bd/"
 	claudePattern := ".claude/settings.local.json"
 
 	hasBeads := strings.Contains(existingContent, beadsPattern)
@@ -138,11 +138,11 @@ func setupForkExclude(verbose bool) error {
 	}
 
 	// Patterns to add for fork protection
-	patterns := []string{".beads/", "**/RECOVERY*.md", "**/SESSION*.md"}
+	patterns := []string{".bd/", "**/RECOVERY*.md", "**/SESSION*.md"}
 	var toAdd []string
 	for _, p := range patterns {
 		// Check for exact line match (pattern alone on a line)
-		// This avoids false positives like ".beads/issues.jsonl" matching ".beads/"
+		// This avoids false positives like ".bd/issues.jsonl" matching ".bd/"
 		if !containsExactPattern(existingContent, p) {
 			toAdd = append(toAdd, p)
 		}
@@ -181,7 +181,7 @@ func setupForkExclude(verbose bool) error {
 }
 
 // containsExactPattern checks if content contains the pattern as an exact line
-// This avoids false positives like ".beads/issues.jsonl" matching ".beads/"
+// This avoids false positives like ".bd/issues.jsonl" matching ".bd/"
 func containsExactPattern(content, pattern string) bool {
 	for _, line := range strings.Split(content, "\n") {
 		if strings.TrimSpace(line) == pattern {
@@ -277,7 +277,7 @@ func setupGlobalGitIgnore(homeDir string, projectPath string, verbose bool) erro
 
 	// Use absolute paths for this specific project (fixes GitHub #538)
 	// This allows other projects to use beads openly while this one stays stealth
-	beadsPattern := projectPath + "/.beads/"
+	beadsPattern := projectPath + "/.bd/"
 	claudePattern := projectPath + "/.claude/settings.local.json"
 
 	hasBeads := strings.Contains(existingContent, beadsPattern)

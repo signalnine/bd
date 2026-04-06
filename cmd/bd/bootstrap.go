@@ -9,11 +9,11 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/beads/internal/beads"
-	"github.com/steveyegge/beads/internal/config"
-	"github.com/steveyegge/beads/internal/configfile"
-	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
-	"github.com/steveyegge/beads/internal/storage/versioncontrolops"
+	"github.com/steveyegge/bd/internal/project"
+	"github.com/steveyegge/bd/internal/config"
+	"github.com/steveyegge/bd/internal/configfile"
+	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
+	"github.com/steveyegge/bd/internal/storage/versioncontrolops"
 	"golang.org/x/term"
 )
 
@@ -26,8 +26,8 @@ Unlike 'bd init --force', bootstrap will never delete existing issues.
 
 Bootstrap auto-detects the right action:
   • If sync.git-remote is configured: clones from the remote
-  • If .beads/backup/*.jsonl exists: restores from backup
-  • If .beads/issues.jsonl exists: imports from git-tracked JSONL
+  • If .bd/backup/*.jsonl exists: restores from backup
+  • If .bd/issues.jsonl exists: imports from git-tracked JSONL
   • If no database exists: creates a fresh one
   • If database already exists: validates and reports status
 
@@ -55,8 +55,8 @@ Examples:
 		nonInteractive := isNonInteractiveBootstrap(yesFlag || nonInteractiveFlag)
 
 		// Find beads directory
-		beadsDir := beads.FindBeadsDir()
-		if beadsDir == "" {
+		bdDir := project.FindBdDir()
+		if bdDir == "" {
 			// No .beads directory exists yet. Before giving up, probe the
 			// git remote for existing Beads data (refs/dolt/data). This is
 			// the "fresh second clone" case: clone1 pushed Beads state to
@@ -73,13 +73,13 @@ Examples:
 						if err != nil {
 							FatalError("failed to get working directory: %v", err)
 						}
-						beadsDir = filepath.Join(cwd, ".beads")
+						bdDir = filepath.Join(cwd, ".bd")
 					}
 				}
 			}
 		}
 
-		if beadsDir == "" {
+		if bdDir == "" {
 			// No .beads and no remote data — nothing to bootstrap from.
 			if jsonOutput {
 				outputJSON(map[string]interface{}{
@@ -96,13 +96,13 @@ Examples:
 		}
 
 		// Load config
-		cfg, err := configfile.Load(beadsDir)
+		cfg, err := configfile.Load(bdDir)
 		if err != nil || cfg == nil {
 			cfg = configfile.DefaultConfig()
 		}
 
 		// Determine action based on state
-		plan := detectBootstrapAction(beadsDir, cfg)
+		plan := detectBootstrapAction(bdDir, cfg)
 
 		if jsonOutput {
 			outputJSON(plan)
@@ -127,7 +127,7 @@ Examples:
 type BootstrapPlan struct {
 	Action      string `json:"action"` // "sync", "restore", "jsonl-import", "init", "none"
 	Reason      string `json:"reason"` // Human-readable explanation
-	BeadsDir    string `json:"beads_dir"`
+	BdDir    string `json:"beads_dir"`
 	Database    string `json:"database"`
 	SyncRemote  string `json:"sync_remote,omitempty"`
 	BackupDir   string `json:"backup_dir,omitempty"`
@@ -135,14 +135,14 @@ type BootstrapPlan struct {
 	HasExisting bool   `json:"has_existing"`
 }
 
-func detectBootstrapAction(beadsDir string, cfg *configfile.Config) BootstrapPlan {
+func detectBootstrapAction(bdDir string, cfg *configfile.Config) BootstrapPlan {
 	plan := BootstrapPlan{
-		BeadsDir: beadsDir,
+		BdDir: bdDir,
 		Database: cfg.GetDoltDatabase(),
 	}
 
 	// Check for existing embedded database
-	dbPath := filepath.Join(beadsDir, "embeddeddolt")
+	dbPath := filepath.Join(bdDir, "embeddeddolt")
 	if info, err := os.Stat(dbPath); err == nil && info.IsDir() {
 		entries, _ := os.ReadDir(dbPath)
 		if len(entries) > 0 {
@@ -175,7 +175,7 @@ func detectBootstrapAction(beadsDir string, cfg *configfile.Config) BootstrapPla
 	}
 
 	// Check for backup JSONL files (must be non-empty to be useful)
-	backupDir := filepath.Join(beadsDir, "backup")
+	backupDir := filepath.Join(bdDir, "backup")
 	issuesFile := filepath.Join(backupDir, "issues.jsonl")
 	if info, err := os.Stat(issuesFile); err == nil && info.Size() > 0 {
 		plan.BackupDir = backupDir
@@ -185,7 +185,7 @@ func detectBootstrapAction(beadsDir string, cfg *configfile.Config) BootstrapPla
 	}
 
 	// Check for git-tracked JSONL (the portable export format)
-	gitJSONL := filepath.Join(beadsDir, "issues.jsonl")
+	gitJSONL := filepath.Join(bdDir, "issues.jsonl")
 	if _, err := os.Stat(gitJSONL); err == nil {
 		plan.JSONLFile = gitJSONL
 		plan.Action = "jsonl-import"
@@ -202,7 +202,7 @@ func detectBootstrapAction(beadsDir string, cfg *configfile.Config) BootstrapPla
 func printBootstrapPlan(plan BootstrapPlan) {
 	switch plan.Action {
 	case "none":
-		fmt.Printf("✓ Database already exists: %s\n", plan.BeadsDir)
+		fmt.Printf("✓ Database already exists: %s\n", plan.BdDir)
 		fmt.Printf("  Nothing to do.\n")
 	case "sync":
 		fmt.Printf("Bootstrap plan: clone from remote\n")
@@ -262,7 +262,7 @@ func executeInitAction(ctx context.Context, plan BootstrapPlan, cfg *configfile.
 	prefix := inferPrefix(cfg)
 	dbName := cfg.GetDoltDatabase()
 
-	s, err := newDoltStore(ctx, plan.BeadsDir, dbName)
+	s, err := newDoltStore(ctx, plan.BdDir, dbName)
 	if err != nil {
 		return fmt.Errorf("create database: %w", err)
 	}
@@ -283,7 +283,7 @@ func executeRestoreAction(ctx context.Context, plan BootstrapPlan, cfg *configfi
 	prefix := inferPrefix(cfg)
 	dbName := cfg.GetDoltDatabase()
 
-	s, err := newDoltStore(ctx, plan.BeadsDir, dbName)
+	s, err := newDoltStore(ctx, plan.BdDir, dbName)
 	if err != nil {
 		return fmt.Errorf("create database: %w", err)
 	}
@@ -312,7 +312,7 @@ func executeSyncAction(ctx context.Context, plan BootstrapPlan, cfg *configfile.
 	// Ensure .beads directory exists -- it may not in the "fresh clone"
 	// bootstrap path where we detected remote data before .beads was
 	// created. Deferred here to preserve --dry-run semantics. (GH#2792)
-	if err := os.MkdirAll(plan.BeadsDir, 0o750); err != nil {
+	if err := os.MkdirAll(plan.BdDir, 0o750); err != nil {
 		return fmt.Errorf("create beads directory: %w", err)
 	}
 
@@ -320,7 +320,7 @@ func executeSyncAction(ctx context.Context, plan BootstrapPlan, cfg *configfile.
 
 	// Embedded mode: open a connection to the embedded engine and use
 	// DOLT_CLONE to create the database from the remote URL.
-	dataDir := filepath.Join(plan.BeadsDir, "embeddeddolt")
+	dataDir := filepath.Join(plan.BdDir, "embeddeddolt")
 	if err := os.MkdirAll(dataDir, 0o750); err != nil {
 		return fmt.Errorf("create embeddeddolt directory: %w", err)
 	}

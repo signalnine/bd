@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/beads/internal/beads"
+	"github.com/steveyegge/bd/internal/project"
 )
 
 var (
@@ -107,7 +107,7 @@ func resolveBranch() string {
 	// Fallback: try to get branch from git at runtime
 	// Use symbolic-ref to work in fresh repos without commits
 	// Uses CWD repo context since this shows user's current branch
-	if rc, err := beads.GetRepoContext(); err == nil {
+	if rc, err := project.GetRepoContext(); err == nil {
 		cmd := rc.GitCmdCWD(context.Background(), "symbolic-ref", "--short", "HEAD")
 		if output, err := cmd.Output(); err == nil {
 			if branch := strings.TrimSpace(string(output)); branch != "" && branch != "HEAD" {

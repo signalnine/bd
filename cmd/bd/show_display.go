@@ -9,8 +9,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/steveyegge/beads/internal/types"
-	"github.com/steveyegge/beads/internal/ui"
+	"github.com/steveyegge/bd/internal/types"
+	"github.com/steveyegge/bd/internal/ui"
 )
 
 // displayShowIssue displays a single issue (reusable for watch mode).

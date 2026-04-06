@@ -1,5 +1,5 @@
 // Package hooks provides a hook system for extensibility.
-// Hooks are executable scripts in .beads/hooks/ that run after certain events.
+// Hooks are executable scripts in .bd/hooks/ that run after certain events.
 package hooks
 
 import (
@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 // Event types
@@ -31,7 +31,7 @@ type Runner struct {
 }
 
 // NewRunner creates a new hook runner.
-// hooksDir is typically .beads/hooks/ relative to workspace root.
+// hooksDir is typically .bd/hooks/ relative to workspace root.
 func NewRunner(hooksDir string) *Runner {
 	return &Runner{
 		hooksDir: hooksDir,
@@ -41,7 +41,7 @@ func NewRunner(hooksDir string) *Runner {
 
 // NewRunnerFromWorkspace creates a hook runner for a workspace.
 func NewRunnerFromWorkspace(workspaceRoot string) *Runner {
-	return NewRunner(filepath.Join(workspaceRoot, ".beads", "hooks"))
+	return NewRunner(filepath.Join(workspaceRoot, ".bd", "hooks"))
 }
 
 // Run executes a hook if it exists.

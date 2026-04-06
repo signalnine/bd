@@ -245,13 +245,13 @@ func TestRemoveRepo_NotFound(t *testing.T) {
 }
 
 func TestFindConfigYAMLPath(t *testing.T) {
-	// Create temp dir with .beads/config.yaml
+	// Create temp dir with .bd/config.yaml
 	tmpDir := t.TempDir()
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0755); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0755); err != nil {
 		t.Fatal(err)
 	}
-	configPath := filepath.Join(beadsDir, "config.yaml")
+	configPath := filepath.Join(bdDir, "config.yaml")
 	if err := os.WriteFile(configPath, []byte("# config\n"), 0600); err != nil {
 		t.Fatal(err)
 	}
@@ -272,11 +272,11 @@ func TestFindConfigYAMLPath(t *testing.T) {
 		t.Fatalf("FindConfigYAMLPath failed: %v", err)
 	}
 
-	// Verify path ends with .beads/config.yaml
+	// Verify path ends with .bd/config.yaml
 	if filepath.Base(found) != "config.yaml" {
 		t.Errorf("expected path ending with config.yaml, got %s", found)
 	}
-	if filepath.Base(filepath.Dir(found)) != ".beads" {
+	if filepath.Base(filepath.Dir(found)) != ".bd" {
 		t.Errorf("expected path in .beads dir, got %s", found)
 	}
 }

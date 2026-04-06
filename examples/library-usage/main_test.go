@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/steveyegge/beads"
+	"github.com/steveyegge/bd"
 )
 
 // TestExampleCompiles ensures the example code compiles and basic API works
@@ -138,12 +138,12 @@ func TestFindDatabasePath(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0o755); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0o755); err != nil {
 		t.Fatalf("Failed to create .beads dir: %v", err)
 	}
 
-	dbPath := filepath.Join(beadsDir, "test.db")
+	dbPath := filepath.Join(bdDir, "test.db")
 	f, err := os.Create(dbPath)
 	if err != nil {
 		t.Fatalf("Failed to create db file: %v", err)

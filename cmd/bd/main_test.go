@@ -12,9 +12,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/steveyegge/beads/internal/configfile"
-	"github.com/steveyegge/beads/internal/storage/dolt"
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/configfile"
+	"github.com/steveyegge/bd/internal/storage/dolt"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 // bd-206: Test updating open issue to closed preserves closed_at
@@ -168,13 +168,13 @@ func TestListUsesRepoBeadsDirWhenDoltDataDirEscapesDotBeads(t *testing.T) {
 
 	tmpDir := t.TempDir()
 	repoDir := filepath.Join(tmpDir, "repo")
-	beadsDir := filepath.Join(repoDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0o755); err != nil {
+	bdDir := filepath.Join(repoDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0o755); err != nil {
 		t.Fatalf("mkdir beads dir: %v", err)
 	}
 
 	relativeDoltDir := "../external-dolt"
-	externalDoltDir := filepath.Join(beadsDir, relativeDoltDir)
+	externalDoltDir := filepath.Join(bdDir, relativeDoltDir)
 	if err := os.MkdirAll(filepath.Dir(externalDoltDir), 0o755); err != nil {
 		t.Fatalf("mkdir external dolt parent: %v", err)
 	}
@@ -188,17 +188,17 @@ func TestListUsesRepoBeadsDirWhenDoltDataDirEscapesDotBeads(t *testing.T) {
 		DoltDatabase:   database,
 		DoltDataDir:    relativeDoltDir,
 	}
-	if err := cfg.Save(beadsDir); err != nil {
+	if err := cfg.Save(bdDir); err != nil {
 		t.Fatalf("save metadata: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(beadsDir, "dolt-server.port"), []byte(strconv.Itoa(testDoltServerPort)), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(bdDir, "dolt-server.port"), []byte(strconv.Itoa(testDoltServerPort)), 0o600); err != nil {
 		t.Fatalf("write port file: %v", err)
 	}
 
 	ctx := context.Background()
 	testStore, err := dolt.New(ctx, &dolt.Config{
 		Path:            externalDoltDir,
-		BeadsDir:        beadsDir,
+		BdDir:        bdDir,
 		ServerHost:      "127.0.0.1",
 		ServerPort:      testDoltServerPort,
 		Database:        database,
@@ -234,10 +234,10 @@ func TestListUsesRepoBeadsDirWhenDoltDataDirEscapesDotBeads(t *testing.T) {
 		t.Fatalf("create issue: %v", err)
 	}
 
-	t.Setenv("BEADS_DIR", beadsDir)
-	t.Setenv("BEADS_DB", "")
-	t.Setenv("BEADS_DOLT_SERVER_PORT", "")
-	t.Setenv("BEADS_DOLT_PORT", "")
+	t.Setenv("BD_DIR", bdDir)
+	t.Setenv("BD_DB", "")
+	t.Setenv("BD_DOLT_SERVER_PORT", "")
+	t.Setenv("BD_DOLT_PORT", "")
 
 	binPath := filepath.Join(t.TempDir(), "bd-under-test")
 	packageDir, err := os.Getwd()
@@ -254,11 +254,11 @@ func TestListUsesRepoBeadsDirWhenDoltDataDirEscapesDotBeads(t *testing.T) {
 	listCmd := exec.Command(binPath, "list", "--json")
 	listCmd.Dir = repoDir
 	listCmd.Env = append(os.Environ(),
-		"BEADS_TEST_MODE=1",
-		"BEADS_DIR="+beadsDir,
-		"BEADS_DB=",
-		"BEADS_DOLT_SERVER_PORT=",
-		"BEADS_DOLT_PORT=",
+		"BD_TEST_MODE=1",
+		"BD_DIR="+bdDir,
+		"BD_DB=",
+		"BD_DOLT_SERVER_PORT=",
+		"BD_DOLT_PORT=",
 	)
 	output, err := listCmd.CombinedOutput()
 	if err != nil {

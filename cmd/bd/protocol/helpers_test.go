@@ -25,7 +25,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/steveyegge/beads/internal/testutil"
+	"github.com/steveyegge/bd/internal/testutil"
 )
 
 // ---------------------------------------------------------------------------
@@ -40,7 +40,7 @@ var (
 )
 
 // testDoltPort is set by TestMain when a test Dolt server is available.
-// Passed to bd subprocesses via BEADS_DOLT_PORT so they never hit prod.
+// Passed to bd subprocesses via BD_DOLT_PORT so they never hit prod.
 var testDoltPort int
 
 func TestMain(m *testing.M) {
@@ -48,7 +48,7 @@ func TestMain(m *testing.M) {
 }
 
 func testMainInner(m *testing.M) int {
-	os.Setenv("BEADS_TEST_MODE", "1")
+	os.Setenv("BD_TEST_MODE", "1")
 	if err := testutil.EnsureDoltContainerForTestMain(); err != nil {
 		fmt.Fprintf(os.Stderr, "WARN: %v, skipping Dolt tests\n", err)
 	} else {
@@ -58,8 +58,8 @@ func testMainInner(m *testing.M) int {
 
 	code := m.Run()
 
-	os.Unsetenv("BEADS_DOLT_PORT")
-	os.Unsetenv("BEADS_TEST_MODE")
+	os.Unsetenv("BD_DOLT_PORT")
+	os.Unsetenv("BD_TEST_MODE")
 
 	if bdDir != "" {
 		os.RemoveAll(bdDir)
@@ -190,10 +190,10 @@ func (w *workspace) env() []string {
 		"PATH=" + os.Getenv("PATH"),
 		"HOME=" + w.dir,
 		"GIT_CONFIG_NOSYSTEM=1",
-		"BEADS_TEST_MODE=1",
+		"BD_TEST_MODE=1",
 	}
 	if testDoltPort > 0 {
-		env = append(env, "BEADS_DOLT_PORT="+strconv.Itoa(testDoltPort))
+		env = append(env, "BD_DOLT_PORT="+strconv.Itoa(testDoltPort))
 	}
 	if v := os.Getenv("TMPDIR"); v != "" {
 		env = append(env, "TMPDIR="+v)

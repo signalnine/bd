@@ -1,4 +1,4 @@
-package beads_test
+package bd_test
 
 import (
 	"context"
@@ -11,15 +11,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/steveyegge/beads"
-	"github.com/steveyegge/beads/internal/testutil"
+	"github.com/steveyegge/bd"
+	"github.com/steveyegge/bd/internal/testutil"
 )
 
 // testServerPort is the port of the shared test Dolt server (0 = not running).
 var testServerPort int
 
 func TestMain(m *testing.M) {
-	os.Setenv("BEADS_TEST_MODE", "1")
+	os.Setenv("BD_TEST_MODE", "1")
 	if err := testutil.EnsureDoltContainerForTestMain(); err != nil {
 		fmt.Fprintf(os.Stderr, "WARN: %v, skipping Dolt tests\n", err)
 	} else {
@@ -29,8 +29,8 @@ func TestMain(m *testing.M) {
 
 	code := m.Run()
 
-	os.Unsetenv("BEADS_DOLT_PORT")
-	os.Unsetenv("BEADS_TEST_MODE")
+	os.Unsetenv("BD_DOLT_PORT")
+	os.Unsetenv("BD_TEST_MODE")
 	os.Exit(code)
 }
 
@@ -81,7 +81,7 @@ func TestFindDatabasePath(t *testing.T) {
 
 func TestFindBeadsDir(t *testing.T) {
 	// This will return empty string or a valid path
-	dir := beads.FindBeadsDir()
+	dir := project.FindBdDir()
 	// Just verify it doesn't panic
 	_ = dir
 }
@@ -93,18 +93,18 @@ func TestOpenFromConfig_Embedded(t *testing.T) {
 
 	// Create a .beads dir with metadata.json configured for embedded mode
 	tmpDir := t.TempDir()
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0755); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0755); err != nil {
 		t.Fatalf("failed to create .beads dir: %v", err)
 	}
 
 	metadata := `{"backend":"dolt","database":"dolt","dolt_database":"testdb","dolt_mode":"embedded"}`
-	if err := os.WriteFile(filepath.Join(beadsDir, "metadata.json"), []byte(metadata), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(bdDir, "metadata.json"), []byte(metadata), 0644); err != nil {
 		t.Fatalf("failed to write metadata.json: %v", err)
 	}
 
 	ctx := context.Background()
-	store, err := beads.OpenFromConfig(ctx, beadsDir)
+	store, err := beads.OpenFromConfig(ctx, bdDir)
 	if err != nil {
 		t.Fatalf("OpenFromConfig (embedded) failed: %v", err)
 	}
@@ -122,18 +122,18 @@ func TestOpenFromConfig_DefaultsToEmbedded(t *testing.T) {
 
 	// metadata.json without dolt_mode should default to embedded
 	tmpDir := t.TempDir()
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0755); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0755); err != nil {
 		t.Fatalf("failed to create .beads dir: %v", err)
 	}
 
 	metadata := `{"backend":"dolt","database":"dolt"}`
-	if err := os.WriteFile(filepath.Join(beadsDir, "metadata.json"), []byte(metadata), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(bdDir, "metadata.json"), []byte(metadata), 0644); err != nil {
 		t.Fatalf("failed to write metadata.json: %v", err)
 	}
 
 	ctx := context.Background()
-	store, err := beads.OpenFromConfig(ctx, beadsDir)
+	store, err := beads.OpenFromConfig(ctx, bdDir)
 	if err != nil {
 		t.Fatalf("OpenFromConfig (default) failed: %v", err)
 	}
@@ -146,20 +146,20 @@ func TestOpenFromConfig_DefaultsToEmbedded(t *testing.T) {
 
 func TestOpenFromConfig_ServerModeFailsWithoutServer(t *testing.T) {
 	// Server mode should fail-fast when no server is listening.
-	// Temporarily unset BEADS_DOLT_PORT/BEADS_TEST_MODE so the config port
+	// Temporarily unset BD_DOLT_PORT/BD_TEST_MODE so the config port
 	// isn't overridden by applyConfigDefaults to the test server.
-	if prev := os.Getenv("BEADS_DOLT_PORT"); prev != "" {
-		os.Unsetenv("BEADS_DOLT_PORT")
-		t.Cleanup(func() { os.Setenv("BEADS_DOLT_PORT", prev) })
+	if prev := os.Getenv("BD_DOLT_PORT"); prev != "" {
+		os.Unsetenv("BD_DOLT_PORT")
+		t.Cleanup(func() { os.Setenv("BD_DOLT_PORT", prev) })
 	}
-	if prev := os.Getenv("BEADS_TEST_MODE"); prev != "" {
-		os.Unsetenv("BEADS_TEST_MODE")
-		t.Cleanup(func() { os.Setenv("BEADS_TEST_MODE", prev) })
+	if prev := os.Getenv("BD_TEST_MODE"); prev != "" {
+		os.Unsetenv("BD_TEST_MODE")
+		t.Cleanup(func() { os.Setenv("BD_TEST_MODE", prev) })
 	}
 
 	tmpDir := t.TempDir()
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0755); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0755); err != nil {
 		t.Fatalf("failed to create .beads dir: %v", err)
 	}
 
@@ -172,12 +172,12 @@ func TestOpenFromConfig_ServerModeFailsWithoutServer(t *testing.T) {
 	ln.Close()
 
 	metadata := fmt.Sprintf(`{"backend":"dolt","database":"dolt","dolt_mode":"server","dolt_server_host":"127.0.0.1","dolt_server_port":%d}`, freePort)
-	if err := os.WriteFile(filepath.Join(beadsDir, "metadata.json"), []byte(metadata), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(bdDir, "metadata.json"), []byte(metadata), 0644); err != nil {
 		t.Fatalf("failed to write metadata.json: %v", err)
 	}
 
 	ctx := context.Background()
-	_, openErr := beads.OpenFromConfig(ctx, beadsDir)
+	_, openErr := beads.OpenFromConfig(ctx, bdDir)
 	if openErr == nil {
 		t.Fatal("OpenFromConfig (server mode) should fail when no server is running")
 	}
@@ -191,13 +191,13 @@ func TestOpenFromConfig_NoMetadata(t *testing.T) {
 	skipIfNoDoltServer(t)
 	// Missing metadata.json should use defaults (server mode)
 	tmpDir := t.TempDir()
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0755); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0755); err != nil {
 		t.Fatalf("failed to create .beads dir: %v", err)
 	}
 
 	ctx := context.Background()
-	store, err := beads.OpenFromConfig(ctx, beadsDir)
+	store, err := beads.OpenFromConfig(ctx, bdDir)
 	if err != nil {
 		t.Fatalf("OpenFromConfig (no metadata) failed: %v", err)
 	}

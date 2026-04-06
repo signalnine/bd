@@ -10,8 +10,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/steveyegge/beads/internal/config"
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/config"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 var configCmd = &cobra.Command{
@@ -77,17 +77,17 @@ var configSetCmd = &cobra.Command{
 			return
 		}
 
-		// beads.role is stored in git config, not SQLite (GH#1531).
+		// bd.role is stored in git config, not SQLite (GH#1531).
 		// bd doctor reads it from git config, so we write there for consistency.
-		if key == "beads.role" {
+		if key == "bd.role" {
 			validRoles := map[string]bool{"maintainer": true, "contributor": true}
 			if !validRoles[value] {
 				fmt.Fprintf(os.Stderr, "Error: invalid role %q (valid values: maintainer, contributor)\n", value)
 				os.Exit(1)
 			}
-			cmd := exec.Command("git", "config", "beads.role", value) //nolint:gosec // value is validated against allowlist above
+			cmd := exec.Command("git", "config", "bd.role", value) //nolint:gosec // value is validated against allowlist above
 			if err := cmd.Run(); err != nil {
-				fmt.Fprintf(os.Stderr, "Error setting beads.role in git config: %v\n", err)
+				fmt.Fprintf(os.Stderr, "Error setting bd.role in git config: %v\n", err)
 				os.Exit(1)
 			}
 			if jsonOutput {
@@ -162,9 +162,9 @@ var configGetCmd = &cobra.Command{
 			return
 		}
 
-		// beads.role is stored in git config, not SQLite (GH#1531).
-		if key == "beads.role" {
-			cmd := exec.Command("git", "config", "--get", "beads.role")
+		// bd.role is stored in git config, not SQLite (GH#1531).
+		if key == "bd.role" {
+			cmd := exec.Command("git", "config", "--get", "bd.role")
 			output, err := cmd.Output()
 			value := strings.TrimSpace(string(output))
 			if err != nil {
@@ -340,11 +340,11 @@ var configUnsetCmd = &cobra.Command{
 			return
 		}
 
-		// beads.role is stored in git config, not the database (GH#1531).
-		if key == "beads.role" {
-			gitCmd := exec.Command("git", "config", "--unset", "beads.role")
+		// bd.role is stored in git config, not the database (GH#1531).
+		if key == "bd.role" {
+			gitCmd := exec.Command("git", "config", "--unset", "bd.role")
 			if err := gitCmd.Run(); err != nil {
-				fmt.Fprintf(os.Stderr, "Error unsetting beads.role in git config: %v\n", err)
+				fmt.Fprintf(os.Stderr, "Error unsetting bd.role in git config: %v\n", err)
 				os.Exit(1)
 			}
 			if jsonOutput {
@@ -443,7 +443,7 @@ func validateSyncConfig(repoPath string) []string {
 	var issues []string
 
 	// Load config.yaml directly from the repo path
-	configPath := filepath.Join(repoPath, ".beads", "config.yaml")
+	configPath := filepath.Join(repoPath, ".bd", "config.yaml")
 	v := viper.New()
 	v.SetConfigType("yaml")
 	v.SetConfigFile(configPath)
@@ -489,8 +489,8 @@ func isValidRemoteURL(url string) bool {
 func findBeadsRepoRoot(startPath string) string {
 	path := startPath
 	for {
-		beadsDir := filepath.Join(path, ".beads")
-		if info, err := os.Stat(beadsDir); err == nil && info.IsDir() {
+		bdDir := filepath.Join(path, ".bd")
+		if info, err := os.Stat(bdDir); err == nil && info.IsDir() {
 			return path
 		}
 		parent := filepath.Dir(path)
@@ -531,7 +531,7 @@ Examples:
 
 		// Phase 2: Validate all pairs before writing any
 		for _, p := range pairs {
-			if p.key == "beads.role" {
+			if p.key == "bd.role" {
 				validRoles := map[string]bool{"maintainer": true, "contributor": true}
 				if !validRoles[p.value] {
 					fmt.Fprintf(os.Stderr, "Error: invalid role %q (valid values: maintainer, contributor)\n", p.value)
@@ -551,7 +551,7 @@ Examples:
 		for _, p := range pairs {
 			if config.IsYamlOnlyKey(p.key) {
 				yamlPairs = append(yamlPairs, p)
-			} else if p.key == "beads.role" {
+			} else if p.key == "bd.role" {
 				gitPairs = append(gitPairs, p)
 			} else {
 				dbPairs = append(dbPairs, p)
@@ -568,7 +568,7 @@ Examples:
 
 		// Phase 5: Write git config keys
 		for _, p := range gitPairs {
-			cmd := exec.Command("git", "config", "beads.role", p.value) //nolint:gosec // value is validated against allowlist above
+			cmd := exec.Command("git", "config", "bd.role", p.value) //nolint:gosec // value is validated against allowlist above
 			if err := cmd.Run(); err != nil {
 				fmt.Fprintf(os.Stderr, "Error setting %s in git config: %v\n", p.key, err)
 				os.Exit(1)
@@ -598,7 +598,7 @@ Examples:
 				location := "database"
 				if config.IsYamlOnlyKey(p.key) {
 					location = "config.yaml"
-				} else if p.key == "beads.role" {
+				} else if p.key == "bd.role" {
 					location = "git config"
 				}
 				results = append(results, map[string]string{
@@ -613,7 +613,7 @@ Examples:
 				location := ""
 				if config.IsYamlOnlyKey(p.key) {
 					location = " (in config.yaml)"
-				} else if p.key == "beads.role" {
+				} else if p.key == "bd.role" {
 					location = " (in git config)"
 				}
 				fmt.Printf("Set %s = %s%s\n", p.key, p.value, location)

@@ -145,7 +145,7 @@ func (r *SubprocessRunner) Build(t *testing.T) string {
 }
 
 // Spawn starts a subprocess running the given test helper function.
-// The sentinel env var (e.g., BEADS_SCHEMA_INIT_HELPER=1) triggers the helper.
+// The sentinel env var (e.g., BD_SCHEMA_INIT_HELPER=1) triggers the helper.
 // Extra env vars are merged with the filtered base environment.
 // Uses process groups for reliable cleanup.
 func (r *SubprocessRunner) Spawn(ctx context.Context, t *testing.T, helperTest string, env map[string]string) *exec.Cmd {
@@ -188,7 +188,7 @@ var safeEnvKeys = []string{
 	"PKG_CONFIG_PATH=",
 	"LD_LIBRARY_PATH=",
 	"DYLD_LIBRARY_PATH=",
-	"BEADS_", // All BEADS_ test control vars.
+	"BD_", // All BD_ test control vars.
 	"DOLT_",  // Dolt configuration.
 	"TZ=",
 	"LC_",
@@ -212,13 +212,13 @@ func FilterEnv(environ []string) []string {
 }
 
 // RequireDolt skips the test if the dolt binary is not available on PATH
-// or if BEADS_TEST_SKIP contains "dolt".
+// or if BD_TEST_SKIP contains "dolt".
 func RequireDolt(t *testing.T) string {
 	t.Helper()
-	if skip := os.Getenv("BEADS_TEST_SKIP"); skip != "" {
+	if skip := os.Getenv("BD_TEST_SKIP"); skip != "" {
 		for _, s := range strings.Split(skip, ",") {
 			if strings.TrimSpace(s) == "dolt" {
-				t.Skip("skipping: Dolt tests skipped (BEADS_TEST_SKIP=dolt)")
+				t.Skip("skipping: Dolt tests skipped (BD_TEST_SKIP=dolt)")
 			}
 		}
 	}

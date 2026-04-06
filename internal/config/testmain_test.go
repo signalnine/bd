@@ -7,11 +7,11 @@ import (
 	"testing"
 )
 
-// TestMain isolates tests from the repository's own `.beads/config.yaml`.
+// TestMain isolates tests from the repository's own `.bd/config.yaml`.
 //
 // Tests expect config defaults. If the test process
 // runs from within this repo, Initialize() will walk up from CWD and load
-// the repo's tracked `.beads/config.yaml`, which may override defaults.
+// the repo's tracked `.bd/config.yaml`, which may override defaults.
 func TestMain(m *testing.M) {
 	tmp, err := os.MkdirTemp("", "beads-config-tests-*")
 	if err != nil {

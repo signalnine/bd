@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 func TestNewRunner(t *testing.T) {
@@ -30,7 +30,7 @@ func TestNewRunnerFromWorkspace(t *testing.T) {
 	if runner == nil {
 		t.Fatal("NewRunnerFromWorkspace returned nil")
 	}
-	expected := filepath.Join("/workspace", ".beads", "hooks")
+	expected := filepath.Join("/workspace", ".bd", "hooks")
 	if runner.hooksDir != expected {
 		t.Errorf("hooksDir = %q, want %q", runner.hooksDir, expected)
 	}

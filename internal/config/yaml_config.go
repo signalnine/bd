@@ -64,7 +64,7 @@ var YamlOnlyKeys = map[string]bool{
 
 	// Dolt server settings
 	"dolt.idle-timeout":  true, // Idle auto-stop timeout (default "30m", "0" disables)
-	"dolt.shared-server": true, // Shared Dolt server at ~/.beads/shared-server/ (GH#2377)
+	"dolt.shared-server": true, // Shared Dolt server at ~/.bd/shared-server/ (GH#2377)
 }
 
 // IsYamlOnlyKey returns true if the given key should be stored in config.yaml
@@ -172,22 +172,22 @@ func UnsetYamlConfig(key string) error {
 	return nil
 }
 
-// findProjectConfigYaml finds the project's .beads/config.yaml file.
+// findProjectConfigYaml finds the project's .bd/config.yaml file.
 func findProjectConfigYaml() (string, error) {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return "", fmt.Errorf("failed to get working directory: %w", err)
 	}
 
-	// Walk up parent directories to find .beads/config.yaml
+	// Walk up parent directories to find .bd/config.yaml
 	for dir := cwd; dir != filepath.Dir(dir); dir = filepath.Dir(dir) {
-		configPath := filepath.Join(dir, ".beads", "config.yaml")
+		configPath := filepath.Join(dir, ".bd", "config.yaml")
 		if _, err := os.Stat(configPath); err == nil {
 			return configPath, nil
 		}
 	}
 
-	return "", fmt.Errorf("no .beads/config.yaml found (run 'bd init' first)")
+	return "", fmt.Errorf("no .bd/config.yaml found (run 'bd init' first)")
 }
 
 // updateYamlKey updates a key in yaml content, handling commented-out keys.

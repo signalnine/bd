@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/beads/internal/storage/doltutil"
+	"github.com/steveyegge/bd/internal/storage/doltutil"
 	"golang.org/x/term"
 )
 
@@ -71,7 +71,7 @@ func printDivergedHistoryGuidance(_ string) {
 	fmt.Fprintln(os.Stderr, "       bd dolt push --force       # force-push local history to remote")
 	fmt.Fprintln(os.Stderr, "")
 	fmt.Fprintln(os.Stderr, "  3. Manual recovery (re-initialize local database):")
-	fmt.Fprintln(os.Stderr, "       rm -rf .beads/embeddeddolt # delete local Dolt database")
+	fmt.Fprintln(os.Stderr, "       rm -rf .bd/embeddeddolt # delete local Dolt database")
 	fmt.Fprintln(os.Stderr, "       bd bootstrap              # re-clone from remote")
 	fmt.Fprintln(os.Stderr, "")
 	fmt.Fprintln(os.Stderr, "Tip: This usually happens when multiple agents independently initialize")
@@ -406,12 +406,12 @@ func init() {
 }
 
 func selectedDoltBeadsDir() string {
-	beadsDir := selectedNoDBBeadsDir()
-	if beadsDir == "" {
+	bdDir := selectedNoDBBeadsDir()
+	if bdDir == "" {
 		return ""
 	}
-	prepareSelectedNoDBContext(beadsDir)
-	return beadsDir
+	prepareSelectedNoDBContext(bdDir)
+	return bdDir
 }
 
 // extractSSHHost extracts the hostname from an SSH URL for connectivity testing.

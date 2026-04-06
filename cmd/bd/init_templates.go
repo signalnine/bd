@@ -10,8 +10,8 @@ import (
 
 // createConfigYaml creates the config.yaml template in the specified directory
 // In --no-db mode, the prefix is saved here since there's no database to store it.
-func createConfigYaml(beadsDir string, noDbMode bool, prefix string) error {
-	configYamlPath := filepath.Join(beadsDir, "config.yaml")
+func createConfigYaml(bdDir string, noDbMode bool, prefix string) error {
+	configYamlPath := filepath.Join(bdDir, "config.yaml")
 
 	// Skip if already exists
 	if _, err := os.Stat(configYamlPath); err == nil {
@@ -40,7 +40,7 @@ func createConfigYaml(beadsDir string, noDbMode bool, prefix string) error {
 %s
 
 # Use no-db mode: JSONL-only, no Dolt database
-# When true, bd will use .beads/issues.jsonl as the source of truth
+# When true, bd will use .bd/issues.jsonl as the source of truth
 %s
 
 # Enable JSON output by default
@@ -51,10 +51,10 @@ func createConfigYaml(beadsDir string, noDbMode bool, prefix string) error {
 # output:
 #   title-length: 255
 
-# Default actor for audit trails (overridden by BEADS_ACTOR or --actor)
+# Default actor for audit trails (overridden by BD_ACTOR or --actor)
 # actor: ""
 
-# Export events (audit trail) to .beads/events.jsonl on each flush/sync
+# Export events (audit trail) to .bd/events.jsonl on each flush/sync
 # When enabled, new events are appended incrementally using a high-water mark.
 # Use 'bd export --events' to trigger manually regardless of this setting.
 # events-export: false
@@ -93,8 +93,8 @@ func createConfigYaml(beadsDir string, noDbMode bool, prefix string) error {
 }
 
 // createReadme creates the README.md file in the .beads directory
-func createReadme(beadsDir string) error {
-	readmePath := filepath.Join(beadsDir, "README.md")
+func createReadme(bdDir string) error {
+	readmePath := filepath.Join(bdDir, "README.md")
 
 	// Skip if already exists
 	if _, err := os.Stat(readmePath); err == nil {
@@ -109,7 +109,7 @@ Welcome to Beads! This repository uses **Beads** for issue tracking - a modern, 
 
 Beads is issue tracking that lives in your repo, making it perfect for AI coding agents and developers who want their issues close to their code. No web UI required - everything works through the CLI and integrates seamlessly with git.
 
-**Learn more:** [github.com/steveyegge/beads](https://github.com/steveyegge/beads)
+**Learn more:** [github.com/steveyegge/bd](https://github.com/steveyegge/bd)
 
 ## Quick Start
 
@@ -175,9 +175,9 @@ bd create "Try out Beads"
 
 ## Learn More
 
-- **Documentation**: [github.com/steveyegge/beads/docs](https://github.com/steveyegge/beads/tree/main/docs)
+- **Documentation**: [github.com/steveyegge/bd/docs](https://github.com/steveyegge/bd/tree/main/docs)
 - **Quick Start Guide**: Run ` + "`bd quickstart`" + `
-- **Examples**: [github.com/steveyegge/beads/examples](https://github.com/steveyegge/beads/tree/main/examples)
+- **Examples**: [github.com/steveyegge/bd/examples](https://github.com/steveyegge/bd/tree/main/examples)
 
 ---
 

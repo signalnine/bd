@@ -27,8 +27,8 @@ func bdBootstrap(t *testing.T, bd, dir string, args ...string) string {
 }
 
 func TestEmbeddedBootstrap(t *testing.T) {
-	if os.Getenv("BEADS_TEST_EMBEDDED_DOLT") != "1" {
-		t.Skip("set BEADS_TEST_EMBEDDED_DOLT=1 to run embedded dolt integration tests")
+	if os.Getenv("BD_TEST_EMBEDDED_DOLT") != "1" {
+		t.Skip("set BD_TEST_EMBEDDED_DOLT=1 to run embedded dolt integration tests")
 	}
 	t.Parallel()
 
@@ -57,10 +57,10 @@ func TestEmbeddedBootstrap(t *testing.T) {
 		cmd = exec.Command("git", "config", "user.email", "test@test.com")
 		cmd.Dir = dir
 		cmd.CombinedOutput()
-		// Create .beads with metadata.json so FindBeadsDir detects it
-		beadsDir := filepath.Join(dir, ".beads")
-		os.MkdirAll(beadsDir, 0o750)
-		os.WriteFile(filepath.Join(beadsDir, "metadata.json"), []byte("{}"), 0o644)
+		// Create .beads with metadata.json so FindBdDir detects it
+		bdDir := filepath.Join(dir, ".bd")
+		os.MkdirAll(bdDir, 0o750)
+		os.WriteFile(filepath.Join(bdDir, "metadata.json"), []byte("{}"), 0o644)
 
 		out := bdBootstrap(t, bd, dir, "--dry-run")
 		if !strings.Contains(out, "create fresh") && !strings.Contains(out, "init") {
@@ -81,9 +81,9 @@ func TestEmbeddedBootstrap(t *testing.T) {
 		cmd = exec.Command("git", "config", "user.email", "test@test.com")
 		cmd.Dir = dir
 		cmd.CombinedOutput()
-		beadsDir := filepath.Join(dir, ".beads")
-		os.MkdirAll(beadsDir, 0o750)
-		os.WriteFile(filepath.Join(beadsDir, "metadata.json"), []byte("{}"), 0o644)
+		bdDir := filepath.Join(dir, ".bd")
+		os.MkdirAll(bdDir, 0o750)
+		os.WriteFile(filepath.Join(bdDir, "metadata.json"), []byte("{}"), 0o644)
 
 		bcmd := exec.Command(bd, "bootstrap")
 		bcmd.Dir = dir
@@ -104,7 +104,7 @@ func TestEmbeddedBootstrap(t *testing.T) {
 		// First create a db and export
 		srcDir, _, _ := bdInit(t, bd, "--prefix", "bs")
 		bdCreate(t, bd, srcDir, "Export for bootstrap", "--type", "task")
-		cmd := exec.Command(bd, "export", "-o", filepath.Join(srcDir, ".beads", "issues.jsonl"))
+		cmd := exec.Command(bd, "export", "-o", filepath.Join(srcDir, ".bd", "issues.jsonl"))
 		cmd.Dir = srcDir
 		cmd.Env = bdEnv(srcDir)
 		if out, err := cmd.CombinedOutput(); err != nil {
@@ -122,13 +122,13 @@ func TestEmbeddedBootstrap(t *testing.T) {
 		gitCmd = exec.Command("git", "config", "user.email", "test@test.com")
 		gitCmd.Dir = dir
 		gitCmd.CombinedOutput()
-		destBeads := filepath.Join(dir, ".beads")
+		destBeads := filepath.Join(dir, ".bd")
 		os.MkdirAll(destBeads, 0o750)
 		os.WriteFile(filepath.Join(destBeads, "metadata.json"), []byte("{}"), 0o644)
 
 		// Copy the JSONL file
-		data, _ := os.ReadFile(filepath.Join(srcDir, ".beads", "issues.jsonl"))
-		os.WriteFile(filepath.Join(dir, ".beads", "issues.jsonl"), data, 0o644)
+		data, _ := os.ReadFile(filepath.Join(srcDir, ".bd", "issues.jsonl"))
+		os.WriteFile(filepath.Join(dir, ".bd", "issues.jsonl"), data, 0o644)
 
 		// Bootstrap should detect and import JSONL
 		bcmd := exec.Command(bd, "bootstrap")
@@ -147,8 +147,8 @@ func TestEmbeddedBootstrap(t *testing.T) {
 
 // TestEmbeddedBootstrapConcurrent exercises bootstrap --dry-run concurrently.
 func TestEmbeddedBootstrapConcurrent(t *testing.T) {
-	if os.Getenv("BEADS_TEST_EMBEDDED_DOLT") != "1" {
-		t.Skip("set BEADS_TEST_EMBEDDED_DOLT=1 to run embedded dolt integration tests")
+	if os.Getenv("BD_TEST_EMBEDDED_DOLT") != "1" {
+		t.Skip("set BD_TEST_EMBEDDED_DOLT=1 to run embedded dolt integration tests")
 	}
 	t.Parallel()
 

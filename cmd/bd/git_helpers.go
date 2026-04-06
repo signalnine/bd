@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/steveyegge/beads/internal/beads"
+	"github.com/steveyegge/bd/internal/project"
 )
 
 // isGitRepo checks if the current working directory is in a git repository.
@@ -69,7 +69,7 @@ func gitURLToDoltRemote(url string) string {
 
 // gitHasUpstream checks if the current branch has an upstream configured.
 func gitHasUpstream() bool {
-	rc, err := beads.GetRepoContext()
+	rc, err := project.GetRepoContext()
 	if err != nil {
 		return false
 	}
@@ -85,7 +85,7 @@ func gitHasUpstream() bool {
 
 // gitHasAnyRemotes returns true if the git repository has any remotes configured.
 func gitHasAnyRemotes() bool {
-	rc, err := beads.GetRepoContext()
+	rc, err := project.GetRepoContext()
 	if err != nil {
 		return false
 	}
@@ -100,7 +100,7 @@ func gitHasAnyRemotes() bool {
 
 // gitBranchHasUpstream checks if a specific branch has an upstream configured.
 func gitBranchHasUpstream(branch string) bool {
-	rc, err := beads.GetRepoContext()
+	rc, err := project.GetRepoContext()
 	if err != nil {
 		return false
 	}

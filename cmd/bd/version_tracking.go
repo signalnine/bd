@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/steveyegge/beads/internal/beads"
-	"github.com/steveyegge/beads/internal/configfile"
-	"github.com/steveyegge/beads/internal/debug"
+	"github.com/steveyegge/bd/internal/project"
+	"github.com/steveyegge/bd/internal/configfile"
+	"github.com/steveyegge/bd/internal/debug"
 )
 
 // localVersionFile is the gitignored file that stores the last bd version used locally.
@@ -22,14 +22,14 @@ const localVersionFile = ".local_version"
 // Sets global variables versionUpgradeDetected and previousVersion if upgrade detected.
 func trackBdVersion() {
 	// Find the beads directory
-	beadsDir := beads.FindBeadsDir()
-	if beadsDir == "" {
+	bdDir := project.FindBdDir()
+	if bdDir == "" {
 		// No .beads directory found - this is fine (e.g., bd init, bd version, etc.)
 		return
 	}
 
 	// Read last version from local (gitignored) file
-	localVersionPath := filepath.Join(beadsDir, localVersionFile)
+	localVersionPath := filepath.Join(bdDir, localVersionFile)
 	lastVersion := readLocalVersion(localVersionPath)
 
 	// Check if version changed (only flag actual upgrades, not downgrades)
@@ -52,7 +52,7 @@ func trackBdVersion() {
 // readLocalVersion reads the last bd version from the local version file.
 // Returns empty string if file doesn't exist or can't be read.
 func readLocalVersion(path string) string {
-	// #nosec G304 - path is constructed from beadsDir + constant
+	// #nosec G304 - path is constructed from bdDir + constant
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return ""
@@ -138,21 +138,21 @@ func maybeShowUpgradeNotification() {
 //
 // IMPORTANT: This must be called BEFORE opening the database to avoid opening DB twice.
 //
-// beadsDir is the path to the .beads directory.
-func autoMigrateOnVersionBump(beadsDir string) {
+// bdDir is the path to the .beads directory.
+func autoMigrateOnVersionBump(bdDir string) {
 	// Only migrate if version upgrade was detected
 	if !versionUpgradeDetected {
 		return
 	}
 
-	// Validate beadsDir
-	if beadsDir == "" {
+	// Validate bdDir
+	if bdDir == "" {
 		debug.Logf("auto-migrate: skipping migration, no beads directory")
 		return
 	}
 
 	// Load config to determine the correct database path for this backend
-	cfg, err := configfile.Load(beadsDir)
+	cfg, err := configfile.Load(bdDir)
 	if err != nil {
 		debug.Logf("auto-migrate: failed to load config: %v", err)
 		return
@@ -162,7 +162,7 @@ func autoMigrateOnVersionBump(beadsDir string) {
 	}
 
 	// Check if database exists at the backend-appropriate path
-	dbPath := cfg.DatabasePath(beadsDir)
+	dbPath := cfg.DatabasePath(bdDir)
 	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
 		// No database - nothing to migrate
 		debug.Logf("auto-migrate: skipping migration, database does not exist: %s", dbPath)
@@ -176,7 +176,7 @@ func autoMigrateOnVersionBump(beadsDir string) {
 		ctx = context.Background()
 	}
 
-	store, err := newDoltStoreFromConfig(ctx, beadsDir)
+	store, err := newDoltStoreFromConfig(ctx, bdDir)
 	if err != nil {
 		// Failed to open database - skip migration
 		debug.Logf("auto-migrate: failed to open database: %v", err)

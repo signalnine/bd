@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/beads/internal/beads"
-	"github.com/steveyegge/beads/internal/git"
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/project"
+	"github.com/steveyegge/bd/internal/git"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 func TestIssueIDCompletion(t *testing.T) {
@@ -241,10 +241,10 @@ func TestCompleteCommandWorksWithoutDatabase(t *testing.T) {
 	dbPath = ""
 
 	// Reset caches so FindDatabasePath won't use stale git worktree info
-	beads.ResetCaches()
+	project.ResetCaches()
 	git.ResetCaches()
 	defer func() {
-		beads.ResetCaches()
+		project.ResetCaches()
 		git.ResetCaches()
 	}()
 

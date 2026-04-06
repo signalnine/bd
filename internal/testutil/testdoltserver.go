@@ -49,7 +49,7 @@ const (
 	doltNoDocker     doltReadiness = iota // Docker daemon not reachable
 	doltNoImage                           // no Dolt image at all
 	doltWrongVersion                      // image exists but wrong tag
-	doltSkipped                           // explicit opt-out via BEADS_TEST_SKIP
+	doltSkipped                           // explicit opt-out via BD_TEST_SKIP
 	doltReady                             // ready to start containers
 )
 
@@ -62,7 +62,7 @@ func (d doltReadiness) String() string {
 	case doltWrongVersion:
 		return fmt.Sprintf("Docker image %s cached but wrong version (run 'docker pull %s')", doltDockerRepo, DoltDockerImage)
 	case doltSkipped:
-		return "Dolt tests skipped (BEADS_TEST_SKIP=dolt)"
+		return "Dolt tests skipped (BD_TEST_SKIP=dolt)"
 	case doltReady:
 		return "Dolt ready"
 	default:
@@ -79,10 +79,10 @@ func isDockerAvailable() bool {
 	return dockerAvail
 }
 
-// hasTestSkip returns true if the given service appears in the BEADS_TEST_SKIP
-// env var (comma-separated list). Example: BEADS_TEST_SKIP=dolt,slow
+// hasTestSkip returns true if the given service appears in the BD_TEST_SKIP
+// env var (comma-separated list). Example: BD_TEST_SKIP=dolt,slow
 func hasTestSkip(service string) bool {
-	val := os.Getenv("BEADS_TEST_SKIP")
+	val := os.Getenv("BD_TEST_SKIP")
 	if val == "" {
 		return false
 	}
@@ -209,17 +209,17 @@ func StartIsolatedDoltContainer(t *testing.T) string {
 	}
 
 	portStr := port.Port()
-	t.Setenv("BEADS_DOLT_PORT", portStr)
+	t.Setenv("BD_DOLT_PORT", portStr)
 	return portStr
 }
 
-// ensureSharedContainer starts the singleton container and sets BEADS_DOLT_PORT.
+// ensureSharedContainer starts the singleton container and sets BD_DOLT_PORT.
 func ensureSharedContainer() {
 	doltServerOnce.Do(func() {
 		doltServerErr = startDoltContainer()
 		if doltServerErr == nil && doltTestPort != "" {
-			if err := os.Setenv("BEADS_DOLT_PORT", doltTestPort); err != nil {
-				doltServerErr = fmt.Errorf("set BEADS_DOLT_PORT: %w", err)
+			if err := os.Setenv("BD_DOLT_PORT", doltTestPort); err != nil {
+				doltServerErr = fmt.Errorf("set BD_DOLT_PORT: %w", err)
 			}
 		}
 	})
@@ -227,7 +227,7 @@ func ensureSharedContainer() {
 
 // EnsureDoltContainerForTestMain starts a shared Dolt container for use in
 // TestMain functions. Call TerminateDoltContainer() after m.Run() to clean up.
-// Sets BEADS_DOLT_PORT process-wide.
+// Sets BD_DOLT_PORT process-wide.
 func EnsureDoltContainerForTestMain() error {
 	if state := checkDolt(); state != doltReady {
 		return fmt.Errorf("%s", state)

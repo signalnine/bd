@@ -15,9 +15,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/steveyegge/beads/internal/storage"
-	"github.com/steveyegge/beads/internal/storage/issueops"
-	"github.com/steveyegge/beads/internal/storage/versioncontrolops"
+	"github.com/steveyegge/bd/internal/storage"
+	"github.com/steveyegge/bd/internal/storage/issueops"
+	"github.com/steveyegge/bd/internal/storage/versioncontrolops"
 )
 
 // credentialKeyFile is the filename for the random encryption key.
@@ -28,14 +28,14 @@ func (s *EmbeddedDoltStore) ensureCredentialKey() error {
 	if s.credentialKey != nil {
 		return nil
 	}
-	if s.beadsDir == "" {
+	if s.bdDir == "" {
 		return fmt.Errorf("beads directory not set; credential encryption unavailable")
 	}
 
-	keyPath := filepath.Join(s.beadsDir, credentialKeyFile)
+	keyPath := filepath.Join(s.bdDir, credentialKeyFile)
 
 	// Try to load existing key.
-	key, err := os.ReadFile(keyPath) //nolint:gosec // G304: keyPath derived from trusted beadsDir
+	key, err := os.ReadFile(keyPath) //nolint:gosec // G304: keyPath derived from trusted bdDir
 	if err == nil && len(key) == 32 {
 		s.credentialKey = key
 		return nil

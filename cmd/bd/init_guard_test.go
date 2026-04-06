@@ -32,7 +32,7 @@ func TestInitGuardServerMessage(t *testing.T) {
 				"bd dolt status",
 				"bd bootstrap",
 				"set sync.git-remote",
-				".beads/config.yaml",
+				".bd/config.yaml",
 				"Aborting",
 				"--force destroys ALL existing issues",
 			},
@@ -153,8 +153,8 @@ func TestInitGuard_FreshCloneWithMetadataJSON(t *testing.T) {
 		defer func() { serverMode = oldServerMode }()
 
 		tmpDir := t.TempDir()
-		beadsDir := filepath.Join(tmpDir, ".beads")
-		if err := os.MkdirAll(beadsDir, 0755); err != nil {
+		bdDir := filepath.Join(tmpDir, ".bd")
+		if err := os.MkdirAll(bdDir, 0755); err != nil {
 			t.Fatal(err)
 		}
 
@@ -167,14 +167,14 @@ func TestInitGuard_FreshCloneWithMetadataJSON(t *testing.T) {
 			"dolt_database": "myproject",
 		}
 		data, _ := json.Marshal(metadata)
-		metadataPath := filepath.Join(beadsDir, "metadata.json")
+		metadataPath := filepath.Join(bdDir, "metadata.json")
 		if err := os.WriteFile(metadataPath, data, 0644); err != nil {
 			t.Fatal(err)
 		}
 
 		// No dolt/ directory — simulates fresh clone with gitignored dolt/.
 		// No server running — simulates machine B with no local server.
-		err := checkExistingBeadsDataAt(beadsDir, "myproject")
+		err := checkExistingBeadsDataAt(bdDir, "myproject")
 		if err != nil {
 			t.Errorf("fresh clone with metadata.json should allow init, got: %v", err)
 		}
@@ -187,8 +187,8 @@ func TestInitGuard_FreshCloneWithMetadataJSON(t *testing.T) {
 		defer func() { serverMode = oldServerMode }()
 
 		tmpDir := t.TempDir()
-		beadsDir := filepath.Join(tmpDir, ".beads")
-		if err := os.MkdirAll(beadsDir, 0755); err != nil {
+		bdDir := filepath.Join(tmpDir, ".bd")
+		if err := os.MkdirAll(bdDir, 0755); err != nil {
 			t.Fatal(err)
 		}
 
@@ -200,17 +200,17 @@ func TestInitGuard_FreshCloneWithMetadataJSON(t *testing.T) {
 			"dolt_database": "myproject",
 		}
 		data, _ := json.Marshal(metadata)
-		if err := os.WriteFile(filepath.Join(beadsDir, "metadata.json"), data, 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(bdDir, "metadata.json"), data, 0644); err != nil {
 			t.Fatal(err)
 		}
 
 		// Create dolt/ directory — this is NOT a fresh clone
-		doltDir := filepath.Join(beadsDir, "dolt")
+		doltDir := filepath.Join(bdDir, "dolt")
 		if err := os.MkdirAll(doltDir, 0755); err != nil {
 			t.Fatal(err)
 		}
 
-		err := checkExistingBeadsDataAt(beadsDir, "myproject")
+		err := checkExistingBeadsDataAt(bdDir, "myproject")
 		if err == nil {
 			t.Error("existing dolt directory should block init")
 		}
@@ -222,8 +222,8 @@ func TestInitGuard_FreshCloneWithMetadataJSON(t *testing.T) {
 	t.Run("embedded_mode_no_embeddeddolt_dir_allows_init", func(t *testing.T) {
 		// Embedded mode is the default — no need to set serverMode
 		tmpDir := t.TempDir()
-		beadsDir := filepath.Join(tmpDir, ".beads")
-		if err := os.MkdirAll(beadsDir, 0755); err != nil {
+		bdDir := filepath.Join(tmpDir, ".bd")
+		if err := os.MkdirAll(bdDir, 0755); err != nil {
 			t.Fatal(err)
 		}
 
@@ -234,12 +234,12 @@ func TestInitGuard_FreshCloneWithMetadataJSON(t *testing.T) {
 			"dolt_mode": "embedded",
 		}
 		data, _ := json.Marshal(metadata)
-		if err := os.WriteFile(filepath.Join(beadsDir, "metadata.json"), data, 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(bdDir, "metadata.json"), data, 0644); err != nil {
 			t.Fatal(err)
 		}
 
 		// No embeddeddolt/ directory — simulates fresh clone
-		err := checkExistingBeadsDataAt(beadsDir, "test")
+		err := checkExistingBeadsDataAt(bdDir, "test")
 		if err != nil {
 			t.Errorf("fresh clone with embedded metadata should allow init, got: %v", err)
 		}
@@ -248,8 +248,8 @@ func TestInitGuard_FreshCloneWithMetadataJSON(t *testing.T) {
 	t.Run("embedded_mode_with_existing_db_blocks_init", func(t *testing.T) {
 		// Embedded mode is the default — no need to set serverMode
 		tmpDir := t.TempDir()
-		beadsDir := filepath.Join(tmpDir, ".beads")
-		if err := os.MkdirAll(beadsDir, 0755); err != nil {
+		bdDir := filepath.Join(tmpDir, ".bd")
+		if err := os.MkdirAll(bdDir, 0755); err != nil {
 			t.Fatal(err)
 		}
 
@@ -260,17 +260,17 @@ func TestInitGuard_FreshCloneWithMetadataJSON(t *testing.T) {
 			"dolt_mode": "embedded",
 		}
 		data, _ := json.Marshal(metadata)
-		if err := os.WriteFile(filepath.Join(beadsDir, "metadata.json"), data, 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(bdDir, "metadata.json"), data, 0644); err != nil {
 			t.Fatal(err)
 		}
 
 		// Create embeddeddolt/<db>/.dolt/ to simulate an existing embedded database
-		dbDir := filepath.Join(beadsDir, "embeddeddolt", "beads", ".dolt")
+		dbDir := filepath.Join(bdDir, "embeddeddolt", "beads", ".dolt")
 		if err := os.MkdirAll(dbDir, 0755); err != nil {
 			t.Fatal(err)
 		}
 
-		err := checkExistingBeadsDataAt(beadsDir, "test")
+		err := checkExistingBeadsDataAt(bdDir, "test")
 		if err == nil {
 			t.Error("existing embedded database should block init")
 		}
@@ -281,13 +281,13 @@ func TestInitGuard_FreshCloneWithMetadataJSON(t *testing.T) {
 
 	t.Run("no_metadata_json_allows_init", func(t *testing.T) {
 		tmpDir := t.TempDir()
-		beadsDir := filepath.Join(tmpDir, ".beads")
-		if err := os.MkdirAll(beadsDir, 0755); err != nil {
+		bdDir := filepath.Join(tmpDir, ".bd")
+		if err := os.MkdirAll(bdDir, 0755); err != nil {
 			t.Fatal(err)
 		}
 
 		// No metadata.json, no dolt/ — fresh project, never initialized
-		err := checkExistingBeadsDataAt(beadsDir, "test")
+		err := checkExistingBeadsDataAt(bdDir, "test")
 		if err != nil {
 			t.Errorf("empty beads dir should allow init, got: %v", err)
 		}

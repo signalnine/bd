@@ -3,7 +3,7 @@ package validation
 import (
 	"testing"
 
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 func TestExists(t *testing.T) {

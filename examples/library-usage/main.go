@@ -10,13 +10,13 @@ import (
 	"log"
 	"time"
 
-	"github.com/steveyegge/beads"
+	"github.com/steveyegge/bd"
 )
 
 func main() {
 	ctx := context.Background()
 
-	// Find the Beads database (looks for .beads/*.db in current/parent dirs)
+	// Find the Beads database (looks for .bd/*.db in current/parent dirs)
 	dbPath := beads.FindDatabasePath()
 	if dbPath == "" {
 		log.Fatal("No Beads database found. Run 'bd init' first.")

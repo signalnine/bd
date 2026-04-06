@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/steveyegge/beads/internal/git"
+	"github.com/steveyegge/bd/internal/git"
 )
 
 func TestDetectExistingHooks(t *testing.T) {
@@ -200,8 +200,8 @@ func TestGenerateHookSection_Timeout(t *testing.T) {
 	section := generateHookSection("pre-push")
 
 	// Must use shell timeout command with configurable duration
-	if !strings.Contains(section, "BEADS_HOOK_TIMEOUT") {
-		t.Error("section missing BEADS_HOOK_TIMEOUT env var")
+	if !strings.Contains(section, "BD_HOOK_TIMEOUT") {
+		t.Error("section missing BD_HOOK_TIMEOUT env var")
 	}
 	if !strings.Contains(section, fmt.Sprintf("%d", hookTimeoutSeconds)) {
 		t.Errorf("section missing default timeout %d", hookTimeoutSeconds)
@@ -693,10 +693,10 @@ func TestUninstallHooksRemovesEmptyFile(t *testing.T) {
 func TestConfigureBeadsHooksPath_AbsolutePath(t *testing.T) {
 	tmpDir := newGitRepo(t)
 	runInDir(t, tmpDir, func() {
-		// Create .beads/hooks/ directory
-		beadsHooksDir := filepath.Join(tmpDir, ".beads", "hooks")
+		// Create .bd/hooks/ directory
+		beadsHooksDir := filepath.Join(tmpDir, ".bd", "hooks")
 		if err := os.MkdirAll(beadsHooksDir, 0750); err != nil {
-			t.Fatalf("Failed to create .beads/hooks/: %v", err)
+			t.Fatalf("Failed to create .bd/hooks/: %v", err)
 		}
 
 		if err := configureBeadsHooksPath(); err != nil {
@@ -715,9 +715,9 @@ func TestConfigureBeadsHooksPath_AbsolutePath(t *testing.T) {
 			t.Errorf("core.hooksPath should be absolute, got %q", hooksPath)
 		}
 
-		// Must point to .beads/hooks
-		if !strings.HasSuffix(hooksPath, filepath.Join(".beads", "hooks")) {
-			t.Errorf("core.hooksPath should end with .beads/hooks, got %q", hooksPath)
+		// Must point to .bd/hooks
+		if !strings.HasSuffix(hooksPath, filepath.Join(".bd", "hooks")) {
+			t.Errorf("core.hooksPath should end with .bd/hooks, got %q", hooksPath)
 		}
 	})
 }
@@ -727,12 +727,12 @@ func TestConfigureBeadsHooksPath_AbsolutePath(t *testing.T) {
 func TestInstallHooksBeads_WorktreeAccess(t *testing.T) {
 	tmpDir := newGitRepo(t)
 	runInDir(t, tmpDir, func() {
-		// Create .beads/ directory with metadata.json (needed for FindBeadsDir)
-		beadsDir := filepath.Join(tmpDir, ".beads")
-		if err := os.MkdirAll(beadsDir, 0750); err != nil {
-			t.Fatalf("Failed to create .beads/: %v", err)
+		// Create .bd/ directory with metadata.json (needed for FindBdDir)
+		bdDir := filepath.Join(tmpDir, ".bd")
+		if err := os.MkdirAll(bdDir, 0750); err != nil {
+			t.Fatalf("Failed to create .bd/: %v", err)
 		}
-		if err := os.WriteFile(filepath.Join(beadsDir, "metadata.json"), []byte(`{}`), 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(bdDir, "metadata.json"), []byte(`{}`), 0644); err != nil {
 			t.Fatalf("Failed to create metadata.json: %v", err)
 		}
 
@@ -741,9 +741,9 @@ func TestInstallHooksBeads_WorktreeAccess(t *testing.T) {
 			t.Fatalf("installHooksWithOptions(beads=true) failed: %v", err)
 		}
 
-		// Verify hooks exist in .beads/hooks/
+		// Verify hooks exist in .bd/hooks/
 		for _, hookName := range managedHookNames {
-			hookPath := filepath.Join(beadsDir, "hooks", hookName)
+			hookPath := filepath.Join(bdDir, "hooks", hookName)
 			if _, err := os.Stat(hookPath); err != nil {
 				t.Errorf("hook %s not found at %s", hookName, hookPath)
 			}
@@ -796,17 +796,17 @@ func TestInstallHooksBeads_WorktreeAccess(t *testing.T) {
 	})
 }
 
-// setupBeadsDir creates .beads/ with a minimal metadata.json so FindBeadsDir works.
+// setupBeadsDir creates .bd/ with a minimal metadata.json so FindBdDir works.
 func setupBeadsDir(t *testing.T, repoDir string) string {
 	t.Helper()
-	beadsDir := filepath.Join(repoDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0750); err != nil {
-		t.Fatalf("failed to create .beads/: %v", err)
+	bdDir := filepath.Join(repoDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0750); err != nil {
+		t.Fatalf("failed to create .bd/: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(beadsDir, "metadata.json"), []byte(`{}`), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(bdDir, "metadata.json"), []byte(`{}`), 0644); err != nil {
 		t.Fatalf("failed to create metadata.json: %v", err)
 	}
-	return beadsDir
+	return bdDir
 }
 
 // TestInstallHooksBeads_PreservesGlobalHooks is a regression test: bd init sets
@@ -851,20 +851,20 @@ func TestInstallHooksBeads_PreservesGlobalHooks(t *testing.T) {
 	}
 
 	runInDir(t, repoDir, func() {
-		beadsDir := setupBeadsDir(t, repoDir)
+		bdDir := setupBeadsDir(t, repoDir)
 
 		if err := installHooksWithOptions(managedHookNames, false, false, false, true); err != nil {
 			t.Fatalf("installHooksWithOptions(beads=true) failed: %v", err)
 		}
 
-		content, err := os.ReadFile(filepath.Join(beadsDir, "hooks", "pre-commit"))
+		content, err := os.ReadFile(filepath.Join(bdDir, "hooks", "pre-commit"))
 		if err != nil {
-			t.Fatalf("failed to read .beads/hooks/pre-commit: %v", err)
+			t.Fatalf("failed to read .bd/hooks/pre-commit: %v", err)
 		}
 		contentStr := string(content)
 
 		if !strings.Contains(contentStr, "echo global-hook-marker") {
-			t.Errorf("global hook content not preserved in .beads/hooks/pre-commit.\nGot:\n%s", contentStr)
+			t.Errorf("global hook content not preserved in .bd/hooks/pre-commit.\nGot:\n%s", contentStr)
 		}
 		if !strings.Contains(contentStr, hookSectionBeginPrefix) {
 			t.Errorf("beads section marker missing.\nGot:\n%s", contentStr)
@@ -874,7 +874,7 @@ func TestInstallHooksBeads_PreservesGlobalHooks(t *testing.T) {
 
 // TestInstallHooksBeads_PreservesDefaultGitHooks verifies that hooks in the
 // default .git/hooks/ directory (both managed and non-managed) are preserved
-// when beads redirects core.hooksPath to .beads/hooks/.
+// when beads redirects core.hooksPath to .bd/hooks/.
 func TestInstallHooksBeads_PreservesDefaultGitHooks(t *testing.T) {
 	repoDir := newGitRepo(t)
 	runInDir(t, repoDir, func() {
@@ -892,16 +892,16 @@ func TestInstallHooksBeads_PreservesDefaultGitHooks(t *testing.T) {
 		// Unset the local core.hooksPath that newGitRepo sets so git falls back to .git/hooks/.
 		exec.Command("git", "config", "--unset", "core.hooksPath").Run()
 
-		beadsDir := setupBeadsDir(t, repoDir)
+		bdDir := setupBeadsDir(t, repoDir)
 
 		if err := installHooksWithOptions(managedHookNames, false, false, false, true); err != nil {
 			t.Fatalf("installHooksWithOptions(beads=true) failed: %v", err)
 		}
 
 		// Managed hook: should be preserved with beads section injected.
-		content, err := os.ReadFile(filepath.Join(beadsDir, "hooks", "pre-commit"))
+		content, err := os.ReadFile(filepath.Join(bdDir, "hooks", "pre-commit"))
 		if err != nil {
-			t.Fatalf("failed to read .beads/hooks/pre-commit: %v", err)
+			t.Fatalf("failed to read .bd/hooks/pre-commit: %v", err)
 		}
 		contentStr := string(content)
 		if !strings.Contains(contentStr, "echo custom-default-hook") {
@@ -912,9 +912,9 @@ func TestInstallHooksBeads_PreservesDefaultGitHooks(t *testing.T) {
 		}
 
 		// Non-managed hook: should be copied as-is.
-		cmContent, err := os.ReadFile(filepath.Join(beadsDir, "hooks", "commit-msg"))
+		cmContent, err := os.ReadFile(filepath.Join(bdDir, "hooks", "commit-msg"))
 		if err != nil {
-			t.Fatalf("non-managed hook commit-msg not copied to .beads/hooks/: %v", err)
+			t.Fatalf("non-managed hook commit-msg not copied to .bd/hooks/: %v", err)
 		}
 		if !strings.Contains(string(cmContent), "echo commit-msg-hook") {
 			t.Errorf("Unmanaged hook content not preserved.\nGot:\n%s", string(cmContent))

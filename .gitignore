@@ -43,13 +43,13 @@ Thumbs.db
 *.db-shm
 
 # Runtime files
-.beads/bd.sock
-.beads/.exclusive-lock
+.bd/bd.sock
+.bd/.exclusive-lock
 
-# .beads directory files
-.beads/.gitignore
-.beads/db.sqlite
-.beads/bd.db
+# .bd directory files
+.bd/.gitignore
+.bd/db.sqlite
+.bd/bd.db
 
 # Ignore nix result
 result
@@ -78,7 +78,7 @@ npm-package/bin/LICENSE
 npm-package/bin/README.md
 npm-package/node_modules/
 npm-package/package-lock.json
-.beads/beads.db?*
+.bd/beads.db?*
 bd-original
 mcp_agent_mail/
 bd-test
@@ -105,7 +105,7 @@ history/
 
 # Orchestrator agent state
 state.json
-.beads/redirect
+.bd/redirect
 
 # Claude Code runtime
 .runtime/
@@ -115,10 +115,10 @@ state.json
 .agents/
 output
 bd_test
-.beads/export-state/
-.beads/beads.db
+.bd/export-state/
+.bd/beads.db
 
 # Orchestrator (added by gt)
 .logs/
-.beads/
+.bd/
 .opencode/

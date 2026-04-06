@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	"github.com/steveyegge/beads/internal/utils"
+	"github.com/steveyegge/bd/internal/utils"
 )
 
 func TestGetWorktreeGitDir(_ *testing.T) {

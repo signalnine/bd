@@ -15,9 +15,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/steveyegge/beads/internal/routing"
-	"github.com/steveyegge/beads/internal/storage/dolt"
-	"github.com/steveyegge/beads/internal/types"
+	"github.com/steveyegge/bd/internal/routing"
+	"github.com/steveyegge/bd/internal/storage/dolt"
+	"github.com/steveyegge/bd/internal/types"
 )
 
 // TestContributorRoutingTracer is the Phase 1 tracer bullet test.
@@ -55,12 +55,12 @@ func TestContributorRoutingTracer(t *testing.T) {
 	t.Run("DetermineTargetRepo_contributor_routes_to_planning", func(t *testing.T) {
 		config := &routing.RoutingConfig{
 			Mode:            "auto",
-			ContributorRepo: "~/.beads-planning",
+			ContributorRepo: "~/.bd-planning",
 		}
 
 		got := routing.DetermineTargetRepo(config, routing.Contributor, ".")
-		if got != "~/.beads-planning" {
-			t.Errorf("DetermineTargetRepo() = %q, want %q", got, "~/.beads-planning")
+		if got != "~/.bd-planning" {
+			t.Errorf("DetermineTargetRepo() = %q, want %q", got, "~/.bd-planning")
 		}
 	})
 
@@ -68,7 +68,7 @@ func TestContributorRoutingTracer(t *testing.T) {
 		config := &routing.RoutingConfig{
 			Mode:            "auto",
 			MaintainerRepo:  ".",
-			ContributorRepo: "~/.beads-planning",
+			ContributorRepo: "~/.bd-planning",
 		}
 
 		got := routing.DetermineTargetRepo(config, routing.Maintainer, ".")
@@ -84,19 +84,19 @@ func TestContributorRoutingTracer(t *testing.T) {
 		planningDir := filepath.Join(tmpDir, "planning")
 
 		// Create project .beads directory
-		projectBeadsDir := filepath.Join(projectDir, ".beads")
+		projectBeadsDir := filepath.Join(projectDir, ".bd")
 		if err := os.MkdirAll(projectBeadsDir, 0755); err != nil {
 			t.Fatalf("failed to create project .beads dir: %v", err)
 		}
 
 		// Create planning .beads directory
-		planningBeadsDir := filepath.Join(planningDir, ".beads")
+		planningBeadsDir := filepath.Join(planningDir, ".bd")
 		if err := os.MkdirAll(planningBeadsDir, 0755); err != nil {
 			t.Fatalf("failed to create planning .beads dir: %v", err)
 		}
 
 		// Initialize project database
-		projectDBPath := filepath.Join(projectBeadsDir, "beads.db")
+		projectDBPath := filepath.Join(projectBeadsDir, "bd.db")
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 
@@ -150,7 +150,7 @@ func TestContributorRoutingTracer(t *testing.T) {
 		}
 
 		// Initialize planning database and verify we can create issues there
-		planningDBPath := filepath.Join(planningBeadsDir, "beads.db")
+		planningDBPath := filepath.Join(planningBeadsDir, "bd.db")
 		planningStore, err := dolt.New(ctx, &dolt.Config{Path: planningDBPath})
 		if err != nil {
 			t.Skipf("skipping: Dolt server not available: %v", err)
@@ -195,13 +195,13 @@ func TestContributorRoutingTracer(t *testing.T) {
 func TestBackwardCompatContributorConfig(t *testing.T) {
 	// Set up temporary directory
 	tmpDir := t.TempDir()
-	beadsDir := filepath.Join(tmpDir, ".beads")
-	if err := os.MkdirAll(beadsDir, 0755); err != nil {
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0755); err != nil {
 		t.Fatalf("failed to create .beads dir: %v", err)
 	}
 
 	// Initialize database
-	dbPath := filepath.Join(beadsDir, "beads.db")
+	dbPath := filepath.Join(bdDir, "bd.db")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -277,13 +277,13 @@ func setupContributorRoutingEnv(t *testing.T) *contributorRoutingEnv {
 	planningDir := filepath.Join(tmpDir, "planning")
 
 	// Create project directory with git init
-	projectBeadsDir := filepath.Join(projectDir, ".beads")
+	projectBeadsDir := filepath.Join(projectDir, ".bd")
 	if err := os.MkdirAll(projectBeadsDir, 0755); err != nil {
 		t.Fatalf("failed to create project .beads dir: %v", err)
 	}
 
 	// Create planning directory with git init
-	planningBeadsDir := filepath.Join(planningDir, ".beads")
+	planningBeadsDir := filepath.Join(planningDir, ".bd")
 	if err := os.MkdirAll(planningBeadsDir, 0755); err != nil {
 		t.Fatalf("failed to create planning .beads dir: %v", err)
 	}
@@ -308,7 +308,7 @@ func (env *contributorRoutingEnv) cleanup() {
 // initProjectStore initializes the project store with routing config
 func (env *contributorRoutingEnv) initProjectStore(syncMode string) *dolt.DoltStore {
 	env.t.Helper()
-	projectDBPath := filepath.Join(env.projectDir, ".beads", "beads.db")
+	projectDBPath := filepath.Join(env.projectDir, ".bd", "bd.db")
 	store, err := dolt.New(env.ctx, &dolt.Config{Path: projectDBPath})
 	if err != nil {
 		env.t.Skipf("skipping: Dolt server not available: %v", err)
@@ -349,7 +349,7 @@ func (env *contributorRoutingEnv) initProjectStore(syncMode string) *dolt.DoltSt
 // initPlanningStore initializes the planning store
 func (env *contributorRoutingEnv) initPlanningStore() *dolt.DoltStore {
 	env.t.Helper()
-	planningDBPath := filepath.Join(env.planningDir, ".beads", "beads.db")
+	planningDBPath := filepath.Join(env.planningDir, ".bd", "bd.db")
 	store, err := dolt.New(env.ctx, &dolt.Config{Path: planningDBPath})
 	if err != nil {
 		env.t.Skipf("skipping: Dolt server not available: %v", err)
@@ -657,12 +657,12 @@ func TestExplicitRepoOverride(t *testing.T) {
 
 	// Create a third "override" directory
 	overrideDir := filepath.Join(env.tmpDir, "override")
-	overrideBeadsDir := filepath.Join(overrideDir, ".beads")
+	overrideBeadsDir := filepath.Join(overrideDir, ".bd")
 	if err := os.MkdirAll(overrideBeadsDir, 0755); err != nil {
 		t.Fatalf("failed to create override .beads dir: %v", err)
 	}
 
-	overrideDBPath := filepath.Join(overrideBeadsDir, "beads.db")
+	overrideDBPath := filepath.Join(overrideBeadsDir, "bd.db")
 	overrideStore, err := dolt.New(env.ctx, &dolt.Config{Path: overrideDBPath})
 	if err != nil {
 		t.Skipf("skipping: Dolt server not available: %v", err)
@@ -725,19 +725,19 @@ func TestExplicitRepoOverride(t *testing.T) {
 	}
 }
 
-// TestBEADS_DIRPrecedence verifies BEADS_DIR env var takes precedence over routing config
+// TestBEADS_DIRPrecedence verifies BD_DIR env var takes precedence over routing config
 func TestBEADS_DIRPrecedence(t *testing.T) {
 	env := setupContributorRoutingEnv(t)
 	defer env.cleanup()
 
-	// Create an external beads directory (simulating BEADS_DIR target)
+	// Create an external beads directory (simulating BD_DIR target)
 	externalDir := filepath.Join(env.tmpDir, "external")
-	externalBeadsDir := filepath.Join(externalDir, ".beads")
+	externalBeadsDir := filepath.Join(externalDir, ".bd")
 	if err := os.MkdirAll(externalBeadsDir, 0755); err != nil {
 		t.Fatalf("failed to create external .beads dir: %v", err)
 	}
 
-	externalDBPath := filepath.Join(externalBeadsDir, "beads.db")
+	externalDBPath := filepath.Join(externalBeadsDir, "bd.db")
 	externalStore, err := dolt.New(env.ctx, &dolt.Config{Path: externalDBPath})
 	if err != nil {
 		t.Skipf("skipping: Dolt server not available: %v", err)
@@ -748,22 +748,22 @@ func TestBEADS_DIRPrecedence(t *testing.T) {
 		t.Fatalf("failed to set issue_prefix in external store: %v", err)
 	}
 
-	// Set BEADS_DIR to external directory
-	t.Setenv("BEADS_DIR", externalBeadsDir)
+	// Set BD_DIR to external directory
+	t.Setenv("BD_DIR", externalBeadsDir)
 
-	// The key insight: BEADS_DIR is checked in FindBeadsDir() BEFORE routing config is read.
+	// The key insight: BD_DIR is checked in FindBdDir() BEFORE routing config is read.
 	// This test verifies the precedence order documented in CONTRIBUTOR_NAMESPACE_ISOLATION.md:
-	// 1. BEADS_DIR environment variable (highest precedence)
+	// 1. BD_DIR environment variable (highest precedence)
 	// 2. --repo flag (explicit override)
 	// 3. Auto-routing based on user role
-	// 4. Current directory's .beads/ (default)
+	// 4. Current directory's .bd/ (default)
 
-	// When BEADS_DIR is set, all operations should use that directory,
+	// When BD_DIR is set, all operations should use that directory,
 	// regardless of routing config.
 
 	// Create issue in external store
 	issue := &types.Issue{
-		Title:     "Test BEADS_DIR precedence",
+		Title:     "Test BD_DIR precedence",
 		IssueType: types.TypeTask,
 		Status:    types.StatusOpen,
 		Priority:  2,
@@ -779,20 +779,20 @@ func TestBEADS_DIRPrecedence(t *testing.T) {
 		t.Fatalf("issue not found in external store: %v", err)
 	}
 
-	// Initialize project store (should be ignored when BEADS_DIR is set)
+	// Initialize project store (should be ignored when BD_DIR is set)
 	projectStore := env.initProjectStore("direct")
 	defer projectStore.Close()
 
 	// Verify issue does NOT exist in project store
 	projectIssue, _ := projectStore.GetIssue(env.ctx, issue.ID)
 	if projectIssue != nil {
-		t.Error("issue should NOT exist in project store when BEADS_DIR is set")
+		t.Error("issue should NOT exist in project store when BD_DIR is set")
 	}
 }
 
-// TestExplicitRoleOverride verifies git config beads.role takes precedence over URL detection
+// TestExplicitRoleOverride verifies git config bd.role takes precedence over URL detection
 func TestExplicitRoleOverride(t *testing.T) {
-	// Test that beads.role=maintainer in git config forces maintainer role
+	// Test that bd.role=maintainer in git config forces maintainer role
 	// even when the remote URL would indicate contributor
 
 	tests := []struct {
@@ -805,13 +805,13 @@ func TestExplicitRoleOverride(t *testing.T) {
 			name:         "explicit maintainer",
 			configRole:   "maintainer",
 			expectedRole: routing.Maintainer,
-			description:  "git config beads.role=maintainer should force maintainer",
+			description:  "git config bd.role=maintainer should force maintainer",
 		},
 		{
 			name:         "explicit contributor",
 			configRole:   "contributor",
 			expectedRole: routing.Contributor,
-			description:  "git config beads.role=contributor should force contributor",
+			description:  "git config bd.role=contributor should force contributor",
 		},
 	}
 
