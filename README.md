@@ -4,22 +4,23 @@
 
 # bd
 
-**Issue tracker for AI agents. 20 commands. One database. No bullshit.**
+**issue tracker for AI agents. 20 commands. one database.**
 
-bd gives coding agents a persistent, dependency-aware task graph backed by [Dolt](https://github.com/dolthub/dolt) -- a version-controlled SQL database. Agents create issues, track blockers, close work, and keep context across sessions.
+your agents need somewhere to track work that isn't a markdown file. bd is a dependency-aware task graph on top of [Dolt](https://github.com/dolthub/dolt) (version-controlled SQL). agents create issues, track blockers, close work, keep context across sessions.
 
-We forked [beads](https://github.com/steveyegge/beads) and deleted 78% of it.
+forked from [beads](https://github.com/steveyegge/beads). deleted 78% of it.
 
-## Install
+## install
 
 ```bash
-# From source (requires Go 1.25+ and CGO)
 git clone https://github.com/signalnine/bd
 cd bd
 make install    # builds and installs to ~/.local/bin/bd
 ```
 
-## 30-second demo
+requires Go 1.25+ and CGO. macOS needs ICU4C from Homebrew but the Makefile handles it.
+
+## try it
 
 ```bash
 cd your-project
@@ -35,7 +36,7 @@ bd close bd-c3d4 "Done"
 bd ready                             # now shows a1b2
 ```
 
-## Commands
+## commands
 
 | | | |
 |---|---|---|
@@ -47,29 +48,29 @@ bd ready                             # now shows a1b2
 | `bd config` | `bd backup` | `bd version` |
 | `bd dolt push` | `bd dolt pull` | |
 
-Every command supports `--json`.
+everything supports `--json`.
 
-## How it works
+## how it works
 
-bd stores issues in an embedded [Dolt](https://github.com/dolthub/dolt) database inside `.bd/` in your project. No server required.
+embedded Dolt database in `.bd/` in your project. no server.
 
-- **Hash-based IDs** (`bd-a1b2`) prevent merge collisions
-- **Dependency graph** tracks blockers
-- **`bd ready`** returns only unblocked issues
-- **Dolt sync** pushes and pulls issue state like git
+- hash-based IDs (`bd-a1b2`) -- no merge collisions
+- dependency graph tracks what blocks what
+- `bd ready` returns unblocked work only
+- dolt push/pull syncs issue state to remotes
 
 ```
 your-project/
   .bd/
-    embeddeddolt/     # Dolt database (version-controlled)
-    config            # bd configuration
+    embeddeddolt/     # version-controlled SQL
+    config
   src/
   ...
 ```
 
-## For agents
+## for agents
 
-Point your agent at bd:
+drop this in your agent instructions:
 
 ```
 Use `bd` for all task tracking. Run `bd ready --json` to find work.
@@ -77,58 +78,54 @@ Claim with `bd update <id> --claim`. Close with `bd close <id> "reason"`.
 Create sub-tasks as you discover them.
 ```
 
-bd favors non-interactive use. All output supports `--json`. Hash IDs require no coordination between agents. `bd ready` resolves the dependency graph so agents grab the next unblocked task.
+hash IDs mean agents don't need to coordinate. `bd ready` does the dependency math. `--json` on everything.
 
-## Git-free usage
-
-bd works without git. Set `BD_DIR` to skip repo discovery:
+## without git
 
 ```bash
 export BD_DIR=/path/to/project/.bd
 bd init --stealth
 ```
 
-Works with Jujutsu, Sapling, monorepos, CI/CD, and ephemeral environments.
+works with jujutsu, sapling, monorepos, CI/CD, whatever.
 
-## Sync
+## sync
 
-bd syncs through Dolt, not git:
+dolt, not git:
 
 ```bash
-bd dolt push       # push issues to remote
-bd dolt pull       # pull from remote
+bd dolt push
+bd dolt pull
 ```
 
-Configure remotes with `bd dolt remote add <name> <url>`.
+`bd dolt remote add <name> <url>` to configure.
 
-## What we deleted
+## what we cut
 
-We cut ~165k lines from [beads](https://github.com/steveyegge/beads):
+~165k lines from [beads](https://github.com/steveyegge/beads):
 
-- 6 external integrations (Jira, Linear, Notion, ADO, GitLab, GitHub)
-- Formula DSL
-- Molecule system (templates, lifecycle, phases)
-- Gate system (async coordination primitives)
-- Swarm orchestration
-- Doctor diagnostics (19 files)
-- Server mode
+- 6 tracker integrations (Jira, Linear, Notion, ADO, GitLab, GitHub)
+- formula DSL
+- molecule system
+- gate system
+- swarm orchestration
+- doctor diagnostics (19 files)
+- server mode
 - OpenTelemetry (8 modules)
-- 151-method storage interface (replaced with a concrete type)
+- 151-method storage interface
 - 230+ commands
 
-What remains: create, track, query, close, sync.
+what's left: create, track, query, close, sync.
 
-## Build
+## build
 
 ```bash
 make build          # build bd binary
 make test           # run tests
 make install        # build + install to ~/.local/bin
-make fmt            # format with gofmt
+make fmt            # gofmt
 ```
 
-Requires CGO (`CGO_ENABLED=1`) for the embedded Dolt engine. macOS needs ICU4C from Homebrew; the Makefile handles it.
-
-## License
+## license
 
 [MIT](LICENSE)
