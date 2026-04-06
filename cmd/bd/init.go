@@ -735,22 +735,10 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 			// Non-fatal - continue anyway
 		}
 
-		// Import from local JSONL if requested (GH#2023).
-		// This must run after the store is created and prefix is set.
+		// JSONL import removed in nuclear simplification.
 		if fromJSONL {
-			localJSONLPath := filepath.Join(beadsDir, "issues.jsonl")
-			if _, statErr := os.Stat(localJSONLPath); os.IsNotExist(statErr) {
-				_ = store.Close()
-				FatalError("--from-jsonl specified but %s does not exist", localJSONLPath)
-			}
-			issueCount, importErr := importFromLocalJSONL(ctx, store, localJSONLPath)
-			if importErr != nil {
-				_ = store.Close()
-				FatalError("failed to import from JSONL: %v", importErr)
-			}
-			if !quiet {
-				fmt.Printf("  Imported %d issues from %s\n", issueCount, localJSONLPath)
-			}
+			_ = store.Close()
+			FatalError("--from-jsonl is no longer supported")
 		}
 
 		// Prompt for contributor mode if:

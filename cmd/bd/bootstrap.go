@@ -450,16 +450,7 @@ func executeJSONLImportAction(ctx context.Context, plan BootstrapPlan, cfg *conf
 		return fmt.Errorf("commit init: %w", err)
 	}
 
-	count, err := importFromLocalJSONL(ctx, s, plan.JSONLFile)
-	if err != nil {
-		return fmt.Errorf("import from JSONL: %w", err)
-	}
-
-	if err := s.Commit(ctx, "bd bootstrap: import from issues.jsonl"); err != nil {
-		return fmt.Errorf("commit import: %w", err)
-	}
-
-	fmt.Fprintf(os.Stderr, "Imported %d issues from %s\n", count, plan.JSONLFile)
+	return fmt.Errorf("JSONL import is no longer supported")
 	return nil
 }
 
