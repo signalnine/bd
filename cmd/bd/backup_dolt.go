@@ -10,7 +10,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/steveyegge/beads/internal/beads"
-	"github.com/steveyegge/beads/internal/doltserver"
 	"github.com/steveyegge/beads/internal/storage"
 	"github.com/steveyegge/beads/internal/storage/versioncontrolops"
 )
@@ -348,7 +347,7 @@ func doltBackupSize() (int64, error) {
 	if beadsDir == "" {
 		return 0, fmt.Errorf("not in a beads repository")
 	}
-	dataDir := doltserver.ResolveDoltDir(beadsDir)
+	dataDir := filepath.Join(beadsDir, "embeddeddolt")
 	return dirSize(dataDir)
 }
 

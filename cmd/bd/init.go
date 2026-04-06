@@ -8,7 +8,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"strconv"
 	"strings"
 	"time"
 
@@ -16,10 +15,8 @@ import (
 	"github.com/steveyegge/beads/internal/beads"
 	"github.com/steveyegge/beads/internal/config"
 	"github.com/steveyegge/beads/internal/configfile"
-	"github.com/steveyegge/beads/internal/doltserver"
 	"github.com/steveyegge/beads/internal/git"
 	"github.com/steveyegge/beads/internal/storage"
-	"github.com/steveyegge/beads/internal/storage/dolt"
 	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
 	"github.com/steveyegge/beads/internal/ui"
 	"github.com/steveyegge/beads/internal/utils"
@@ -95,7 +92,7 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 
 		// Validate --database early, before any side effects
 		if database != "" {
-			if err := dolt.ValidateDatabaseName(database); err != nil {
+			if err := validateDatabaseName(database); err != nil {
 				FatalError("invalid database name %q: %v", database, err)
 			}
 		}
@@ -125,33 +122,9 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 		// Dolt is the only supported backend
 		backend := configfile.BackendDolt
 
-		// Also treat BEADS_DOLT_SERVER_MODE=1 env var as --server.
-		if os.Getenv("BEADS_DOLT_SERVER_MODE") == "1" {
-			initServerMode = true
-		}
-
-		// Shared server mode still uses a Dolt sql-server, so it must select
-		// the server-backed store path during init. Without this, init can
-		// persist shared-server intent in YAML while still creating an embedded
-		// store and recording dolt_mode=embedded in metadata.json (GH#2946).
-		if sharedServer || strings.EqualFold(os.Getenv("BEADS_DOLT_SHARED_SERVER"), "true") || os.Getenv("BEADS_DOLT_SHARED_SERVER") == "1" {
-			initServerMode = true
-		}
-
-		// Set serverMode so isEmbeddedMode() returns the correct value.
-		// Both the global and cmdCtx must be set because PersistentPreRun
-		// creates a fresh cmdCtx (with ServerMode=false) before Run executes.
-		serverMode = initServerMode
-		if cmdCtx != nil {
-			cmdCtx.ServerMode = initServerMode
-		}
-
-		// Propagate --shared-server flag to env so that IsSharedServerMode(),
-		// ResolveDoltDir(), and DefaultConfig() all see shared mode immediately
-		// (before config.yaml exists). Safe: init runs once and exits.
-		if sharedServer {
-			_ = os.Setenv("BEADS_DOLT_SHARED_SERVER", "1")
-		}
+		// Server mode is no longer supported -- embedded only.
+		_ = initServerMode // unused
+		_ = sharedServer   // unused
 
 		// Initialize config (PersistentPreRun doesn't run for init command)
 		if err := config.Initialize(); err != nil {
@@ -274,8 +247,7 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 		// If there's a redirect file, use the redirect target (GH#bd-0qel)
 		initDBPath := dbPath
 		if initDBPath == "" {
-			// Dolt backend: respect dolt_data_dir config / BEADS_DOLT_DATA_DIR env
-			initDBPath = doltserver.ResolveDoltDir(beadsDirForInit)
+			initDBPath = filepath.Join(beadsDirForInit, "embeddeddolt")
 		}
 
 		// Determine if we should create .beads/ directory in CWD or main repo root
@@ -397,21 +369,9 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 			}
 		}
 
-		// Ensure storage directory exists (.beads/dolt).
-		// In server mode, dolt.New() connects via TCP and doesn't create local directories,
-		// so we create the marker directory explicitly.
-		// In embedded mode the engine creates its own directories under .beads/embeddeddolt/,
-		// so skip this to avoid leaving an empty .beads/dolt/ artifact (GH#2903).
-		if initServerMode {
-			if err := os.MkdirAll(initDBPath, config.BeadsDirPerm); err != nil {
-				FatalError("failed to create storage directory %s: %v", initDBPath, err)
-			}
-		}
-
 		ctx := rootCtx
 
 		// Create Dolt storage backend
-		storagePath := doltserver.ResolveDoltDir(beadsDir)
 		// Respect existing config's database name to avoid creating phantom catalog
 		// entries when a user has renamed their database (GH#2051).
 		dbName := ""
@@ -440,19 +400,8 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 		// automatically — no manual dolt clone needed.
 		gitRemoteURL := config.GetString("sync.git-remote")
 		bootstrappedFromRemote := false
-		if gitRemoteURL != "" {
-			cloned, bootstrapErr := dolt.BootstrapFromGitRemoteWithDB(ctx, storagePath, gitRemoteURL, dbName)
-			if bootstrapErr != nil {
-				fmt.Fprintf(os.Stderr, "Warning: failed to bootstrap from git remote %s: %v\n", gitRemoteURL, bootstrapErr)
-				fmt.Fprintf(os.Stderr, "  Continuing with fresh database initialization.\n")
-				// Non-fatal: fall through to normal init
-			} else if cloned {
-				bootstrappedFromRemote = true
-				if !quiet {
-					fmt.Printf("  %s Bootstrapped from git remote: %s\n", ui.RenderPass("✓"), gitRemoteURL)
-				}
-			}
-		} else if isGitRepo() && !isBareGitRepo() {
+		_ = bootstrappedFromRemote // used later
+		if gitRemoteURL == "" && isGitRepo() && !isBareGitRepo() {
 			// Auto-detect git origin and use it as the Dolt remote.
 			// This enables push/pull against the git remote by default.
 			if originURL, err := gitRemoteGetURL("origin"); err == nil && originURL != "" {
@@ -465,77 +414,14 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 			}
 		}
 
-		// Build config. Beads always uses dolt sql-server.
-		// AutoStart is always enabled during init — we need a server to initialize the database.
-		//
-		// Port resolution for init: use ONLY project-local sources (env var, port file)
-		// to prevent cross-project data leakage (GH#2336). DefaultConfig falls through
-		// to config.yaml / global config, which may resolve to another project's server
-		// because metadata.json doesn't exist yet during init. For fresh inits, port 0
-		// forces auto-start to allocate an ephemeral port for THIS project.
-		initPort := 0
-		if p := os.Getenv("BEADS_DOLT_SERVER_PORT"); p != "" {
-			if port, err := strconv.Atoi(p); err == nil && port > 0 {
-				initPort = port
-			}
-		}
-		if initPort == 0 {
-			initPort = doltserver.ReadPortFile(beadsDir)
-		}
-		// Shared server mode intentionally uses a common port for all projects.
-		if initPort == 0 && doltserver.IsSharedServerMode() {
-			initPort = doltserver.DefaultSharedServerPort
-		}
-		doltCfg := &dolt.Config{
-			Path:            storagePath,
-			BeadsDir:        beadsDir,
-			Database:        dbName,
-			ServerPort:      initPort,
-			ServerMode:      initServerMode,
-			CreateIfMissing: true, // bd init is the only path that should create databases
-			AutoStart:       initServerMode && os.Getenv("BEADS_DOLT_AUTO_START") != "0",
-		}
-		if serverHost != "" {
-			doltCfg.ServerHost = serverHost
-		}
-		if serverPort != 0 {
-			doltCfg.ServerPort = serverPort
-		}
-		if serverUser != "" {
-			doltCfg.ServerUser = serverUser
-		}
-
-		initLock, err := acquireEmbeddedLock(beadsDir, initServerMode)
+		initLock, err := acquireEmbeddedLock(beadsDir)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			os.Exit(1)
 		}
 		defer initLock.Unlock()
 
-		// WARNING: DO NOT remove, delete, or modify files inside Dolt's .dolt/
-		// directory — including noms/LOCK files. These are Dolt-internal files.
-		// Removing them WILL cause unrecoverable data corruption and data loss.
-		// Dolt manages these files itself; external interference is never safe.
-
-		// In shared server mode, ensure the shared server is running before
-		// opening the store. EnsureRunning won't auto-start because
-		// ResolveServerMode returns ServerModeExternal, so start it
-		// explicitly via the shared server directory (GH#2946).
-		if sharedServer || doltserver.IsSharedServerMode() {
-			if sharedDir, err := doltserver.SharedServerDir(); err == nil {
-				if state, _ := doltserver.IsRunning(sharedDir); state == nil || !state.Running {
-					if _, startErr := doltserver.Start(sharedDir); startErr != nil {
-						fmt.Fprintf(os.Stderr, "Error: failed to start shared Dolt server: %v\n", startErr)
-						os.Exit(1)
-					}
-					if !quiet {
-						fmt.Printf("  %s Shared Dolt server started\n", ui.RenderPass("✓"))
-					}
-				}
-			}
-		}
-
-		store, err := newDoltStore(ctx, doltCfg, embeddeddolt.WithLock(initLock))
+		store, err := newDoltStore(ctx, beadsDir, dbName, embeddeddolt.WithLock(initLock))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error: failed to open Dolt store: %v\n", err)
 			os.Exit(1)
@@ -695,16 +581,6 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 			if err := createConfigYaml(beadsDir, false, ""); err != nil {
 				fmt.Fprintf(os.Stderr, "Warning: failed to create config.yaml: %v\n", err)
 				// Non-fatal - continue anyway
-			}
-
-			// Enable shared server mode if requested via flag OR env var (GH#2377).
-			// Persist to config.yaml so the project continues working without the env var.
-			if sharedServer || doltserver.IsSharedServerMode() {
-				if err := config.SetYamlConfig("dolt.shared-server", "true"); err != nil {
-					fmt.Fprintf(os.Stderr, "Warning: failed to enable shared server mode: %v\n", err)
-				} else if !quiet {
-					fmt.Printf("  %s Shared server mode enabled\n", ui.RenderPass("✓"))
-				}
 			}
 
 			// In stealth mode, persist no-git-ops: true so bd prime
@@ -995,30 +871,7 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 			fmt.Printf("\n%s bd initialized successfully!\n\n", ui.RenderPass("✓"))
 		}
 		fmt.Printf("  Backend: %s\n", ui.RenderAccent(backend))
-		if isEmbeddedMode() {
-			fmt.Printf("  Mode: %s\n", ui.RenderAccent("embedded"))
-		} else {
-			host := serverHost
-			if host == "" {
-				host = configfile.DefaultDoltServerHost
-			}
-			port := serverPort
-			if port == 0 {
-				port = doltserver.DefaultConfig(beadsDir).Port
-			}
-			user := serverUser
-			if user == "" {
-				user = configfile.DefaultDoltServerUser
-			}
-			fmt.Printf("  Mode: %s\n", ui.RenderAccent("server"))
-			fmt.Printf("  Server: %s\n", ui.RenderAccent(fmt.Sprintf("%s@%s:%d", user, host, port)))
-			// Warn when using the default localhost — this is the #1 misconfiguration
-			// for setups where Dolt runs on a remote machine (e.g., over Tailscale).
-			if serverHost == "" && os.Getenv("BEADS_DOLT_SERVER_HOST") == "" {
-				fmt.Fprintf(os.Stderr, "\n  %s Server host defaulted to %s.\n", ui.RenderWarn("⚠"), configfile.DefaultDoltServerHost)
-				fmt.Fprintf(os.Stderr, "    If your Dolt server is remote, set BEADS_DOLT_SERVER_HOST or pass --server-host.\n")
-			}
-		}
+		fmt.Printf("  Mode: %s\n", ui.RenderAccent("embedded"))
 		fmt.Printf("  Database: %s\n", ui.RenderAccent(dbName))
 		fmt.Printf("  Issue prefix: %s\n", ui.RenderAccent(prefix))
 		fmt.Printf("  Issues will be named: %s\n\n", ui.RenderAccent(prefix+"-<hash> (e.g., "+prefix+"-a3f2dd)"))
@@ -1028,34 +881,10 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 		// This catches the branch-switch scenario: user ran bd init on a new
 		// branch and the database was created fresh, but backup JSONL files
 		// exist from a prior backup on this or another branch.
-		if !bootstrappedFromRemote && dolt.HasBackupFiles(beadsDir) {
+		if !bootstrappedFromRemote && hasBackupFiles(beadsDir) {
 			fmt.Printf("  %s Backup files detected in .beads/backup/\n", ui.RenderWarn("!"))
 			fmt.Printf("    To restore issues from a previous backup, run:\n")
 			fmt.Printf("      %s\n\n", ui.RenderAccent("bd backup restore"))
-		}
-
-		// Run limited diagnostics to verify init succeeded.
-		// Skipped in embedded mode: diagnostics use dolt.NewFromConfigWithOptions
-		// which auto-starts a dolt sql-server. Embedded init already validates
-		// the database via initSchema.
-		if !isEmbeddedMode() {
-			doctorResult := runInitDiagnostics(cwd)
-			hasIssues := false
-			for _, check := range doctorResult.Checks {
-				if check.Status != statusOK {
-					hasIssues = true
-					break
-				}
-			}
-			if hasIssues {
-				fmt.Printf("%s Setup incomplete. Some issues were detected:\n", ui.RenderWarn("⚠"))
-				for _, check := range doctorResult.Checks {
-					if check.Status != statusOK {
-						fmt.Printf("  • %s: %s\n", check.Name, check.Message)
-					}
-				}
-				fmt.Printf("\nRun %s to see details and fix these issues.\n\n", ui.RenderAccent("bd doctor --fix"))
-			}
 		}
 	},
 }
@@ -1200,50 +1029,12 @@ Aborting.`, ui.RenderWarn("⚠"), location, ui.RenderAccent("bd list"), prefix)
 			return nil
 		}
 
-		// Check both the local directory AND server mode config.
-		// In server mode the local dolt/ directory may be empty — the database
-		// lives on the Dolt sql-server. Checking only the directory would miss
-		// server-mode installations.
-		doltPath := doltserver.ResolveDoltDir(beadsDir)
-		doltDirExists := false
-		if info, err := os.Stat(doltPath); err == nil && info.IsDir() {
-			doltDirExists = true
-		}
-		if doltDirExists || cfg.IsDoltServerMode() {
-			// For server mode, distinguish "DB exists" from "DB missing" (FR-010).
-			if cfg.IsDoltServerMode() && !doltDirExists {
-				host := cfg.GetDoltServerHost()
-				port := doltserver.DefaultConfig(beadsDir).Port
-				dbName := cfg.GetDoltDatabase()
-				password := cfg.GetDoltServerPassword()
-				user := cfg.GetDoltServerUser()
-
-				result := checkDatabaseOnServer(host, port, user, password, dbName)
-				if result.Reachable && !result.Exists && result.Err == nil {
-					// Server is up but DB doesn't exist. Since we also know
-					// doltDirExists==false, this is a fresh clone — there's no
-					// local database to protect. Allow init to proceed so the
-					// user can bootstrap (e.g. via --from-jsonl). (GH#2433)
-					return nil
-				}
-				if result.Reachable && result.Exists {
-					// Server up and DB exists — fall through to "already initialized" error.
-				} else {
-					// Server unreachable or error during check: this is a fresh clone
-					// with committed metadata.json but no local dolt/ directory.
-					// Allow init to proceed so the user can bootstrap the database
-					// (e.g. via --from-jsonl). (GH#2433)
-					return nil
-				}
-			}
-
-			location := doltPath
-			if cfg.IsDoltServerMode() {
-				host := cfg.GetDoltServerHost()
-				port := doltserver.DefaultConfig(beadsDir).Port
-				location = fmt.Sprintf("dolt server at %s:%d", host, port)
-			}
-			return fmt.Errorf(`
+		// Check for existing embedded database
+		embeddedPath := filepath.Join(beadsDir, "embeddeddolt")
+		if info, err := os.Stat(embeddedPath); err == nil && info.IsDir() {
+			entries, _ := os.ReadDir(embeddedPath)
+			if len(entries) > 0 {
+				return fmt.Errorf(`
 %s Found existing Dolt database: %s
 
 This workspace is already initialized.
@@ -1255,7 +1046,8 @@ If the database is genuinely corrupt and unrecoverable:
   bd export > backup.jsonl              # Back up first!
   bd init --force --prefix %s           # Then reinitialize
 
-Aborting.`, ui.RenderWarn("⚠"), location, ui.RenderAccent("bd list"), prefix)
+Aborting.`, ui.RenderWarn("⚠"), embeddedPath, ui.RenderAccent("bd list"), prefix)
+			}
 		}
 		// Backend is Dolt but no dolt directory exists yet — this is a fresh
 		// clone. Any beads.db file is a legacy SQLite artifact, not the active
@@ -1499,10 +1291,34 @@ func verifyMetadata(ctx context.Context, store storage.DoltStorage, key, value s
 	readBack, err := store.GetMetadata(ctx, key)
 	if err != nil || readBack != value {
 		fmt.Fprintf(os.Stderr, "Warning: %s metadata write did not persist (wrote %q, read %q)\n", key, value, readBack)
-		if !isEmbeddedMode() {
-			fmt.Fprintf(os.Stderr, "  Run 'bd doctor --fix' to repair.\n")
-		}
 		return false
 	}
 	return true
+}
+
+// validateDatabaseName checks that a database name is valid for use as a
+// MySQL/Dolt identifier.
+func validateDatabaseName(name string) error {
+	if name == "" {
+		return fmt.Errorf("database name cannot be empty")
+	}
+	if len(name) > 64 {
+		return fmt.Errorf("database name too long (max 64 characters)")
+	}
+	for _, c := range name {
+		if !((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_') {
+			return fmt.Errorf("invalid character %q in database name", c)
+		}
+	}
+	if len(name) > 0 && name[0] >= '0' && name[0] <= '9' {
+		return fmt.Errorf("database name cannot start with a digit")
+	}
+	return nil
+}
+
+// hasBackupFiles checks if backup JSONL files exist in .beads/backup/.
+func hasBackupFiles(beadsDir string) bool {
+	backupDir := filepath.Join(beadsDir, "backup")
+	info, err := os.Stat(filepath.Join(backupDir, "issues.jsonl"))
+	return err == nil && info.Size() > 0
 }

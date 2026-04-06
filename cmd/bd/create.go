@@ -16,7 +16,6 @@ import (
 	"github.com/steveyegge/beads/internal/debug"
 	"github.com/steveyegge/beads/internal/routing"
 	"github.com/steveyegge/beads/internal/storage"
-	"github.com/steveyegge/beads/internal/storage/dolt"
 	"github.com/steveyegge/beads/internal/timeparsing"
 	"github.com/steveyegge/beads/internal/types"
 	"github.com/steveyegge/beads/internal/ui"
@@ -793,11 +792,7 @@ func ensureBeadsDirForPath(ctx context.Context, targetPath string, sourceStore s
 			// Open target store temporarily to set prefix.
 			// Use newDoltStore with explicit config since the target .beads
 			// directory was just created and has no metadata.json yet.
-			tempStore, err := newDoltStore(ctx, &dolt.Config{
-				BeadsDir:        beadsDir,
-				Database:        dbName,
-				CreateIfMissing: true,
-			})
+			tempStore, err := newDoltStore(ctx, beadsDir, dbName)
 			if err != nil {
 				return fmt.Errorf("failed to initialize target database: %w", err)
 			}

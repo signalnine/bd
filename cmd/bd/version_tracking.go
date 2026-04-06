@@ -10,8 +10,6 @@ import (
 	"github.com/steveyegge/beads/internal/beads"
 	"github.com/steveyegge/beads/internal/configfile"
 	"github.com/steveyegge/beads/internal/debug"
-	"github.com/steveyegge/beads/internal/doltserver"
-	"github.com/steveyegge/beads/internal/storage/dolt"
 )
 
 // localVersionFile is the gitignored file that stores the last bd version used locally.
@@ -171,27 +169,14 @@ func autoMigrateOnVersionBump(beadsDir string) {
 		return
 	}
 
-	// GH#2137: If upgrading from pre-0.56, the dolt database may have been
-	// created by the old embedded Dolt mode. Recover by reinitializing.
-	if previousVersion != "" && compareVersions(previousVersion, "0.56.0") < 0 {
-		recovered, recErr := doltserver.RecoverPreV56DoltDir(dbPath)
-		if recErr != nil {
-			debug.Logf("auto-migrate: pre-v56 recovery failed: %v", recErr)
-		}
-		if recovered {
-			debug.Logf("auto-migrate: rebuilt pre-v56 dolt database at %s", dbPath)
-		}
-	}
-
-	// Open database using factory (respects backend config from metadata.json)
+	// Open database using embedded store factory
 	// Use rootCtx if available and not canceled, otherwise use Background
 	ctx := rootCtx
 	if ctx == nil || ctx.Err() != nil {
-		// rootCtx is nil or canceled - use fresh background context
 		ctx = context.Background()
 	}
 
-	store, err := dolt.NewFromConfig(ctx, beadsDir)
+	store, err := newDoltStoreFromConfig(ctx, beadsDir)
 	if err != nil {
 		// Failed to open database - skip migration
 		debug.Logf("auto-migrate: failed to open database: %v", err)

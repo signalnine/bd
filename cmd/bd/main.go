@@ -23,14 +23,10 @@ import (
 	"github.com/steveyegge/beads/internal/config"
 	"github.com/steveyegge/beads/internal/configfile"
 	"github.com/steveyegge/beads/internal/debug"
-	"github.com/steveyegge/beads/internal/doltserver"
 	"github.com/steveyegge/beads/internal/hooks"
 	"github.com/steveyegge/beads/internal/storage"
-	"github.com/steveyegge/beads/internal/storage/dolt"
-	"github.com/steveyegge/beads/internal/telemetry"
+	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
 	"github.com/steveyegge/beads/internal/utils"
-	"go.opentelemetry.io/otel/attribute"
-	oteltrace "go.opentelemetry.io/otel/trace"
 )
 
 var (
@@ -57,7 +53,6 @@ var (
 )
 var (
 	sandboxMode     bool
-	serverMode      bool               // True when using external dolt sql-server (dolt_mode=server)
 	readonlyMode    bool               // Read-only mode: block write operations (for worker sandboxes)
 	storeIsReadOnly bool               // Track if store was opened read-only (for staleness checks)
 	lockTimeout     = 30 * time.Second // Dolt open timeout (fixed default)
@@ -88,10 +83,6 @@ var (
 	// commandTipIDsShown tracks which tip IDs were shown in this command (deduped).
 	// This is used for tip-commit message formatting.
 	commandTipIDsShown map[string]struct{}
-
-	// commandSpan is the root OTel span for the current command execution.
-	// All storage and AI spans are nested as children of this span.
-	commandSpan oteltrace.Span
 )
 
 // readOnlyCommands lists commands that only read from the database.
@@ -151,53 +142,6 @@ func loadEnvironment() {
 	}
 }
 
-// repairSharedServerEmbeddedMismatch detects and auto-repairs the case where
-// shared-server mode is active but metadata.json still pins dolt_mode=embedded.
-// This prevents the silent fallback into embedded mode that hides server-backed
-// issue state after upgrades (GH#2949).
-func repairSharedServerEmbeddedMismatch(beadsDir string, cfg *configfile.Config) {
-	if cfg == nil {
-		return
-	}
-	if strings.ToLower(strings.TrimSpace(cfg.DoltMode)) != configfile.DoltModeEmbedded {
-		return
-	}
-	if !doltserver.IsSharedServerMode() {
-		return
-	}
-	fmt.Fprintln(os.Stderr, "Notice: shared-server is enabled but metadata.json had dolt_mode=embedded.")
-	cfg.DoltMode = configfile.DoltModeServer
-	if err := cfg.Save(beadsDir); err != nil {
-		fmt.Fprintf(os.Stderr, "Warning: failed to auto-repair metadata.json: %v\n", err)
-		fmt.Fprintln(os.Stderr, "Fix manually: set dolt_mode to \"server\" in .beads/metadata.json")
-	} else {
-		fmt.Fprintln(os.Stderr, "Auto-repaired: dolt_mode updated to \"server\" in metadata.json.")
-	}
-}
-
-// loadServerModeFromConfig loads the storage mode (embedded vs server) from
-// metadata.json so that isEmbeddedMode() returns the correct value. Called
-// for commands that skip full DB init but still need to know the mode.
-func loadServerModeFromConfig() {
-	beadsDir := beads.FindBeadsDir()
-	if beadsDir == "" {
-		return
-	}
-	cfg, err := configfile.Load(beadsDir)
-	if err != nil || cfg == nil {
-		return
-	}
-	repairSharedServerEmbeddedMismatch(beadsDir, cfg)
-	sm := cfg.IsDoltServerMode()
-	// GH#2946: shared-server override for stale metadata.json (no-db commands)
-	if !sm && doltserver.IsSharedServerMode() {
-		sm = true
-	}
-	serverMode = sm
-	if cmdCtx != nil {
-		cmdCtx.ServerMode = sm
-	}
-}
 
 func preserveRedirectSourceDatabase(beadsDir string) {
 	if beadsDir == "" || os.Getenv("BEADS_DOLT_SERVER_DATABASE") != "" {
@@ -414,22 +358,6 @@ var rootCmd = &cobra.Command{
 		// pending batch commits before canceling the context.
 		rootCtx, rootCancel = setupGracefulShutdown()
 
-		// Initialize OTel (no-op unless BD_OTEL_METRICS_URL or BD_OTEL_STDOUT=true).
-		// Must run before any DB access so SQL spans nest under command spans.
-		if err := telemetry.Init(rootCtx, "bd", Version); err != nil {
-			debug.Logf("warning: telemetry init failed: %v", err)
-		}
-
-		// Start root span for this command. rootCtx now carries the span, so
-		// all downstream DB and AI calls become child spans automatically.
-		rootCtx, commandSpan = telemetry.Tracer("bd").Start(rootCtx, "bd.command."+cmd.Name(),
-			oteltrace.WithAttributes(
-				attribute.String("bd.command", cmd.Name()),
-				attribute.String("bd.version", Version),
-				attribute.String("bd.args", strings.Join(os.Args[1:], " ")),
-			),
-		)
-
 		// Apply verbosity flags early (before any output)
 		debug.SetVerbose(verboseFlag)
 		debug.SetQuiet(quietFlag)
@@ -516,11 +444,6 @@ var rootCmd = &cobra.Command{
 		if !isSelectedNoDBCommand(cmd) {
 			loadEnvironment()
 		}
-
-		// Load storage mode (embedded vs server) early so that isEmbeddedMode()
-		// returns the correct value for all commands, including those that skip
-		// full DB initialization (e.g., bd dolt status, bd doctor, bd bootstrap).
-		loadServerModeFromConfig()
 
 		// GH#1093: Check noDbCommands BEFORE expensive operations
 		// to avoid spawning git subprocesses for simple commands
@@ -658,10 +581,6 @@ var rootCmd = &cobra.Command{
 
 		// Set actor for audit trail
 		actor = getActorWithGit()
-		// Attach actor to the command span now that we have it.
-		if commandSpan != nil {
-			commandSpan.SetAttributes(attribute.String("bd.actor", actor))
-		}
 
 		// Track bd version changes
 		// Best-effort tracking - failures are silent
@@ -684,74 +603,34 @@ var rootCmd = &cobra.Command{
 		// Initialize direct storage access
 		var err error
 
-		// Create Dolt storage config — resolve dolt data dir which may be
-		// on a different filesystem (e.g., ext4 for performance on WSL).
-		doltPath := doltserver.ResolveDoltDir(beadsDir)
-		doltCfg := &dolt.Config{
-			ReadOnly: useReadOnly,
-			BeadsDir: beadsDir,
-		}
-
-		// Load config to get database name and server connection settings
+		// Load config to get database name
 		cfg, cfgErr := configfile.Load(beadsDir)
 		if cfgErr != nil {
 			fmt.Fprintf(os.Stderr, "warning: failed to load beads config from %s: %v\n", beadsDir, cfgErr)
 		}
+
+		database := configfile.DefaultDoltDatabase
 		if cfg != nil {
-			doltCfg.ServerMode = cfg.IsDoltServerMode()
-			// Shared server mode (dolt.shared-server in config.yaml) is a
-			// form of server mode. Override metadata.json if it still says
-			// embedded — handles installs created before GH#2946 fix.
-			if !doltCfg.ServerMode && doltserver.IsSharedServerMode() {
-				doltCfg.ServerMode = true
-			}
-			serverMode = doltCfg.ServerMode
-			if cmdCtx != nil {
-				cmdCtx.ServerMode = doltCfg.ServerMode
-			}
-
-			// Always set database name (needed for bootstrap to find
-			// prefix-based databases like "beads_hq"; see #1669)
-			doltCfg.Database = cfg.GetDoltDatabase()
-
-			doltCfg.ServerHost = cfg.GetDoltServerHost()
-			// Use doltserver.DefaultConfig for port resolution (env > port file >
-			// config.yaml). Port 0 is fine here — auto-start will resolve it.
-			doltCfg.ServerPort = doltserver.DefaultConfig(beadsDir).Port
-			doltCfg.ServerUser = cfg.GetDoltServerUser()
-			// Use the resolved port for credential lookup — metadata.json port
-			// and runtime port can diverge (e.g., tunnel on 3308 vs local on 3307).
-			doltCfg.ServerPassword = cfg.GetDoltServerPasswordForPort(doltCfg.ServerPort)
-			doltCfg.ServerTLS = cfg.GetDoltServerTLS()
+			database = cfg.GetDoltDatabase()
 		} else if cfgErr == nil {
-			// Load returned (nil, nil) — no config file found.
-			// Log so silent fallback to default DB is visible.
 			fmt.Fprintf(os.Stderr, "warning: no beads configuration found in %s; database name may default incorrectly\n", beadsDir)
 		}
-		doltCfg.SyncGitRemote = config.GetString("sync.git-remote")
 
-		// Keep standalone CLI auto-start behavior centralized so doctor and
-		// other helper paths stay in lockstep with the main command path.
-		dolt.ApplyCLIAutoStart(beadsDir, doltCfg)
-
-		// Server mode defaults auto-commit to OFF because the server handles
-		// commits via its own transaction lifecycle; firing DOLT_COMMIT after
-		// every write under concurrent load causes 'database is read only' errors.
+		// Default auto-commit to OFF
 		if strings.TrimSpace(doltAutoCommit) == "" {
 			doltAutoCommit = string(doltAutoCommitOff)
 		}
 
-		doltCfg.Path = doltPath
+		// Acquire embedded lock before opening
+		embLock, lockErr := acquireEmbeddedLock(beadsDir)
+		if lockErr != nil {
+			FatalError("failed to acquire embedded lock: %v", lockErr)
+		}
 
-		// WARNING: DO NOT remove, delete, or modify files inside Dolt's .dolt/
-		// directory — including noms/LOCK files. These are Dolt-internal files.
-		// Removing them WILL cause unrecoverable data corruption and data loss.
-		// Dolt manages these files itself; external interference is never safe.
-
-		store, err = newDoltStore(rootCtx, doltCfg)
+		store, err = newDoltStore(rootCtx, beadsDir, database, embeddeddolt.WithLock(embLock))
 
 		// Track final read-only state for staleness checks (GH#1089)
-		storeIsReadOnly = doltCfg.ReadOnly
+		storeIsReadOnly = useReadOnly
 
 		if err != nil {
 			// Check for fresh clone scenario
@@ -859,15 +738,6 @@ var rootCmd = &cobra.Command{
 		if store != nil {
 			_ = store.Close() // Best effort cleanup
 		}
-
-		// End the command span and flush OTel data before process exit.
-		if commandSpan != nil {
-			commandSpan.End()
-			commandSpan = nil
-		}
-		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
-		telemetry.Shutdown(shutdownCtx)
-		shutdownCancel()
 
 		if profileFile != nil {
 			pprof.StopCPUProfile()
