@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/steveyegge/beads/cmd/bd/doctor"
 	"github.com/steveyegge/beads/internal/beads"
 	"github.com/steveyegge/beads/internal/configfile"
 	"github.com/steveyegge/beads/internal/debug"
@@ -37,7 +36,7 @@ func trackBdVersion() {
 
 	// Check if version changed (only flag actual upgrades, not downgrades)
 	if lastVersion != "" && lastVersion != Version {
-		if doctor.CompareVersions(Version, lastVersion) > 0 {
+		if compareVersions(Version, lastVersion) > 0 {
 			// Version upgrade detected!
 			versionUpgradeDetected = true
 			previousVersion = lastVersion
@@ -174,7 +173,7 @@ func autoMigrateOnVersionBump(beadsDir string) {
 
 	// GH#2137: If upgrading from pre-0.56, the dolt database may have been
 	// created by the old embedded Dolt mode. Recover by reinitializing.
-	if previousVersion != "" && doctor.CompareVersions(previousVersion, "0.56.0") < 0 {
+	if previousVersion != "" && compareVersions(previousVersion, "0.56.0") < 0 {
 		recovered, recErr := doltserver.RecoverPreV56DoltDir(dbPath)
 		if recErr != nil {
 			debug.Logf("auto-migrate: pre-v56 recovery failed: %v", recErr)
@@ -218,12 +217,12 @@ func autoMigrateOnVersionBump(beadsDir string) {
 
 	// Check for downgrade: refuse to overwrite a newer version with an older one (gt-e3uiy)
 	maxVersion, _ := store.GetMetadata(ctx, "bd_version_max")
-	if dbVersion != "" && doctor.CompareVersions(Version, dbVersion) < 0 {
+	if dbVersion != "" && compareVersions(Version, dbVersion) < 0 {
 		debug.Logf("auto-migrate: refusing downgrade from %s to %s", dbVersion, Version)
 		_ = store.Close() // Best effort cleanup on error path
 		return
 	}
-	if maxVersion != "" && doctor.CompareVersions(Version, maxVersion) < 0 {
+	if maxVersion != "" && compareVersions(Version, maxVersion) < 0 {
 		debug.Logf("auto-migrate: refusing downgrade (max version %s > current %s)", maxVersion, Version)
 		_ = store.Close() // Best effort cleanup on error path
 		return
@@ -239,7 +238,7 @@ func autoMigrateOnVersionBump(beadsDir string) {
 	}
 
 	// Update max version tracking
-	if maxVersion == "" || doctor.CompareVersions(Version, maxVersion) > 0 {
+	if maxVersion == "" || compareVersions(Version, maxVersion) > 0 {
 		if err := store.SetMetadata(ctx, "bd_version_max", Version); err != nil {
 			debug.Logf("auto-migrate: failed to update max version: %v", err)
 		}
@@ -261,4 +260,32 @@ func autoMigrateOnVersionBump(beadsDir string) {
 	}
 
 	debug.Logf("auto-migrate: successfully migrated database to version %s", Version)
+}
+
+// compareVersions compares two semver-like version strings.
+// Returns -1 if v1 < v2, 0 if equal, 1 if v1 > v2.
+// (Inlined from the deleted doctor package.)
+func compareVersions(v1, v2 string) int {
+	parts1 := strings.Split(v1, ".")
+	parts2 := strings.Split(v2, ".")
+	maxLen := len(parts1)
+	if len(parts2) > maxLen {
+		maxLen = len(parts2)
+	}
+	for i := 0; i < maxLen; i++ {
+		var p1, p2 int
+		if i < len(parts1) {
+			_, _ = fmt.Sscanf(parts1[i], "%d", &p1)
+		}
+		if i < len(parts2) {
+			_, _ = fmt.Sscanf(parts2[i], "%d", &p2)
+		}
+		if p1 < p2 {
+			return -1
+		}
+		if p1 > p2 {
+			return 1
+		}
+	}
+	return 0
 }

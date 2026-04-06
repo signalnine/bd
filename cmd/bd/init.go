@@ -13,8 +13,6 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/beads/cmd/bd/doctor"
-	"github.com/steveyegge/beads/cmd/bd/setup"
 	"github.com/steveyegge/beads/internal/beads"
 	"github.com/steveyegge/beads/internal/config"
 	"github.com/steveyegge/beads/internal/configfile"
@@ -23,7 +21,6 @@ import (
 	"github.com/steveyegge/beads/internal/storage"
 	"github.com/steveyegge/beads/internal/storage/dolt"
 	"github.com/steveyegge/beads/internal/storage/embeddeddolt"
-	"github.com/steveyegge/beads/internal/templates/agents"
 	"github.com/steveyegge/beads/internal/ui"
 	"github.com/steveyegge/beads/internal/utils"
 	"golang.org/x/term"
@@ -66,7 +63,6 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 		team, _ := cmd.Flags().GetBool("team")
 		stealth, _ := cmd.Flags().GetBool("stealth")
 		skipHooks, _ := cmd.Flags().GetBool("skip-hooks")
-		skipAgents, _ := cmd.Flags().GetBool("skip-agents")
 		force, _ := cmd.Flags().GetBool("force")
 		nonInteractiveFlag, _ := cmd.Flags().GetBool("non-interactive")
 		roleFlag, _ := cmd.Flags().GetString("role")
@@ -347,12 +343,12 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 				FatalError("failed to create .beads directory: %v", err)
 			}
 
-			// Create/update .gitignore in .beads directory (only if missing or outdated)
+			// Create/update .gitignore in .beads directory (only if missing)
 			gitignorePath := filepath.Join(beadsDir, ".gitignore")
-			check := doctor.CheckGitignore(cwd)
-			if check.Status != "ok" {
-				if err := os.WriteFile(gitignorePath, []byte(doctor.GitignoreTemplate), 0600); err != nil {
-					fmt.Fprintf(os.Stderr, "Warning: failed to create/update .gitignore: %v\n", err)
+			if _, err := os.Stat(gitignorePath); os.IsNotExist(err) {
+				beadsGitignore := "*.db\n*.db-shm\n*.db-wal\n.dolt/\n"
+				if err := os.WriteFile(gitignorePath, []byte(beadsGitignore), 0600); err != nil {
+					fmt.Fprintf(os.Stderr, "Warning: failed to create .gitignore: %v\n", err)
 					// Non-fatal - continue anyway
 				}
 			}
@@ -366,7 +362,7 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 			cwdAbs, _ := filepath.Abs(cwd)
 			beadsDirIsLocal := strings.HasPrefix(beadsDirAbs, filepath.Clean(cwdAbs)+string(filepath.Separator))
 			if beadsDirIsLocal {
-				if err := doctor.EnsureProjectGitignore(cwd); err != nil {
+				if err := ensureProjectGitignore(cwd); err != nil {
 					fmt.Fprintf(os.Stderr, "Warning: failed to update project .gitignore: %v\n", err)
 					// Non-fatal - continue anyway
 				}
@@ -932,50 +928,7 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 			}
 		}
 
-		// Add agent instructions to AGENTS.md (or custom filename via --agents-file)
-		// Skip in stealth mode (user wants invisible setup) or when explicitly skipped
-		if !stealth && !skipAgents {
-			agentsTemplate, _ := cmd.Flags().GetString("agents-template")
-			agentsProfileStr, _ := cmd.Flags().GetString("agents-profile")
-			agentsProfile := agents.Profile(agentsProfileStr)
-			agentsFile, _ := cmd.Flags().GetString("agents-file")
-
-			// Validate and persist custom agents filename
-			if agentsFile != "" {
-				if err := config.ValidateAgentsFile(agentsFile); err != nil {
-					fmt.Fprintf(os.Stderr, "Error: invalid --agents-file: %v\n", err)
-					return
-				}
-				if err := config.SetYamlConfig("agents.file", agentsFile); err != nil {
-					fmt.Fprintf(os.Stderr, "Warning: failed to persist agents.file to config: %v\n", err)
-				}
-			}
-
-			// Use flag value directly if provided (honoring user intent even if
-			// config persistence failed), otherwise read from config/default.
-			resolvedAgentsFile := agentsFile
-			if resolvedAgentsFile == "" {
-				resolvedAgentsFile = config.SafeAgentsFile()
-			}
-			if isBareGitRepo() {
-				if !quiet {
-					fmt.Printf("  Skipping %s generation in bare repository\n", resolvedAgentsFile)
-				}
-			} else {
-				addAgentsInstructions(resolvedAgentsFile, !quiet, agentsTemplate, agentsProfile)
-			}
-		}
-
-		// Auto-setup Claude hooks for project (writes to .claude/settings.json)
-		// so bd prime runs automatically. Skip in stealth mode or when agents are skipped.
-		if !stealth && !skipAgents && !isBareGitRepo() {
-			if err := setup.InstallClaudeProject(stealth); err != nil {
-				if !quiet {
-					fmt.Fprintf(os.Stderr, "Warning: failed to setup Claude hooks: %v\n", err)
-				}
-				// Non-fatal - continue with init
-			}
-		}
+		// Agents instructions and Claude hooks setup removed (nuclear simplification)
 
 		// Auto-stage and commit beads files so bd doctor doesn't warn about
 		// untracked files or dirty working tree in a clean room setup.

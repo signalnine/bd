@@ -6,10 +6,299 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
-
-	"github.com/steveyegge/beads/cmd/bd/doctor"
 )
+
+// HookMigrationHookPlan describes migration state for a single hook file.
+// (Inlined from the deleted doctor package.)
+type HookMigrationHookPlan struct {
+	Name             string `json:"name"`
+	HookPath         string `json:"hook_path"`
+	Exists           bool   `json:"exists"`
+	MarkerState      string `json:"marker_state"`
+	LegacyBDHook     bool   `json:"legacy_bd_hook"`
+	HasOldSidecar    bool   `json:"has_old_sidecar"`
+	HasBackupSidecar bool   `json:"has_backup_sidecar"`
+	State            string `json:"state"`
+	NeedsMigration   bool   `json:"needs_migration"`
+	SuggestedAction  string `json:"suggested_action,omitempty"`
+	ReadError        string `json:"read_error,omitempty"`
+}
+
+// HookMigrationPlan summarizes migration state for all managed hooks.
+// (Inlined from the deleted doctor package.)
+type HookMigrationPlan struct {
+	Path                string                  `json:"path"`
+	RepoRoot            string                  `json:"repo_root,omitempty"`
+	HooksDir            string                  `json:"hooks_dir,omitempty"`
+	IsGitRepo           bool                    `json:"is_git_repo"`
+	Hooks               []HookMigrationHookPlan `json:"hooks"`
+	TotalHooks          int                     `json:"total_hooks"`
+	NeedsMigrationCount int                     `json:"needs_migration_count"`
+	BrokenMarkerCount   int                     `json:"broken_marker_count"`
+}
+
+const (
+	hookMarkerStateNone   = "none"
+	hookMarkerStateValid  = "valid"
+	hookMarkerStateBroken = "broken"
+
+	hookMarkerBeginTag = "BEGIN BEADS INTEGRATION"
+	hookMarkerEndTag   = "END BEADS INTEGRATION"
+)
+
+var managedHookNames = []string{
+	"pre-commit",
+	"post-merge",
+	"pre-push",
+	"post-checkout",
+	"prepare-commit-msg",
+}
+
+// PlanHookMigration builds a read-only migration plan for git hooks.
+// (Inlined from the deleted doctor package.)
+func PlanHookMigration(path string) (HookMigrationPlan, error) {
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return HookMigrationPlan{}, fmt.Errorf("resolve path: %w", err)
+	}
+
+	plan := HookMigrationPlan{
+		Path:       absPath,
+		TotalHooks: len(managedHookNames),
+		Hooks:      make([]HookMigrationHookPlan, 0, len(managedHookNames)),
+	}
+
+	repoRoot, hooksDir, err := resolveGitHooksDir(absPath)
+	if err != nil {
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) {
+			return plan, nil
+		}
+		return HookMigrationPlan{}, err
+	}
+
+	plan.IsGitRepo = true
+	plan.RepoRoot = repoRoot
+	plan.HooksDir = hooksDir
+
+	for _, hookName := range managedHookNames {
+		hook := inspectHookMigration(hooksDir, hookName)
+		if hook.NeedsMigration {
+			plan.NeedsMigrationCount++
+		}
+		if hook.MarkerState == hookMarkerStateBroken {
+			plan.BrokenMarkerCount++
+		}
+		plan.Hooks = append(plan.Hooks, hook)
+	}
+
+	return plan, nil
+}
+
+func inspectHookMigration(hooksDir, hookName string) HookMigrationHookPlan {
+	hookPath := filepath.Join(hooksDir, hookName)
+	hook := HookMigrationHookPlan{
+		Name:             hookName,
+		HookPath:         hookPath,
+		HasOldSidecar:    hookFileExists(hookPath + ".old"),
+		HasBackupSidecar: hookFileExists(hookPath + ".backup"),
+		MarkerState:      hookMarkerStateNone,
+	}
+
+	content, err := os.ReadFile(hookPath) // #nosec G304
+	if err == nil {
+		hook.Exists = true
+		contentStr := string(content)
+		hook.MarkerState = detectHookMarkerState(contentStr)
+		hook.LegacyBDHook = isLegacyBDHook(contentStr)
+	} else if !errors.Is(err, os.ErrNotExist) {
+		hook.ReadError = err.Error()
+		hook.State = "read_error"
+		hook.SuggestedAction = "Inspect hook file permissions/content manually before migration."
+		return hook
+	}
+
+	classifyHookMigration(&hook)
+	return hook
+}
+
+func classifyHookMigration(hook *HookMigrationHookPlan) {
+	if hook.ReadError != "" {
+		return
+	}
+	switch hook.MarkerState {
+	case hookMarkerStateValid:
+		hook.State = "marker_managed"
+		return
+	case hookMarkerStateBroken:
+		hook.State = "marker_broken"
+		hook.NeedsMigration = true
+		hook.SuggestedAction = "Repair BEGIN/END marker mismatch, then rerun hook migration."
+		return
+	}
+	if hook.LegacyBDHook {
+		hook.NeedsMigration = true
+		switch {
+		case hook.HasOldSidecar && hook.HasBackupSidecar:
+			hook.State = "legacy_with_both_sidecars"
+		case hook.HasOldSidecar:
+			hook.State = "legacy_with_old_sidecar"
+		case hook.HasBackupSidecar:
+			hook.State = "legacy_with_backup_sidecar"
+		default:
+			hook.State = "legacy_only"
+		}
+		return
+	}
+	if !hook.Exists {
+		switch {
+		case hook.HasOldSidecar && hook.HasBackupSidecar:
+			hook.State = "missing_with_both_sidecars"
+			hook.NeedsMigration = true
+		case hook.HasOldSidecar:
+			hook.State = "missing_with_old_sidecar"
+			hook.NeedsMigration = true
+		case hook.HasBackupSidecar:
+			hook.State = "missing_with_backup_sidecar"
+			hook.NeedsMigration = true
+		default:
+			hook.State = "missing_no_artifacts"
+		}
+		return
+	}
+	if hook.HasOldSidecar || hook.HasBackupSidecar {
+		hook.State = "custom_with_sidecars"
+		hook.NeedsMigration = true
+		return
+	}
+	hook.State = "unmanaged_custom"
+}
+
+func detectHookMarkerState(content string) string {
+	beginCount := strings.Count(content, hookMarkerBeginTag)
+	endCount := strings.Count(content, hookMarkerEndTag)
+	switch {
+	case beginCount == 1 && endCount == 1:
+		beginIdx := strings.Index(content, hookMarkerBeginTag)
+		endIdx := strings.Index(content, hookMarkerEndTag)
+		if beginIdx < endIdx {
+			return hookMarkerStateValid
+		}
+		return hookMarkerStateBroken
+	case beginCount == 0 && endCount == 0:
+		return hookMarkerStateNone
+	default:
+		return hookMarkerStateBroken
+	}
+}
+
+func isLegacyBDHook(content string) bool {
+	return strings.Contains(content, "# bd-shim") ||
+		strings.Contains(content, "bd-hooks-version:") ||
+		strings.Contains(content, "# bd (beads)")
+}
+
+// IsUnmodifiedLegacyHook returns true if content contains only known BD-managed lines.
+// (Inlined from the deleted doctor package.)
+func IsUnmodifiedLegacyHook(content string) bool {
+	for _, line := range strings.Split(content, "\n") {
+		line = strings.TrimRight(line, "\r")
+		if isKnownLegacyHookLine(line) {
+			continue
+		}
+		return false
+	}
+	return true
+}
+
+func isKnownLegacyHookLine(line string) bool {
+	trimmed := strings.TrimSpace(line)
+	if trimmed == "" || strings.HasPrefix(trimmed, "#!") {
+		return true
+	}
+	switch trimmed {
+	case "fi", "then", "else", "exit 0", "exit 1":
+		return true
+	}
+	if strings.HasPrefix(trimmed, "#") {
+		lower := strings.ToLower(trimmed)
+		for _, keyword := range []string{"bd", "beads", "hook", "shim"} {
+			if strings.Contains(lower, keyword) {
+				return true
+			}
+		}
+		for _, keyword := range []string{"PATH", "Install", "Warning"} {
+			if strings.Contains(trimmed, keyword) {
+				return true
+			}
+		}
+		return false
+	}
+	knownPrefixes := []string{
+		"exec bd hook",
+		"bd hooks run",
+		"export BD_GIT_HOOK",
+		"if ! command -v bd",
+		"if command -v bd",
+		"_bd_exit=$?",
+	}
+	for _, prefix := range knownPrefixes {
+		if strings.HasPrefix(trimmed, prefix) {
+			return true
+		}
+	}
+	if strings.HasPrefix(trimmed, "echo") {
+		lower := strings.ToLower(trimmed)
+		if strings.Contains(lower, "bd") || strings.Contains(lower, "beads") {
+			return true
+		}
+	}
+	return false
+}
+
+func resolveGitHooksDir(path string) (repoRoot string, hooksDir string, err error) {
+	cmd := exec.Command("git", "rev-parse", "--show-toplevel", "--git-common-dir")
+	cmd.Dir = path
+	out, err := cmd.Output()
+	if err != nil {
+		return "", "", err
+	}
+	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
+	if len(lines) < 2 {
+		return "", "", fmt.Errorf("unexpected git rev-parse output")
+	}
+	repoRoot = strings.TrimSpace(lines[0])
+	gitCommonDir := strings.TrimSpace(lines[1])
+	if !filepath.IsAbs(gitCommonDir) {
+		gitCommonDir = filepath.Join(repoRoot, gitCommonDir)
+	}
+	hooksDir = filepath.Join(gitCommonDir, "hooks")
+	hooksPathCmd := exec.Command("git", "config", "--get", "core.hooksPath")
+	hooksPathCmd.Dir = repoRoot
+	if hooksPathOut, hooksPathErr := hooksPathCmd.Output(); hooksPathErr == nil {
+		hooksPath := strings.TrimSpace(string(hooksPathOut))
+		if hooksPath != "" {
+			if strings.HasPrefix(hooksPath, "~/") || strings.HasPrefix(hooksPath, "~\\") {
+				if home, homeErr := os.UserHomeDir(); homeErr == nil {
+					hooksPath = filepath.Join(home, hooksPath[2:])
+				}
+			}
+			if !filepath.IsAbs(hooksPath) {
+				hooksPath = filepath.Join(repoRoot, hooksPath)
+			}
+			hooksDir = hooksPath
+		}
+	}
+	return repoRoot, hooksDir, nil
+}
+
+func hookFileExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
+}
 
 type hookMigrationMode struct {
 	RequestedDryRun bool
@@ -122,7 +411,7 @@ func (p hookMigrationExecutionPlan) outputOperations() []hookMigrationOutputOper
 	return ops
 }
 
-func buildHookMigrationExecutionPlan(plan doctor.HookMigrationPlan) hookMigrationExecutionPlan {
+func buildHookMigrationExecutionPlan(plan HookMigrationPlan) hookMigrationExecutionPlan {
 	execPlan := hookMigrationExecutionPlan{
 		WriteOps:       make([]hookMigrationWriteOp, 0, plan.NeedsMigrationCount),
 		RetireOps:      make([]hookMigrationRetireOp, 0, plan.NeedsMigrationCount*2),
@@ -157,7 +446,7 @@ func buildHookMigrationExecutionPlan(plan doctor.HookMigrationPlan) hookMigratio
 		// logic to the shim — if they have, block migration to avoid silent data loss.
 		if hook.LegacyBDHook && (hook.HasOldSidecar || hook.HasBackupSidecar) {
 			content, readErr := os.ReadFile(hook.HookPath) // #nosec G304 -- path from migration planner
-			if readErr == nil && !doctor.IsUnmodifiedLegacyHook(string(content)) {
+			if readErr == nil && !IsUnmodifiedLegacyHook(string(content)) {
 				execPlan.BlockingErrors = append(execPlan.BlockingErrors,
 					fmt.Sprintf("%s: legacy hook appears user-modified; review manually before migration (state: %s)", hook.Name, hook.State))
 				continue
@@ -197,7 +486,7 @@ func buildHookMigrationExecutionPlan(plan doctor.HookMigrationPlan) hookMigratio
 	return execPlan
 }
 
-func formatHookMigrationBlockingError(hook doctor.HookMigrationHookPlan) string {
+func formatHookMigrationBlockingError(hook HookMigrationHookPlan) string {
 	suggestion := strings.TrimSpace(hook.SuggestedAction)
 	if suggestion == "" {
 		suggestion = "Repair manually, then rerun migration"
@@ -208,7 +497,7 @@ func formatHookMigrationBlockingError(hook doctor.HookMigrationHookPlan) string 
 	return fmt.Sprintf("%s (%s): %s", hook.Name, hook.State, suggestion)
 }
 
-func chooseHookMigrationWriteSource(hook doctor.HookMigrationHookPlan) (hookMigrationWriteSource, string, error) {
+func chooseHookMigrationWriteSource(hook HookMigrationHookPlan) (hookMigrationWriteSource, string, error) {
 	switch hook.State {
 	case "legacy_only":
 		return hookMigrationWriteFromTemplate, "", nil

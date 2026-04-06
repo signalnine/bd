@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/beads/cmd/bd/doctor"
 	"golang.org/x/term"
 )
 
@@ -50,7 +49,7 @@ Examples:
 			FatalErrorRespectJSON("resolving path: %v", err)
 		}
 
-		plan, err := doctor.PlanHookMigration(absPath)
+		plan, err := PlanHookMigration(absPath)
 		if err != nil {
 			FatalErrorRespectJSON("building hook migration plan: %v", err)
 		}
@@ -128,7 +127,7 @@ func maybeApplyHookMigration(execPlan hookMigrationExecutionPlan, autoYes bool) 
 	return summary, err == nil, err
 }
 
-func buildHookMigrationJSON(plan doctor.HookMigrationPlan, mode hookMigrationMode, execPlan hookMigrationExecutionPlan, summary *hookMigrationApplySummary) map[string]interface{} {
+func buildHookMigrationJSON(plan HookMigrationPlan, mode hookMigrationMode, execPlan hookMigrationExecutionPlan, summary *hookMigrationApplySummary) map[string]interface{} {
 	status := "preview"
 	if mode.RequestedApply {
 		status = "applied"
@@ -152,7 +151,7 @@ func buildHookMigrationJSON(plan doctor.HookMigrationPlan, mode hookMigrationMod
 	return output
 }
 
-func formatHookMigrationPlan(plan doctor.HookMigrationPlan, mode hookMigrationMode) []string {
+func formatHookMigrationPlan(plan HookMigrationPlan, mode hookMigrationMode) []string {
 	lines := []string{
 		"Hook migration plan",
 	}

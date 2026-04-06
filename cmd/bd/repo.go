@@ -9,7 +9,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/steveyegge/beads/internal/config"
-	"github.com/steveyegge/beads/internal/remotecache"
 	"github.com/steveyegge/beads/internal/storage"
 	"github.com/steveyegge/beads/internal/types"
 )
@@ -53,7 +52,7 @@ shared across all clones of this repository.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		repoPath := args[0]
 
-		if remotecache.IsRemoteURL(repoPath) {
+		if isRemoteURL(repoPath) {
 			// Remote URL: skip local .beads directory validation
 			fmt.Fprintf(os.Stderr, "Adding remote repository: %s\n", repoPath)
 		} else {
@@ -140,13 +139,6 @@ that came from the removed repository.`,
 		// Remove the repo from config
 		if err := config.RemoveRepo(configPath, repoPath); err != nil {
 			return fmt.Errorf("failed to remove repository: %w", err)
-		}
-
-		// Evict remote cache if applicable
-		if remotecache.IsRemoteURL(repoPath) {
-			if cache, err := remotecache.DefaultCache(); err == nil {
-				_ = cache.Evict(repoPath)
-			}
 		}
 
 		// Embedded mode: flush Dolt commit before output.
@@ -256,49 +248,6 @@ Also triggers Dolt push/pull if a remote is configured.`,
 
 		// Hydrate issues from each additional repository
 		for _, repoPath := range repos.Additional {
-			// Remote URL: pull into cache, read issues from SQL store
-			if remotecache.IsRemoteURL(repoPath) {
-				cache, err := remotecache.DefaultCache()
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "Warning: failed to init cache for %s: %v\n", repoPath, err)
-					continue
-				}
-				if _, err = cache.Ensure(ctx, repoPath); err != nil {
-					fmt.Fprintf(os.Stderr, "Warning: failed to sync remote %s: %v\n", repoPath, err)
-					continue
-				}
-				remoteStore, err := cache.OpenStore(ctx, repoPath, newDoltStoreFromConfig)
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "Warning: failed to open remote store %s: %v\n", repoPath, err)
-					continue
-				}
-
-				issues, err := remoteStore.SearchIssues(ctx, "", types.IssueFilter{})
-				_ = remoteStore.Close() // close eagerly — defer in a loop would leak connections
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "Warning: failed to read issues from %s: %v\n", repoPath, err)
-					continue
-				}
-
-				for _, issue := range issues {
-					issue.SourceRepo = repoPath
-				}
-				if len(issues) > 0 {
-					if importErr := store.CreateIssuesWithFullOptions(ctx, issues, "repo-sync", storage.BatchCreateOptions{
-						OrphanHandling:       storage.OrphanAllow,
-						SkipPrefixValidation: true,
-					}); importErr != nil {
-						fmt.Fprintf(os.Stderr, "Warning: failed to import from %s: %v\n", repoPath, importErr)
-						continue
-					}
-					totalImported += len(issues)
-					if verbose {
-						fmt.Fprintf(os.Stderr, "Imported %d issue(s) from remote %s\n", len(issues), repoPath)
-					}
-				}
-				continue
-			}
-
 			// Local path: expand tilde
 			expandedPath := repoPath
 			if len(repoPath) > 0 && repoPath[0] == '~' {

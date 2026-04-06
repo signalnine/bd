@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // createConfigYaml creates the config.yaml template in the specified directory
@@ -188,5 +190,46 @@ bd create "Try out Beads"
 		return fmt.Errorf("failed to write README.md: %w", err)
 	}
 
+	return nil
+}
+
+// ensureProjectGitignore adds .dolt/ and *.db entries to the project-root
+// .gitignore if they are not already present.
+func ensureProjectGitignore(dir string) error {
+	gitignorePath := filepath.Join(dir, ".gitignore")
+	entries := []string{".dolt/", "*.db"}
+
+	// Read existing content
+	existing := map[string]bool{}
+	if f, err := os.Open(gitignorePath); err == nil {
+		scanner := bufio.NewScanner(f)
+		for scanner.Scan() {
+			existing[strings.TrimSpace(scanner.Text())] = true
+		}
+		f.Close()
+	}
+
+	// Determine which entries are missing
+	var toAdd []string
+	for _, e := range entries {
+		if !existing[e] {
+			toAdd = append(toAdd, e)
+		}
+	}
+	if len(toAdd) == 0 {
+		return nil
+	}
+
+	// Append missing entries
+	f, err := os.OpenFile(gitignorePath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644) //nolint:gosec // G306: gitignore should be readable
+	if err != nil {
+		return fmt.Errorf("open .gitignore: %w", err)
+	}
+	defer f.Close()
+	for _, e := range toAdd {
+		if _, err := fmt.Fprintln(f, e); err != nil {
+			return fmt.Errorf("write .gitignore: %w", err)
+		}
+	}
 	return nil
 }

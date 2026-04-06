@@ -10,9 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/steveyegge/beads/cmd/bd/doctor"
 	"github.com/steveyegge/beads/internal/config"
-	"github.com/steveyegge/beads/internal/remotecache"
 	"github.com/steveyegge/beads/internal/types"
 )
 
@@ -30,7 +28,6 @@ Common namespaces:
   - github.*          GitHub integration settings
   - custom.*          Custom integration settings
   - status.*          Issue status configuration
-  - doctor.suppress.* Suppress specific bd doctor warnings (GH#1095)
 
 Custom Status States:
   You can define custom status states for multi-step pipelines using the
@@ -42,19 +39,10 @@ Custom Status States:
   This enables issues to use statuses like 'awaiting_review' in addition to
   the built-in statuses (open, in_progress, blocked, deferred, closed).
 
-Suppressing Doctor Warnings:
-  Suppress specific bd doctor warnings by check name slug:
-    bd config set doctor.suppress.pending-migrations true
-    bd config set doctor.suppress.git-hooks true
-  Check names are converted to slugs: "Git Hooks" → "git-hooks".
-  Only warnings are suppressed (errors and passing checks always show).
-  To unsuppress: bd config unset doctor.suppress.<slug>
-
 Examples:
   bd config set jira.url "https://company.atlassian.net"
   bd config set jira.project "PROJ"
   bd config set status.custom "awaiting_review,awaiting_testing"
-  bd config set doctor.suppress.pending-migrations true
   bd config get jira.url
   bd config list
   bd config unset jira.url`,
@@ -420,18 +408,8 @@ Examples:
 			os.Exit(1)
 		}
 
-		// Run the existing doctor config values check
-		doctorCheck := doctor.CheckConfigValues(repoPath)
-
-		// Run additional sync-related validations
-		syncIssues := validateSyncConfig(repoPath)
-
-		// Combine results
-		allIssues := []string{}
-		if doctorCheck.Detail != "" {
-			allIssues = append(allIssues, strings.Split(doctorCheck.Detail, "\n")...)
-		}
-		allIssues = append(allIssues, syncIssues...)
+		// Run sync-related validations
+		allIssues := validateSyncConfig(repoPath)
 
 		// Output results
 		if jsonOutput {
@@ -444,14 +422,14 @@ Examples:
 		}
 
 		if len(allIssues) == 0 {
-			fmt.Println("✓ All sync-related configuration is valid")
+			fmt.Println("All sync-related configuration is valid")
 			return
 		}
 
 		fmt.Println("Configuration validation found issues:")
 		for _, issue := range allIssues {
 			if issue != "" {
-				fmt.Printf("  • %s\n", issue)
+				fmt.Printf("  - %s\n", issue)
 			}
 		}
 		fmt.Println("\nRun 'bd config set <key> <value>' to fix configuration issues.")
@@ -501,9 +479,10 @@ func validateSyncConfig(repoPath string) []string {
 }
 
 // isValidRemoteURL validates remote URL formats for sync configuration.
-// Delegates to remotecache.IsRemoteURL for consistent URL classification.
 func isValidRemoteURL(url string) bool {
-	return remotecache.IsRemoteURL(url)
+	return strings.HasPrefix(url, "http://") ||
+		strings.HasPrefix(url, "https://") ||
+		strings.HasPrefix(url, "git+")
 }
 
 // findBeadsRepoRoot walks up from the given path to find the repo root (containing .beads)
