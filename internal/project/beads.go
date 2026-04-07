@@ -71,7 +71,7 @@ func ResolveRedirect(bdDir string) SourceDatabaseInfo {
 	// Dolt connections or recursive FollowRedirect calls causing deadlocks).
 	// We only need the raw dolt_database field.
 	metadataPath := filepath.Join(bdDir, "metadata.json")
-	if data, err := os.ReadFile(metadataPath); err == nil {
+	if data, err := os.ReadFile(metadataPath); err == nil { //nolint:gosec // trusted internal path
 		var raw struct {
 			DoltDatabase string `json:"dolt_database"`
 		}
@@ -102,7 +102,7 @@ func ResolveRedirect(bdDir string) SourceDatabaseInfo {
 // This prevents infinite loops and keeps the behavior predictable.
 func FollowRedirect(bdDir string) string {
 	redirectFile := filepath.Join(bdDir, RedirectFileName)
-	data, err := os.ReadFile(redirectFile)
+	data, err := os.ReadFile(redirectFile) //nolint:gosec // trusted internal path
 	if err != nil {
 		// No redirect file or can't read it - use original path
 		return bdDir

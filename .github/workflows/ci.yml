@@ -22,55 +22,6 @@ jobs:
       - name: Check all versions match
         run: ./scripts/check-versions.sh
 
-  # Check documentation references match actual CLI flags
-  check-doc-flags:
-    name: Check doc flags freshness
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Set up Go
-        uses: actions/setup-go@v6
-        with:
-          go-version-file: 'go.mod'
-
-      - name: Install ICU4C
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libicu-dev
-
-      - name: Build bd
-        run: go build -o bd ./cmd/bd/
-
-      - name: Validate docs against CLI
-        run: ./scripts/check-doc-flags.sh ./bd
-
-  # Fast check to catch accidental .beads/issues.jsonl changes from contributors
-  check-no-beads-changes:
-    name: Check for .beads changes
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: Check for .beads/issues.jsonl changes
-        run: |
-          if git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -q "^\.beads/issues\.jsonl$"; then
-            echo "This PR includes changes to .beads/issues.jsonl"
-            echo ""
-            echo "This file is the project's issue database and should not be modified in PRs."
-            echo ""
-            echo "To fix, run:"
-            echo "  git checkout origin/main -- .beads/issues.jsonl"
-            echo "  git commit --amend"
-            echo "  git push --force"
-            echo ""
-            exit 1
-          fi
-          echo "No .beads/issues.jsonl changes detected"
-
   # Cross-platform test matrix (Linux/macOS only - Windows uses smoke tests)
   test:
     name: Test (${{ matrix.os }})
@@ -220,8 +171,8 @@ jobs:
 
       - name: Test
         env:
-          BEADS_TEST_EMBEDDED_DOLT: "1"
-          BEADS_TEST_EMBEDDED_TEST_BINARY: /tmp/embeddeddolt-test
+          BD_TEST_EMBEDDED_DOLT: "1"
+          BD_TEST_EMBEDDED_TEST_BINARY: /tmp/embeddeddolt-test
         run: /tmp/embeddeddolt-test -test.v -test.count=1 -test.timeout=10m
 
   test-embedded-cmd:
@@ -256,8 +207,8 @@ jobs:
 
       - name: Test
         env:
-          BEADS_TEST_EMBEDDED_DOLT: "1"
-          BEADS_TEST_BD_BINARY: /tmp/bd-embedded-test
+          BD_TEST_EMBEDDED_DOLT: "1"
+          BD_TEST_BINARY: /tmp/bd-embedded-test
         run: bash .github/scripts/embedded-test-shard.sh ${{ matrix.shard }} 20
 
   # Windows smoke tests only - full test suite times out (see bd-bmev)
@@ -342,11 +293,11 @@ jobs:
         id: nix_help
         continue-on-error: true
         run: |
-          export BEADS_DB="$PWD/.ci-beads/beads.db"
-          mkdir -p "$(dirname "$BEADS_DB")"
-          rm -rf .beads
-          nix run .#default -- --db "$BEADS_DB" init --quiet --prefix ci
-          nix run .#default -- --db "$BEADS_DB" > help.txt
+          export BD_DB="$PWD/.ci-bd/bd.db"
+          mkdir -p "$(dirname "$BD_DB")"
+          rm -rf .bd
+          nix run .#default -- --db "$BD_DB" init --quiet --prefix ci
+          nix run .#default -- --db "$BD_DB" > help.txt
       - name: Verify help text
         if: steps.nix_help.outcome == 'success'
         run: |

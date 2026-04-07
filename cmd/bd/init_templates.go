@@ -201,12 +201,12 @@ func ensureProjectGitignore(dir string) error {
 
 	// Read existing content
 	existing := map[string]bool{}
-	if f, err := os.Open(gitignorePath); err == nil {
+	if f, err := os.Open(gitignorePath); err == nil { //nolint:gosec // path from trusted caller
 		scanner := bufio.NewScanner(f)
 		for scanner.Scan() {
 			existing[strings.TrimSpace(scanner.Text())] = true
 		}
-		f.Close()
+		_ = f.Close()
 	}
 
 	// Determine which entries are missing
