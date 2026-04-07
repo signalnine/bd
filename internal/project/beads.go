@@ -681,7 +681,7 @@ func FindBdDir() string {
 // DatabaseInfo contains information about a discovered beads database
 type DatabaseInfo struct {
 	Path       string // Full path to the .db file
-	BdDir   string // Parent .beads directory
+	BdDir      string // Parent .beads directory
 	IssueCount int    // Number of issues (-1 if unknown)
 }
 
@@ -907,7 +907,7 @@ func FindAllDatabases() []DatabaseInfo {
 
 				databases = append(databases, DatabaseInfo{
 					Path:       dbPath,
-					BdDir:   bdDir,
+					BdDir:      bdDir,
 					IssueCount: -1,
 				})
 

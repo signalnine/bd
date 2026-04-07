@@ -13,8 +13,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/steveyegge/bd/internal/project"
 	"github.com/steveyegge/bd/internal/config"
+	"github.com/steveyegge/bd/internal/project"
 	"github.com/steveyegge/bd/internal/storage"
 	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
 	"github.com/steveyegge/bd/internal/types"

@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	
 	"github.com/steveyegge/bd/internal/git"
 )
 

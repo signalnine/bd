@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/steveyegge/bd/internal/project"
 	"github.com/steveyegge/bd/internal/git"
+	"github.com/steveyegge/bd/internal/project"
 )
 
 // waitFor repeatedly evaluates pred until it returns true or timeout expires.

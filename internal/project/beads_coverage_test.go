@@ -258,7 +258,7 @@ func TestRepoContext_GitCmdCWD(t *testing.T) {
 // TestRepoContext_GitCmdCWD_NoCWDRepo tests GitCmdCWD when CWDRepoRoot is empty
 func TestRepoContext_GitCmdCWD_NoCWDRepo(t *testing.T) {
 	rc := &RepoContext{
-		BdDir:    "/some/path/.bd",
+		BdDir:       "/some/path/.bd",
 		RepoRoot:    "/some/path",
 		CWDRepoRoot: "", // Not in a git repo
 	}

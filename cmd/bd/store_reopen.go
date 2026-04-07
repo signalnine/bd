@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/steveyegge/bd/internal/project"
 	"github.com/steveyegge/bd/internal/configfile"
+	"github.com/steveyegge/bd/internal/project"
 	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
 	"github.com/steveyegge/bd/internal/utils"
 )

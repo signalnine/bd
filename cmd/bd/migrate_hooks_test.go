@@ -3,8 +3,6 @@ package main
 import (
 	"strings"
 	"testing"
-
-	
 )
 
 func TestBuildHookMigrationJSON(t *testing.T) {

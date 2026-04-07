@@ -22,20 +22,20 @@ func TestExampleCompiles(t *testing.T) {
 
 	// Open storage
 	ctx := context.Background()
-	store, err := beads.Open(ctx, dbPath)
+	store, err := bd.Open(ctx, dbPath)
 	if err != nil {
 		t.Fatalf("Failed to open storage: %v", err)
 	}
 	defer store.Close()
 
 	// Create an issue (from example code)
-	newIssue := &beads.Issue{
+	newIssue := &bd.Issue{
 		ID:          "",
 		Title:       "Test library-created issue",
 		Description: "This verifies the library example works",
-		Status:      beads.StatusOpen,
+		Status:      bd.StatusOpen,
 		Priority:    2,
-		IssueType:   beads.TypeTask,
+		IssueType:   bd.TypeTask,
 	}
 
 	if err := store.CreateIssue(ctx, newIssue, "test"); err != nil {
@@ -47,8 +47,8 @@ func TestExampleCompiles(t *testing.T) {
 	}
 
 	// Get ready work (from example code)
-	ready, err := store.GetReadyWork(ctx, beads.WorkFilter{
-		Status: beads.StatusOpen,
+	ready, err := store.GetReadyWork(ctx, bd.WorkFilter{
+		Status: bd.StatusOpen,
 		Limit:  5,
 	})
 	if err != nil {
@@ -75,7 +75,7 @@ func TestExampleCompiles(t *testing.T) {
 
 	// Update status (from example code)
 	updates := map[string]interface{}{
-		"status": beads.StatusInProgress,
+		"status": bd.StatusInProgress,
 	}
 	if err := store.UpdateIssue(ctx, newIssue.ID, updates, "test"); err != nil {
 		t.Fatalf("Failed to update issue: %v", err)
@@ -102,7 +102,7 @@ func TestExampleCompiles(t *testing.T) {
 		t.Fatalf("Failed to get issue: %v", err)
 	}
 
-	if closed.Status != beads.StatusClosed {
+	if closed.Status != bd.StatusClosed {
 		t.Errorf("Expected status closed, got %v", closed.Status)
 	}
 
@@ -112,21 +112,21 @@ func TestExampleCompiles(t *testing.T) {
 // TestDependencyConstants ensures all constants are accessible
 func TestDependencyConstants(t *testing.T) {
 	// Test that all constants from the example are accessible
-	_ = beads.StatusOpen
-	_ = beads.StatusInProgress
-	_ = beads.StatusClosed
-	_ = beads.StatusBlocked
+	_ = bd.StatusOpen
+	_ = bd.StatusInProgress
+	_ = bd.StatusClosed
+	_ = bd.StatusBlocked
 
-	_ = beads.TypeBug
-	_ = beads.TypeFeature
-	_ = beads.TypeTask
-	_ = beads.TypeEpic
-	_ = beads.TypeChore
+	_ = bd.TypeBug
+	_ = bd.TypeFeature
+	_ = bd.TypeTask
+	_ = bd.TypeEpic
+	_ = bd.TypeChore
 
-	_ = beads.DepBlocks
-	_ = beads.DepRelated
-	_ = beads.DepParentChild
-	_ = beads.DepDiscoveredFrom
+	_ = bd.DepBlocks
+	_ = bd.DepRelated
+	_ = bd.DepParentChild
+	_ = bd.DepDiscoveredFrom
 }
 
 // TestFindDatabasePath tests database discovery
@@ -154,7 +154,7 @@ func TestFindDatabasePath(t *testing.T) {
 	t.Chdir(tmpDir)
 
 	// Test FindDatabasePath
-	found := beads.FindDatabasePath()
+	found := bd.FindDatabasePath()
 	if found == "" {
 		t.Error("Expected to find database, got empty string")
 	}

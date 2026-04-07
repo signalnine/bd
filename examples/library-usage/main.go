@@ -17,7 +17,7 @@ func main() {
 	ctx := context.Background()
 
 	// Find the Beads database (looks for .bd/*.db in current/parent dirs)
-	dbPath := beads.FindDatabasePath()
+	dbPath := bd.FindDatabasePath()
 	if dbPath == "" {
 		log.Fatal("No Beads database found. Run 'bd init' first.")
 	}
@@ -25,7 +25,7 @@ func main() {
 	fmt.Printf("Using database: %s\n\n", dbPath)
 
 	// Open the database
-	store, err := beads.Open(ctx, dbPath)
+	store, err := bd.Open(ctx, dbPath)
 	if err != nil {
 		log.Fatalf("Failed to open storage: %v", err)
 	}
@@ -33,8 +33,8 @@ func main() {
 
 	// Example 1: Get ready work
 	fmt.Println("=== Ready Work ===")
-	ready, err := store.GetReadyWork(ctx, beads.WorkFilter{
-		Status: beads.StatusOpen,
+	ready, err := store.GetReadyWork(ctx, bd.WorkFilter{
+		Status: bd.StatusOpen,
 		Limit:  5,
 	})
 	if err != nil {
@@ -47,13 +47,13 @@ func main() {
 
 	// Example 2: Create an issue
 	fmt.Println("\n=== Creating Issue ===")
-	newIssue := &beads.Issue{
+	newIssue := &bd.Issue{
 		ID:          "", // Empty = auto-generate
 		Title:       "Example library-created issue",
 		Description: "This issue was created programmatically using Beads as a library",
-		Status:      beads.StatusOpen,
+		Status:      bd.StatusOpen,
 		Priority:    2,
-		IssueType:   beads.TypeTask,
+		IssueType:   bd.TypeTask,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
@@ -66,10 +66,10 @@ func main() {
 
 	// Example 3: Add a dependency
 	fmt.Println("\n=== Adding Dependency ===")
-	dep := &beads.Dependency{
+	dep := &bd.Dependency{
 		IssueID:     newIssue.ID,
 		DependsOnID: "bd-1", // Assumes bd-1 exists
-		Type:        beads.DepDiscoveredFrom,
+		Type:        bd.DepDiscoveredFrom,
 		CreatedAt:   time.Now(),
 		CreatedBy:   "library-example",
 	}
@@ -99,7 +99,7 @@ func main() {
 	// Example 6: Update issue status
 	fmt.Println("\n=== Updating Status ===")
 	updates := map[string]interface{}{
-		"status": beads.StatusInProgress,
+		"status": bd.StatusInProgress,
 	}
 	if err := store.UpdateIssue(ctx, newIssue.ID, updates, "library-example"); err != nil {
 		log.Fatalf("Failed to update issue: %v", err)

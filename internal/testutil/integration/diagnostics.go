@@ -12,7 +12,7 @@ import (
 
 // Diagnostics captures state information for debugging test failures.
 type Diagnostics struct {
-	t        *testing.T
+	t     *testing.T
 	bdDir string
 }
 

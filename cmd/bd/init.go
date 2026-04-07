@@ -12,10 +12,10 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/bd/internal/project"
 	"github.com/steveyegge/bd/internal/config"
 	"github.com/steveyegge/bd/internal/configfile"
 	"github.com/steveyegge/bd/internal/git"
+	"github.com/steveyegge/bd/internal/project"
 	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
 	"github.com/steveyegge/bd/internal/ui"
 	"github.com/steveyegge/bd/internal/utils"

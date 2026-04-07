@@ -32,7 +32,7 @@ import (
 // DoltDB.SetCrashOnFatalError (GH#2571).
 type EmbeddedDoltStore struct {
 	dataDir       string
-	bdDir      string
+	bdDir         string
 	database      string
 	branch        string
 	credentialKey []byte
@@ -102,7 +102,7 @@ func New(ctx context.Context, bdDir, database, branch string, opts ...Option) (*
 
 	s := &EmbeddedDoltStore{
 		dataDir:  dataDir,
-		bdDir: absBeadsDir,
+		bdDir:    absBeadsDir,
 		database: database,
 		branch:   branch,
 		lock:     lock,

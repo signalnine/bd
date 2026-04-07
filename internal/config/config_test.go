@@ -980,7 +980,7 @@ external_projects:
 		// won't be discovered (viper searches from CWD upward)
 		testDirs := []string{
 			mainRepoDir, // From repo root
-			bdDir,    // From .bd/ (daemon context)
+			bdDir,       // From .bd/ (daemon context)
 		}
 
 		for _, testDir := range testDirs {

@@ -14,9 +14,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/steveyegge/bd/internal/project"
 	"github.com/steveyegge/bd/internal/configfile"
 	"github.com/steveyegge/bd/internal/git"
+	"github.com/steveyegge/bd/internal/project"
 	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
 )
 

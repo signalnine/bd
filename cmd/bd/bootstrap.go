@@ -9,9 +9,9 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/bd/internal/project"
 	"github.com/steveyegge/bd/internal/config"
 	"github.com/steveyegge/bd/internal/configfile"
+	"github.com/steveyegge/bd/internal/project"
 	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
 	"github.com/steveyegge/bd/internal/storage/versioncontrolops"
 	"golang.org/x/term"
@@ -127,7 +127,7 @@ Examples:
 type BootstrapPlan struct {
 	Action      string `json:"action"` // "sync", "restore", "jsonl-import", "init", "none"
 	Reason      string `json:"reason"` // Human-readable explanation
-	BdDir    string `json:"beads_dir"`
+	BdDir       string `json:"beads_dir"`
 	Database    string `json:"database"`
 	SyncRemote  string `json:"sync_remote,omitempty"`
 	BackupDir   string `json:"backup_dir,omitempty"`
@@ -137,7 +137,7 @@ type BootstrapPlan struct {
 
 func detectBootstrapAction(bdDir string, cfg *configfile.Config) BootstrapPlan {
 	plan := BootstrapPlan{
-		BdDir: bdDir,
+		BdDir:    bdDir,
 		Database: cfg.GetDoltDatabase(),
 	}
 

@@ -61,7 +61,7 @@ func TestOpen(t *testing.T) {
 	dbPath := filepath.Join(tmpDir, "test-dolt")
 
 	ctx := context.Background()
-	store, err := beads.Open(ctx, dbPath)
+	store, err := bd.Open(ctx, dbPath)
 	if err != nil {
 		t.Fatalf("Open failed: %v", err)
 	}
@@ -74,14 +74,14 @@ func TestOpen(t *testing.T) {
 
 func TestFindDatabasePath(t *testing.T) {
 	// This will return empty string in test environment without a database
-	path := beads.FindDatabasePath()
+	path := bd.FindDatabasePath()
 	// Just verify it doesn't panic
 	_ = path
 }
 
 func TestFindBeadsDir(t *testing.T) {
 	// This will return empty string or a valid path
-	dir := project.FindBdDir()
+	dir := bd.FindBdDir()
 	// Just verify it doesn't panic
 	_ = dir
 }
@@ -104,7 +104,7 @@ func TestOpenFromConfig_Embedded(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	store, err := beads.OpenFromConfig(ctx, bdDir)
+	store, err := bd.OpenFromConfig(ctx, bdDir)
 	if err != nil {
 		t.Fatalf("OpenFromConfig (embedded) failed: %v", err)
 	}
@@ -133,7 +133,7 @@ func TestOpenFromConfig_DefaultsToEmbedded(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	store, err := beads.OpenFromConfig(ctx, bdDir)
+	store, err := bd.OpenFromConfig(ctx, bdDir)
 	if err != nil {
 		t.Fatalf("OpenFromConfig (default) failed: %v", err)
 	}
@@ -177,7 +177,7 @@ func TestOpenFromConfig_ServerModeFailsWithoutServer(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	_, openErr := beads.OpenFromConfig(ctx, bdDir)
+	_, openErr := bd.OpenFromConfig(ctx, bdDir)
 	if openErr == nil {
 		t.Fatal("OpenFromConfig (server mode) should fail when no server is running")
 	}
@@ -197,7 +197,7 @@ func TestOpenFromConfig_NoMetadata(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	store, err := beads.OpenFromConfig(ctx, bdDir)
+	store, err := bd.OpenFromConfig(ctx, bdDir)
 	if err != nil {
 		t.Fatalf("OpenFromConfig (no metadata) failed: %v", err)
 	}
@@ -210,7 +210,7 @@ func TestOpenFromConfig_NoMetadata(t *testing.T) {
 
 func TestFindAllDatabases(t *testing.T) {
 	// This scans the file system, just verify it doesn't panic
-	dbs := beads.FindAllDatabases()
+	dbs := bd.FindAllDatabases()
 	// Should return a slice (possibly empty)
 	if dbs == nil {
 		t.Error("expected non-nil slice")
@@ -220,39 +220,39 @@ func TestFindAllDatabases(t *testing.T) {
 // Test that exported constants have correct values
 func TestConstants(t *testing.T) {
 	// Status constants
-	if beads.StatusOpen != "open" {
-		t.Errorf("StatusOpen = %q, want %q", beads.StatusOpen, "open")
+	if bd.StatusOpen != "open" {
+		t.Errorf("StatusOpen = %q, want %q", bd.StatusOpen, "open")
 	}
-	if beads.StatusInProgress != "in_progress" {
-		t.Errorf("StatusInProgress = %q, want %q", beads.StatusInProgress, "in_progress")
+	if bd.StatusInProgress != "in_progress" {
+		t.Errorf("StatusInProgress = %q, want %q", bd.StatusInProgress, "in_progress")
 	}
-	if beads.StatusBlocked != "blocked" {
-		t.Errorf("StatusBlocked = %q, want %q", beads.StatusBlocked, "blocked")
+	if bd.StatusBlocked != "blocked" {
+		t.Errorf("StatusBlocked = %q, want %q", bd.StatusBlocked, "blocked")
 	}
-	if beads.StatusClosed != "closed" {
-		t.Errorf("StatusClosed = %q, want %q", beads.StatusClosed, "closed")
+	if bd.StatusClosed != "closed" {
+		t.Errorf("StatusClosed = %q, want %q", bd.StatusClosed, "closed")
 	}
 
 	// IssueType constants
-	if beads.TypeBug != "bug" {
-		t.Errorf("TypeBug = %q, want %q", beads.TypeBug, "bug")
+	if bd.TypeBug != "bug" {
+		t.Errorf("TypeBug = %q, want %q", bd.TypeBug, "bug")
 	}
-	if beads.TypeFeature != "feature" {
-		t.Errorf("TypeFeature = %q, want %q", beads.TypeFeature, "feature")
+	if bd.TypeFeature != "feature" {
+		t.Errorf("TypeFeature = %q, want %q", bd.TypeFeature, "feature")
 	}
-	if beads.TypeTask != "task" {
-		t.Errorf("TypeTask = %q, want %q", beads.TypeTask, "task")
+	if bd.TypeTask != "task" {
+		t.Errorf("TypeTask = %q, want %q", bd.TypeTask, "task")
 	}
-	if beads.TypeEpic != "epic" {
-		t.Errorf("TypeEpic = %q, want %q", beads.TypeEpic, "epic")
+	if bd.TypeEpic != "epic" {
+		t.Errorf("TypeEpic = %q, want %q", bd.TypeEpic, "epic")
 	}
 
 	// DependencyType constants
-	if beads.DepBlocks != "blocks" {
-		t.Errorf("DepBlocks = %q, want %q", beads.DepBlocks, "blocks")
+	if bd.DepBlocks != "blocks" {
+		t.Errorf("DepBlocks = %q, want %q", bd.DepBlocks, "blocks")
 	}
-	if beads.DepRelated != "related" {
-		t.Errorf("DepRelated = %q, want %q", beads.DepRelated, "related")
+	if bd.DepRelated != "related" {
+		t.Errorf("DepRelated = %q, want %q", bd.DepRelated, "related")
 	}
 }
 
@@ -263,39 +263,23 @@ func TestPublicAPITypeAssertions(t *testing.T) {
 	dbPath := filepath.Join(tmpDir, "test-dolt")
 
 	ctx := context.Background()
-	store, err := beads.Open(ctx, dbPath)
+	store, err := bd.Open(ctx, dbPath)
 	if err != nil {
 		t.Fatalf("Open failed: %v", err)
 	}
 	defer store.Close()
 
 	t.Run("RemoteStore", func(t *testing.T) {
-		rs, ok := store.(beads.RemoteStore)
-		if !ok {
-			t.Fatal("store does not satisfy beads.RemoteStore")
-		}
-		// Verify a method is callable (no remotes configured, so empty list)
-		remotes, err := rs.ListRemotes(ctx)
+		// Concrete type -- methods always available
+		remotes, err := store.ListRemotes(ctx)
 		if err != nil {
 			t.Fatalf("ListRemotes failed: %v", err)
 		}
 		_ = remotes
 	})
 
-	t.Run("SyncStore", func(t *testing.T) {
-		_, ok := store.(beads.SyncStore)
-		if !ok {
-			t.Fatal("store does not satisfy beads.SyncStore")
-		}
-	})
-
-	t.Run("VersionControlReader", func(t *testing.T) {
-		vcr, ok := store.(beads.VersionControlReader)
-		if !ok {
-			t.Fatal("store does not satisfy beads.VersionControlReader")
-		}
-
-		branch, err := vcr.CurrentBranch(ctx)
+	t.Run("VersionControl", func(t *testing.T) {
+		branch, err := store.CurrentBranch(ctx)
 		if err != nil {
 			t.Fatalf("CurrentBranch failed: %v", err)
 		}

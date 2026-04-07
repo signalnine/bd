@@ -12,7 +12,7 @@ import (
 // StateCorruptor creates dirty server state for testing recovery scenarios.
 type StateCorruptor struct {
 	BdDir string
-	t        *testing.T
+	t     *testing.T
 }
 
 // NewStateCorruptor creates a corruptor targeting the given .beads directory.

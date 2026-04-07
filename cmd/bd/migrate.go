@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/bd/internal/project"
 	"github.com/steveyegge/bd/internal/configfile"
+	"github.com/steveyegge/bd/internal/project"
 	"github.com/steveyegge/bd/internal/types"
 	"github.com/steveyegge/bd/internal/ui"
 	"github.com/steveyegge/bd/internal/utils"

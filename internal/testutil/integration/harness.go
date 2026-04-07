@@ -188,8 +188,8 @@ var safeEnvKeys = []string{
 	"PKG_CONFIG_PATH=",
 	"LD_LIBRARY_PATH=",
 	"DYLD_LIBRARY_PATH=",
-	"BD_", // All BD_ test control vars.
-	"DOLT_",  // Dolt configuration.
+	"BD_",   // All BD_ test control vars.
+	"DOLT_", // Dolt configuration.
 	"TZ=",
 	"LC_",
 	"XDG_",

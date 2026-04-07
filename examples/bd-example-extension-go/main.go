@@ -21,7 +21,7 @@ func main() {
 	flag.Parse()
 
 	if *dbPath == "" {
-		*dbPath = beads.FindDatabasePath()
+		*dbPath = bd.FindDatabasePath()
 	}
 	if *dbPath == "" {
 		log.Fatal("No database found. Run 'bd init'")
@@ -29,7 +29,7 @@ func main() {
 
 	// Open bd storage + extension database
 	ctx := context.Background()
-	store, _ := beads.Open(ctx, *dbPath)
+	store, _ := bd.Open(ctx, *dbPath)
 	defer store.Close()
 	db, _ := sql.Open("sqlite3", *dbPath)
 	defer db.Close()
@@ -38,7 +38,7 @@ func main() {
 	db.Exec(schema) // Initialize extension schema
 
 	// Get ready work
-	readyIssues, _ := store.GetReadyWork(ctx, beads.WorkFilter{Limit: 1})
+	readyIssues, _ := store.GetReadyWork(ctx, bd.WorkFilter{Limit: 1})
 	if len(readyIssues) == 0 {
 		fmt.Println("No ready work")
 		return
@@ -53,7 +53,7 @@ func main() {
 	execID, _ := result.LastInsertId()
 
 	// Update issue in bd
-	store.UpdateIssue(ctx, issue.ID, map[string]interface{}{"status": beads.StatusInProgress}, "demo-agent")
+	store.UpdateIssue(ctx, issue.ID, map[string]interface{}{"status": bd.StatusInProgress}, "demo-agent")
 
 	// Create checkpoints
 	for _, phase := range []string{"assess", "implement", "test"} {

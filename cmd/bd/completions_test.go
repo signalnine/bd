@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/bd/internal/project"
 	"github.com/steveyegge/bd/internal/git"
+	"github.com/steveyegge/bd/internal/project"
 	"github.com/steveyegge/bd/internal/types"
 )
 

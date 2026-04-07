@@ -143,7 +143,7 @@ func buildRepoContext() (*RepoContext, error) {
 	isWorktree := git.IsWorktree()
 
 	return &RepoContext{
-		BdDir:     bdDir,
+		BdDir:        bdDir,
 		RepoRoot:     repoRoot,
 		CWDRepoRoot:  cwdRepoRoot,
 		IsRedirected: isExternal,
@@ -426,7 +426,7 @@ func buildRepoContextForWorkspace(workspacePath string) (*RepoContext, error) {
 	cwdRepoRoot := git.GetRepoRoot()
 
 	return &RepoContext{
-		BdDir:     bdDir,
+		BdDir:        bdDir,
 		RepoRoot:     repoRoot,
 		CWDRepoRoot:  cwdRepoRoot,
 		IsRedirected: false, // Workspace-specific context is never "redirected"

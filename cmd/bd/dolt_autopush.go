@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/steveyegge/bd/internal/project"
 	"github.com/steveyegge/bd/internal/config"
 	"github.com/steveyegge/bd/internal/debug"
+	"github.com/steveyegge/bd/internal/project"
 )
 
 // pushState tracks auto-push state in a local file (.bd/push-state.json)
