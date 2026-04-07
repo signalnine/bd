@@ -4,7 +4,7 @@
 
 # bd
 
-**issue tracker for AI agents. 20 commands. one database.**
+**issue tracker for AI agents.**
 
 your agents need somewhere to track work that isn't a markdown file. bd is a dependency-aware task graph on top of [Dolt](https://github.com/dolthub/dolt) (version-controlled SQL). agents create issues, track blockers, close work, keep context across sessions.
 
