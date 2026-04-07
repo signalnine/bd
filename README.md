@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://signalnine.s3.amazonaws.com/disembed-revivalists.jpeg" alt="bd" width="50%" />
+  <img src=".github/hero.jpeg" alt="bd" width="50%" />
 </p>
 
 # bd
