@@ -8,10 +8,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/signalnine/bd/internal/config"
 	"github.com/signalnine/bd/internal/types"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var configCmd = &cobra.Command{

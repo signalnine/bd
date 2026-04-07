@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/spf13/cobra"
 	"github.com/signalnine/bd/internal/config"
+	"github.com/spf13/cobra"
 )
 
 var backupCmd = &cobra.Command{

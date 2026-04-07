@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/spf13/cobra"
 	"github.com/signalnine/bd/internal/config"
 	"github.com/signalnine/bd/internal/configfile"
 	"github.com/signalnine/bd/internal/git"
@@ -19,6 +18,7 @@ import (
 	"github.com/signalnine/bd/internal/storage/embeddeddolt"
 	"github.com/signalnine/bd/internal/ui"
 	"github.com/signalnine/bd/internal/utils"
+	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
 

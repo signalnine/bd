@@ -8,10 +8,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/spf13/cobra"
 	"github.com/signalnine/bd/internal/types"
 	"github.com/signalnine/bd/internal/ui"
 	"github.com/signalnine/bd/internal/utils"
+	"github.com/spf13/cobra"
 )
 
 var stateCmd = &cobra.Command{

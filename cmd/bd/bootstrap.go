@@ -8,12 +8,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/spf13/cobra"
 	"github.com/signalnine/bd/internal/config"
 	"github.com/signalnine/bd/internal/configfile"
 	"github.com/signalnine/bd/internal/project"
 	"github.com/signalnine/bd/internal/storage/embeddeddolt"
 	"github.com/signalnine/bd/internal/storage/versioncontrolops"
+	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
 

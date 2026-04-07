@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/spf13/cobra"
 	"github.com/signalnine/bd/internal/project"
 	"github.com/signalnine/bd/internal/types"
+	"github.com/spf13/cobra"
 )
 
 // issueIDCompletion provides shell completion for issue IDs by querying the storage

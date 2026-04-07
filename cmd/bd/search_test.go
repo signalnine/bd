@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/spf13/cobra"
 	"github.com/signalnine/bd/internal/types"
+	"github.com/spf13/cobra"
 )
 
 // TestSearchCommand_HelpErrorHandling verifies that the search command handles

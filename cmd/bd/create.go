@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/spf13/cobra"
 	"github.com/signalnine/bd/internal/config"
 	"github.com/signalnine/bd/internal/configfile"
 	"github.com/signalnine/bd/internal/debug"
@@ -21,6 +20,7 @@ import (
 	"github.com/signalnine/bd/internal/types"
 	"github.com/signalnine/bd/internal/ui"
 	"github.com/signalnine/bd/internal/validation"
+	"github.com/spf13/cobra"
 )
 
 var createCmd = &cobra.Command{

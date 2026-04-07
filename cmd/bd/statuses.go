@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/spf13/cobra"
 	"github.com/signalnine/bd/internal/types"
 	"github.com/signalnine/bd/internal/ui"
+	"github.com/spf13/cobra"
 )
 
 // builtInStatuses describes the built-in statuses with their categories and descriptions.

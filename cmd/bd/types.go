@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/spf13/cobra"
 	"github.com/signalnine/bd/internal/types"
+	"github.com/spf13/cobra"
 )
 
 // coreWorkTypes are the built-in types that bd validates without configuration.

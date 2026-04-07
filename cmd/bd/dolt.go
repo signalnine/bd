@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/spf13/cobra"
 	"github.com/signalnine/bd/internal/storage/doltutil"
+	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
 

@@ -7,10 +7,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/spf13/cobra"
 	"github.com/signalnine/bd/internal/storage/embeddeddolt"
 	"github.com/signalnine/bd/internal/types"
 	"github.com/signalnine/bd/internal/ui"
+	"github.com/spf13/cobra"
 )
 
 // resolveIDWithRouting resolves a partial issue ID using prefix-based routing.

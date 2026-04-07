@@ -5,9 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/spf13/cobra"
 	"github.com/signalnine/bd/internal/project"
 	"github.com/signalnine/bd/internal/utils"
+	"github.com/spf13/cobra"
 )
 
 // WhereResult contains information about the active bd location

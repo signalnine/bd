@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/spf13/cobra"
 	"github.com/signalnine/bd/internal/audit"
 	"github.com/signalnine/bd/internal/config"
 	"github.com/signalnine/bd/internal/types"
 	"github.com/signalnine/bd/internal/ui"
 	"github.com/signalnine/bd/internal/utils"
 	"github.com/signalnine/bd/internal/validation"
+	"github.com/spf13/cobra"
 )
 
 var closeCmd = &cobra.Command{

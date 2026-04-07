@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/spf13/cobra"
 	"github.com/signalnine/bd/internal/ui"
+	"github.com/spf13/cobra"
 )
 
 var commentCmd = &cobra.Command{

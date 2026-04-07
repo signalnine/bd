@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/spf13/cobra"
 	"github.com/signalnine/bd/internal/configfile"
 	"github.com/signalnine/bd/internal/project"
+	"github.com/spf13/cobra"
 )
 
 var upgradeCmd = &cobra.Command{

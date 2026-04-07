@@ -9,8 +9,8 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"github.com/spf13/cobra"
 	"github.com/signalnine/bd/internal/project"
+	"github.com/spf13/cobra"
 )
 
 var (

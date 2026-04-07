@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 
-	"github.com/spf13/cobra"
 	"github.com/signalnine/bd/internal/types"
 	"github.com/signalnine/bd/internal/ui"
+	"github.com/spf13/cobra"
 )
 
 // StatusOutput represents the complete status output

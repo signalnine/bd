@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/spf13/cobra"
 	"github.com/signalnine/bd/internal/storage"
 	"github.com/signalnine/bd/internal/storage/embeddeddolt"
 	"github.com/signalnine/bd/internal/types"
 	"github.com/signalnine/bd/internal/ui"
+	"github.com/spf13/cobra"
 )
 
 var renameCmd = &cobra.Command{

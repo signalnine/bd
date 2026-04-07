@@ -11,7 +11,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/spf13/cobra"
 	"github.com/signalnine/bd/internal/config"
 	"github.com/signalnine/bd/internal/storage"
 	"github.com/signalnine/bd/internal/storage/embeddeddolt"
@@ -19,6 +18,7 @@ import (
 	"github.com/signalnine/bd/internal/ui"
 	"github.com/signalnine/bd/internal/utils"
 	"github.com/signalnine/bd/internal/validation"
+	"github.com/spf13/cobra"
 )
 
 // storageExecutor handles operations that need a store connection

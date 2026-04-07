@@ -6,7 +6,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/spf13/cobra"
 	"github.com/signalnine/bd/internal/config"
 	"github.com/signalnine/bd/internal/debug"
 	"github.com/signalnine/bd/internal/storage"
@@ -14,6 +13,7 @@ import (
 	"github.com/signalnine/bd/internal/types"
 	"github.com/signalnine/bd/internal/ui"
 	"github.com/signalnine/bd/internal/utils"
+	"github.com/spf13/cobra"
 )
 
 var readyCmd = &cobra.Command{

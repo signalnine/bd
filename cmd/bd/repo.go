@@ -7,10 +7,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/spf13/cobra"
 	"github.com/signalnine/bd/internal/config"
 	"github.com/signalnine/bd/internal/storage"
 	"github.com/signalnine/bd/internal/types"
+	"github.com/spf13/cobra"
 )
 
 var repoCmd = &cobra.Command{
