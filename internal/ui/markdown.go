@@ -1,4 +1,4 @@
-// Package ui provides terminal styling for beads CLI output.
+// Package ui provides terminal styling for bd CLI output.
 package ui
 
 import (
@@ -8,7 +8,7 @@ import (
 	"golang.org/x/term"
 )
 
-// RenderMarkdown renders markdown text using glamour with beads theme colors.
+// RenderMarkdown renders markdown text using glamour with bd theme colors.
 // Returns the rendered markdown or the original text if rendering fails.
 // Word wraps at terminal width (or 80 columns if width can't be detected).
 func RenderMarkdown(markdown string) string {

@@ -124,7 +124,7 @@ func GetGitCommonDir() (string, error) {
 // the worktree-specific directory (e.g., /repo/.git/worktrees/feature/hooks).
 func GetGitHooksDir() (string, error) {
 	// Respect core.hooksPath if configured.
-	// This is used by beads' Dolt backend (hooks installed to .bd/hooks/).
+	// This is used by bd' Dolt backend (hooks installed to .bd/hooks/).
 	cmd := exec.Command("git", "config", "--get", "core.hooksPath")
 	if out, err := cmd.Output(); err == nil {
 		hooksPath := strings.TrimSpace(string(out))

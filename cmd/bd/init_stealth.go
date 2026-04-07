@@ -40,7 +40,7 @@ func setupStealthMode(verbose bool) error {
 	return nil
 }
 
-// setupGitExclude configures .git/info/exclude to ignore beads and claude files
+// setupGitExclude configures .git/info/exclude to ignore bd and claude files
 // This is the correct approach for per-repository user-specific ignores (GitHub #704).
 // Unlike global gitignore, patterns here are relative to the repo root.
 func setupGitExclude(verbose bool) error {
@@ -115,7 +115,7 @@ func setupGitExclude(verbose bool) error {
 // setupForkExclude configures .git/info/exclude for fork workflows (GH#742)
 // Adds bd files and Claude artifacts to keep PRs to upstream clean.
 // This is separate from stealth mode - fork protection is specifically about
-// preventing beads/Claude files from appearing in upstream PRs.
+// preventing bd/claude files from appearing in upstream PRs.
 func setupForkExclude(verbose bool) error {
 	// Use --git-common-dir to get main repo's .git, not worktree's (GH#1053)
 	gitDir, err := exec.Command("git", "rev-parse", "--git-common-dir").Output()
@@ -216,7 +216,7 @@ func promptForkExclude(upstreamURL string, quiet bool) (bool, error) {
 	return response == "" || response == "y" || response == "yes", nil
 }
 
-// setupGlobalGitIgnore configures global gitignore to ignore beads and claude files for a specific project
+// setupGlobalGitIgnore configures global gitignore to ignore bd and claude files for a specific project
 // DEPRECATED: This function uses absolute paths which don't work in gitignore (GitHub #704).
 // Use setupGitExclude instead for new code.
 func setupGlobalGitIgnore(homeDir string, projectPath string, verbose bool) error {
@@ -276,7 +276,7 @@ func setupGlobalGitIgnore(homeDir string, projectPath string, verbose bool) erro
 	}
 
 	// Use absolute paths for this specific project (fixes GitHub #538)
-	// This allows other projects to use beads openly while this one stays stealth
+	// This allows other projects to use bd openly while this one stays stealth
 	bdPattern := projectPath + "/.bd/"
 	claudePattern := projectPath + "/.claude/settings.local.json"
 

@@ -1,4 +1,4 @@
-// Package ui provides terminal styling for beads CLI output.
+// Package ui provides terminal styling for bd CLI output.
 // Uses the Ayu color theme with adaptive light/dark mode support.
 package ui
 

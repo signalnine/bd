@@ -1,7 +1,7 @@
-// Package main demonstrates using Beads as a Go library
+// Package main demonstrates using bd as a Go library
 //
 // This example shows how an external project (like VC) can import and use
-// Beads programmatically instead of spawning CLI processes.
+// bd programmatically instead of spawning CLI processes.
 package main
 
 import (
@@ -16,7 +16,7 @@ import (
 func main() {
 	ctx := context.Background()
 
-	// Find the Beads database (looks for .bd/*.db in current/parent dirs)
+	// Find the bd database (looks for .bd/*.db in current/parent dirs)
 	dbPath := bd.FindDatabasePath()
 	if dbPath == "" {
 		log.Fatal("No bd database found. Run 'bd init' first.")

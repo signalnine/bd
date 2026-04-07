@@ -10,9 +10,9 @@ import (
 	"github.com/signalnine/bd/internal/utils"
 )
 
-// WhereResult contains information about the active beads location
+// WhereResult contains information about the active bd location
 type WhereResult struct {
-	Path           string `json:"path"`                      // Active .beads directory path
+	Path           string `json:"path"`                      // Active .bd directory path
 	RedirectedFrom string `json:"redirected_from,omitempty"` // Original path if redirected
 	Prefix         string `json:"prefix,omitempty"`          // Issue prefix (if detectable)
 	DatabasePath   string `json:"database_path,omitempty"`   // Full path to database file
@@ -34,7 +34,7 @@ Examples:
 	Run: func(cmd *cobra.Command, args []string) {
 		result := WhereResult{}
 
-		// Find the beads directory (this follows redirects)
+		// Find the bd directory (this follows redirects)
 		bdDir := project.FindBdDir()
 		if bdDir == "" {
 			if jsonOutput {
@@ -48,8 +48,8 @@ Examples:
 
 		result.Path = bdDir
 
-		// Check if we got here via redirect by looking for the original .beads directory
-		// Walk up from cwd to find any .beads with a redirect file
+		// Check if we got here via redirect by looking for the original .bd directory
+		// Walk up from cwd to find any .bd with a redirect file
 		originalBdDir := findOriginalBdDir()
 		if originalBdDir != "" && originalBdDir != bdDir {
 			result.RedirectedFrom = originalBdDir
@@ -92,8 +92,8 @@ Examples:
 	},
 }
 
-// findOriginalBdDir walks up from cwd looking for a .beads directory with a redirect file
-// Returns the original .beads path if found, empty string otherwise
+// findOriginalBdDir walks up from cwd looking for a .bd directory with a redirect file
+// Returns the original .bd path if found, empty string otherwise
 func findOriginalBdDir() string {
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -115,7 +115,7 @@ func findOriginalBdDir() string {
 		return ""
 	}
 
-	// Walk up directory tree looking for .beads with redirect
+	// Walk up directory tree looking for .bd with redirect
 	for dir := cwd; dir != "/" && dir != "."; {
 		bdDir := filepath.Join(dir, ".bd")
 		if info, err := os.Stat(bdDir); err == nil && info.IsDir() {
@@ -123,7 +123,7 @@ func findOriginalBdDir() string {
 			if _, err := os.Stat(redirectFile); err == nil {
 				return bdDir
 			}
-			// Found .beads without redirect - this is the actual location
+			// Found .bd without redirect - this is the actual location
 			return ""
 		}
 
@@ -141,7 +141,7 @@ func findOriginalBdDir() string {
 	return ""
 }
 
-// detectPrefixFromDir tries to detect the issue prefix from files in the beads directory.
+// detectPrefixFromDir tries to detect the issue prefix from files in the bd directory.
 // Returns empty string if prefix cannot be determined.
 func detectPrefixFromDir(_ string) string {
 	return ""

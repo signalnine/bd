@@ -14,7 +14,7 @@ import (
 )
 
 // GetIssueByExternalRefInTx looks up an issue by its external_ref field.
-// Checks both issues and wisps tables so that pushed ephemeral beads are
+// Checks both issues and wisps tables so that pushed ephemeral bd are
 // found during pull dedup.
 // Returns the issue ID if found. Returns storage.ErrNotFound (wrapped) if not found.
 func GetIssueByExternalRefInTx(ctx context.Context, tx *sql.Tx, externalRef string) (string, error) {

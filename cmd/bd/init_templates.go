@@ -92,7 +92,7 @@ func createConfigYaml(bdDir string, noDbMode bool, prefix string) error {
 	return nil
 }
 
-// createReadme creates the README.md file in the .beads directory
+// createReadme creates the README.md file in the .bd directory
 func createReadme(bdDir string) error {
 	readmePath := filepath.Join(bdDir, "README.md")
 

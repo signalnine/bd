@@ -9,7 +9,7 @@ import (
 	"github.com/signalnine/bd/internal/types"
 )
 
-// coreWorkTypes are the built-in types that beads validates without configuration.
+// coreWorkTypes are the built-in types that bd validates without configuration.
 var coreWorkTypes = []struct {
 	Type        types.IssueType
 	Description string

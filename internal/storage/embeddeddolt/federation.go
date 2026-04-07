@@ -21,7 +21,7 @@ import (
 )
 
 // credentialKeyFile is the filename for the random encryption key.
-const credentialKeyFile = ".beads-credential-key" //nolint:gosec // G101: filename, not a credential
+const credentialKeyFile = ".bd-credential-key" //nolint:gosec // G101: filename, not a credential
 
 // ensureCredentialKey lazily initializes the credential encryption key.
 func (s *EmbeddedDoltStore) ensureCredentialKey() error {

@@ -53,10 +53,10 @@ shared across all clones of this repository.`,
 		repoPath := args[0]
 
 		if isRemoteURL(repoPath) {
-			// Remote URL: skip local .beads directory validation
+			// Remote URL: skip local .bd directory validation
 			fmt.Fprintf(os.Stderr, "Adding remote repository: %s\n", repoPath)
 		} else {
-			// Local path: validate .beads directory exists
+			// Local path: validate .bd directory exists
 			expandedPath := repoPath
 			if len(repoPath) > 0 && repoPath[0] == '~' {
 				home, err := os.UserHomeDir()

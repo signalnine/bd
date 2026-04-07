@@ -1,4 +1,4 @@
-// Package ui provides terminal styling and pager support for beads CLI output.
+// Package ui provides terminal styling and pager support for bd CLI output.
 package ui
 
 import (

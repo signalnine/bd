@@ -97,7 +97,7 @@ func WarnError(format string, args ...interface{}) {
 
 // CheckReadonly exits with an error if readonly mode is enabled.
 // Call this at the start of write commands (create, update, close, delete, sync, etc.).
-// Used by worker sandboxes that should only read beads, not modify them.
+// Used by worker sandboxes that should only read bd, not modify them.
 //
 // Example:
 //

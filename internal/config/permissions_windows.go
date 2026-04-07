@@ -14,7 +14,7 @@ const (
 	BdFilePerm fs.FileMode = 0600
 )
 
-// EnsureBdDir creates the .beads directory with secure permissions.
+// EnsureBdDir creates the .bd directory with secure permissions.
 func EnsureBdDir(path string) error {
 	return os.MkdirAll(path, BdDirPerm)
 }

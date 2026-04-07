@@ -131,7 +131,7 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 			// Non-fatal - continue with defaults
 		}
 
-		// Safety guard: check for existing beads data
+		// Safety guard: check for existing bd data
 		// This prevents accidental re-initialization
 		if !force {
 			if err := checkExistingBdData(prefix); err != nil {
@@ -250,7 +250,7 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 		}
 
 		// Determine if we should create .bd/ directory in CWD or main repo root
-		// For worktrees, .beads should always be in the main repository root
+		// For worktrees, .bd should always be in the main repository root
 		cwd, err := os.Getwd()
 		if err != nil {
 			FatalError("failed to get current directory: %v", err)
@@ -262,7 +262,7 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 		// to ensure consistent path representation.
 		bdDir := bdDirForInit
 
-		// Prevent nested .beads directories
+		// Prevent nested .bd directories
 		// Check if current working directory is inside a .bd directory
 		if strings.Contains(filepath.Clean(cwd), string(filepath.Separator)+".bd"+string(filepath.Separator)) ||
 			strings.HasSuffix(filepath.Clean(cwd), string(filepath.Separator)+".bd") {
@@ -295,7 +295,7 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 		useLocalBd := !hasExplicitBdDir || filepath.Clean(initDBDirAbs) == filepath.Clean(bdDirAbs)
 
 		if useLocalBd {
-			// Create .beads directory with owner-only permissions (0700).
+			// Create .bd directory with owner-only permissions (0700).
 			if err := os.MkdirAll(bdDir, config.BdDirPerm); err != nil {
 				if os.IsPermission(err) {
 					if runtime.GOOS == "windows" {
@@ -314,7 +314,7 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 				FatalError("failed to create .bd directory: %v", err)
 			}
 
-			// Create/update .gitignore in .beads directory (only if missing)
+			// Create/update .gitignore in .bd directory (only if missing)
 			gitignorePath := filepath.Join(bdDir, ".gitignore")
 			if _, err := os.Stat(gitignorePath); os.IsNotExist(err) {
 				bdGitignore := "*.db\n*.db-shm\n*.db-wal\n.dolt/\n"
@@ -932,12 +932,12 @@ func migrateOldDatabases(targetPath string, quiet bool) error {
 		return nil
 	}
 
-	// Create .beads directory if it doesn't exist
+	// Create .bd directory if it doesn't exist
 	if err := os.MkdirAll(targetDir, 0750); err != nil {
 		return fmt.Errorf("failed to create .bd directory: %w", err)
 	}
 
-	// Look for existing .db files in the .beads directory
+	// Look for existing .db files in the .bd directory
 	pattern := filepath.Join(targetDir, "*.db")
 	matches, err := filepath.Glob(pattern)
 	if err != nil {
@@ -985,7 +985,7 @@ func migrateOldDatabases(targetPath string, quiet bool) error {
 // checkExistingBdDataAt checks for existing database at a specific bdDir path.
 // This is extracted to support both BD_DIR and CWD-based resolution.
 func checkExistingBdDataAt(bdDir string, prefix string) error {
-	// Check if .beads directory exists
+	// Check if .bd directory exists
 	if _, err := os.Stat(bdDir); os.IsNotExist(err) {
 		return nil // No .bd directory, safe to init
 	}
@@ -1155,7 +1155,7 @@ func checkExistingBdData(prefix string) error {
 		return nil // Can't determine CWD, allow init to proceed
 	}
 
-	// Determine where to check for .beads directory
+	// Determine where to check for .bd directory
 	// Guard with isGitRepo() check first - on Windows, git commands may hang
 	// when run outside a git repository (GH#727)
 	var bdDir string

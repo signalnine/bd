@@ -25,7 +25,7 @@ func acquireEmbeddedLock(bdDir string) (embeddeddolt.Unlocker, error) {
 	return embeddeddolt.TryLock(dataDir)
 }
 
-// newDoltStoreFromConfig creates an embedded storage backend from the beads
+// newDoltStoreFromConfig creates an embedded storage backend from the bd
 // directory's persisted metadata.json configuration.
 func newDoltStoreFromConfig(ctx context.Context, bdDir string) (*embeddeddolt.EmbeddedDoltStore, error) {
 	cfg, err := configfile.Load(bdDir)
@@ -36,7 +36,7 @@ func newDoltStoreFromConfig(ctx context.Context, bdDir string) (*embeddeddolt.Em
 	return embeddeddolt.New(ctx, bdDir, database, "main")
 }
 
-// newReadOnlyStoreFromConfig creates a read-only storage backend from the beads
+// newReadOnlyStoreFromConfig creates a read-only storage backend from the bd
 // directory's persisted metadata.json configuration.
 func newReadOnlyStoreFromConfig(ctx context.Context, bdDir string) (*embeddeddolt.EmbeddedDoltStore, error) {
 	// Embedded dolt is single-process so read-only is not enforced at the engine level.

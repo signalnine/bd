@@ -15,7 +15,7 @@ type StateCorruptor struct {
 	t     *testing.T
 }
 
-// NewStateCorruptor creates a corruptor targeting the given .beads directory.
+// NewStateCorruptor creates a corruptor targeting the given .bd directory.
 func NewStateCorruptor(t *testing.T, bdDir string) *StateCorruptor {
 	t.Helper()
 	return &StateCorruptor{BdDir: bdDir, t: t}

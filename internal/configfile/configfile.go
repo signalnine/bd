@@ -27,7 +27,7 @@ type Config struct {
 	DoltServerHost     string `json:"dolt_server_host,omitempty"`     // Server host (default: 127.0.0.1)
 	DoltServerPort     int    `json:"dolt_server_port,omitempty"`     // Server port (default: 3307)
 	DoltServerUser     string `json:"dolt_server_user,omitempty"`     // MySQL user (default: root)
-	DoltDatabase       string `json:"dolt_database,omitempty"`        // SQL database name (default: beads)
+	DoltDatabase       string `json:"dolt_database,omitempty"`        // SQL database name (default: bd)
 	DoltServerTLS      bool   `json:"dolt_server_tls,omitempty"`      // Enable TLS for server connections (required for Hosted Dolt)
 	DoltDataDir        string `json:"dolt_data_dir,omitempty"`        // Custom dolt data directory (absolute path; default: .bd/dolt)
 	DoltRemotesAPIPort int    `json:"dolt_remotesapi_port,omitempty"` // Dolt remotesapi port for federation (default: 8080)
@@ -141,7 +141,7 @@ func (c *Config) DatabasePath(bdDir string) string {
 		return c.Database
 	}
 	// Always use "dolt" as the directory name.
-	// Stale values like "town", "wyvern", "beads_rig" caused split-brain (see DOLT-HEALTH-P0.md).
+	// Stale values like "town", "wyvern", "bd_rig" caused split-brain (see DOLT-HEALTH-P0.md).
 	return filepath.Join(bdDir, "dolt")
 }
 
@@ -180,7 +180,7 @@ const (
 // single-process-only unless using server mode.
 type BackendCapabilities struct {
 	// SingleProcessOnly indicates the backend must not be accessed from multiple
-	// Beads OS processes concurrently.
+	// bd OS processes concurrently.
 	SingleProcessOnly bool
 }
 
@@ -321,7 +321,7 @@ func (c *Config) GetDoltDatabase() string {
 // Checks in order:
 //  1. BD_DOLT_PASSWORD env var (highest priority, existing behavior)
 //  2. Credentials file lookup by [host:port] section
-//     (path from BD_CREDENTIALS_FILE env var, or ~/.config/beads/credentials)
+//     (path from BD_CREDENTIALS_FILE env var, or ~/.config/bd/credentials)
 //  3. Empty string (no password)
 //
 // Note: uses the port from configfile (metadata.json / env var), which may differ

@@ -16,7 +16,7 @@ import (
 // --- Dolt-native backup commands ---
 //
 // These wrap Dolt's built-in backup feature (CALL DOLT_BACKUP(...)) for standalone
-// users who want their beads database backed up to a filesystem path, NAS, or DoltHub.
+// users who want their bd database backed up to a filesystem path, NAS, or DoltHub.
 //
 // Unlike the JSONL backup (bd backup), Dolt backups preserve full commit history
 // and are faster for large databases.
@@ -73,7 +73,7 @@ After adding, run 'bd backup sync' to push your data.`,
 			}
 		}
 
-		// Store the backup config in beads metadata for status display
+		// Store the backup config in bd metadata for status display
 		if err := saveDoltBackupConfig(backupURL); err != nil {
 			fmt.Fprintf(os.Stderr, "Warning: backup registered but failed to save config: %v\n", err)
 		}

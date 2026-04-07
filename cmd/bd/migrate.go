@@ -49,7 +49,7 @@ Subcommands:
 			return
 		}
 
-		// Find .beads directory
+		// Find .bd directory
 		bdDir := project.FindBdDir()
 		if bdDir == "" {
 			if jsonOutput {
@@ -283,7 +283,7 @@ func loadOrCreateConfig(bdDir string) (*configfile.Config, error) {
 }
 
 func handleUpdateRepoID(dryRun bool, autoYes bool) {
-	// Find .beads directory
+	// Find .bd directory
 	bdDir := project.FindBdDir()
 	if bdDir == "" {
 		if jsonOutput {
@@ -397,7 +397,7 @@ func handleUpdateRepoID(dryRun bool, autoYes bool) {
 
 // handleInspect shows migration plan and database state for AI agent analysis
 func handleInspect() {
-	// Find .beads directory
+	// Find .bd directory
 	bdDir := project.FindBdDir()
 	if bdDir == "" {
 		if jsonOutput {
@@ -542,7 +542,7 @@ func handleToSeparateBranch(branch string, dryRun bool) {
 		FatalErrorWithHint(fmt.Sprintf("invalid branch name '%s'", branch), "branch name cannot be empty or contain whitespace")
 	}
 
-	// Find .beads directory
+	// Find .bd directory
 	bdDir := project.FindBdDir()
 	if bdDir == "" {
 		if jsonOutput {

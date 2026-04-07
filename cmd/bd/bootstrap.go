@@ -54,15 +54,15 @@ Examples:
 		// Resolve non-interactive mode: flag > env var > CI env > terminal detection.
 		nonInteractive := isNonInteractiveBootstrap(yesFlag || nonInteractiveFlag)
 
-		// Find beads directory
+		// Find bd directory
 		bdDir := project.FindBdDir()
 		if bdDir == "" {
 			// No .bd directory exists yet. Before giving up, probe the
-			// git remote for existing Beads data (refs/dolt/data). This is
-			// the "fresh second clone" case: clone1 pushed Beads state to
+			// git remote for existing bd data (refs/dolt/data). This is
+			// the "fresh second clone" case: clone1 pushed bd state to
 			// origin, and clone2 needs to bootstrap from it. (GH#2792)
 			//
-			// If found, synthesize the theoretical .beads path and fall
+			// If found, synthesize the theoretical .bd path and fall
 			// through to the normal detectBootstrapAction + executeBootstrapPlan
 			// flow. Actual directory creation is deferred to executeSyncAction
 			// to preserve --dry-run semantics.
@@ -80,7 +80,7 @@ Examples:
 		}
 
 		if bdDir == "" {
-			// No .beads and no remote data — nothing to bootstrap from.
+			// No .bd and no remote data — nothing to bootstrap from.
 			if jsonOutput {
 				outputJSON(map[string]interface{}{
 					"action":     "none",
@@ -309,8 +309,8 @@ func executeJSONLImportAction(_ context.Context, _ BootstrapPlan, _ *configfile.
 }
 
 func executeSyncAction(ctx context.Context, plan BootstrapPlan, cfg *configfile.Config) error {
-	// Ensure .beads directory exists -- it may not in the "fresh clone"
-	// bootstrap path where we detected remote data before .beads was
+	// Ensure .bd directory exists -- it may not in the "fresh clone"
+	// bootstrap path where we detected remote data before .bd was
 	// created. Deferred here to preserve --dry-run semantics. (GH#2792)
 	if err := os.MkdirAll(plan.BdDir, 0o750); err != nil {
 		return fmt.Errorf("create bd directory: %w", err)

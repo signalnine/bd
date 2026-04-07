@@ -1,4 +1,4 @@
-// Package ui provides terminal styling and output helpers for beads CLI.
+// Package ui provides terminal styling and output helpers for bd CLI.
 package ui
 
 import (

@@ -14,7 +14,7 @@ import (
 
 // openReadOnlyStoreForDBPath reopens a read-only store from an existing dbPath
 // while preserving repo-local metadata such as dolt_database and the resolved
-// Dolt server port. Falls back to deriving the beads directory from the dbPath
+// Dolt server port. Falls back to deriving the bd directory from the dbPath
 // parent when no matching metadata.json can be found.
 func openReadOnlyStoreForDBPath(ctx context.Context, dbPath string) (*embeddeddolt.EmbeddedDoltStore, error) {
 	if dbPath == "" {
@@ -25,11 +25,11 @@ func openReadOnlyStoreForDBPath(ctx context.Context, dbPath string) (*embeddeddo
 		return newReadOnlyStoreFromConfig(ctx, bdDir)
 	}
 
-	// Fallback: derive beads dir from dbPath parent directory.
+	// Fallback: derive bd dir from dbPath parent directory.
 	return newReadOnlyStoreFromConfig(ctx, filepath.Dir(dbPath))
 }
 
-// resolveBdDirForDBPath maps a database path back to its owning .beads
+// resolveBdDirForDBPath maps a database path back to its owning .bd
 // directory when metadata.json is available. This is needed for repos that use
 // non-default dolt_database names or custom dolt_data_dir locations.
 func resolveBdDirForDBPath(dbPath string) string {

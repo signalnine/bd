@@ -106,7 +106,7 @@ func runChecks(jsonOutput, skipLint bool) {
 	fmtResult := runFmtCheck()
 	results = append(results, fmtResult)
 
-	// Run beads pollution check
+	// Run bd pollution check
 	bdResult := runBdPollutionCheck()
 	results = append(results, bdResult)
 

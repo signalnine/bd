@@ -638,9 +638,9 @@ var listCmd = &cobra.Command{
 			pinned := true
 			filter.Pinned = &pinned
 		} else if noPinnedFlag || (status != "pinned" && status != "hooked" && !allFlag) {
-			// Exclude pinned beads by default — they are permanent references,
+			// Exclude pinned bd by default — they are permanent references,
 			// not actionable work items. Use --pinned or --all to see them. (bd-uhcg)
-			// Also skip exclusion for --status=hooked: beads transitioning from
+			// Also skip exclusion for --status=hooked: bd transitioning from
 			// pinned to hooked retain the legacy pinned=1 column, and excluding
 			// them breaks gt hook status detection (bd-pr-sheriff bug).
 			pinned := false
@@ -662,7 +662,7 @@ var listCmd = &cobra.Command{
 
 		// Infra type filtering: exclude configured infra types by default.
 		// These types live in the wisps table after migration 007.
-		// Use --include-infra or --type=agent to show infra beads.
+		// Use --include-infra or --type=agent to show infra issues.
 		infraTypes := storage.DefaultInfraTypes()
 		if store != nil {
 			infraSet := store.GetInfraTypes(rootCtx)
@@ -694,7 +694,7 @@ var listCmd = &cobra.Command{
 		}
 
 		// When explicitly requesting an infra type, search the wisps table
-		// (where infra beads live after migration 007).
+		// (where infra bd live after migration 007).
 		if isInfra(issueType) {
 			ephemeral := true
 			filter.Ephemeral = &ephemeral

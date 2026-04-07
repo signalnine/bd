@@ -21,7 +21,7 @@ const localVersionFile = ".local_version"
 // This function is best-effort - failures are silent to avoid disrupting commands.
 // Sets global variables versionUpgradeDetected and previousVersion if upgrade detected.
 func trackBdVersion() {
-	// Find the beads directory
+	// Find the bd directory
 	bdDir := project.FindBdDir()
 	if bdDir == "" {
 		// No .bd directory found - this is fine (e.g., bd init, bd version, etc.)
@@ -138,7 +138,7 @@ func maybeShowUpgradeNotification() {
 //
 // IMPORTANT: This must be called BEFORE opening the database to avoid opening DB twice.
 //
-// bdDir is the path to the .beads directory.
+// bdDir is the path to the .bd directory.
 func autoMigrateOnVersionBump(bdDir string) {
 	// Only migrate if version upgrade was detected
 	if !versionUpgradeDetected {

@@ -401,7 +401,7 @@ Examples:
 			os.Exit(1)
 		}
 
-		// Find repo root by walking up to find .beads directory
+		// Find repo root by walking up to find .bd directory
 		repoPath := findBdRepoRoot(cwd)
 		if repoPath == "" {
 			fmt.Fprintf(os.Stderr, "Error: not in a bd repository (no .bd directory found)\n")
@@ -485,7 +485,7 @@ func isValidRemoteURL(url string) bool {
 		strings.HasPrefix(url, "git+")
 }
 
-// findBdRepoRoot walks up from the given path to find the repo root (containing .beads)
+// findBdRepoRoot walks up from the given path to find the repo root (containing .bd)
 func findBdRepoRoot(startPath string) string {
 	path := startPath
 	for {

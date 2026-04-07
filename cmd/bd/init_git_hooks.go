@@ -205,7 +205,7 @@ func installGitHooks() error {
 }
 
 // buildPreCommitHook generates the pre-commit hook content using section markers (GH#1380).
-// If chainHooks is true, chained hooks (.old) are called before the beads section.
+// If chainHooks is true, chained hooks (.old) are called before the bd section.
 func buildPreCommitHook(chainHooks bool, existingHooks []hookInfo) string {
 	section := generateHookSection("pre-commit")
 

@@ -275,7 +275,7 @@ func BuildIssueFilterClauses(query string, filter types.IssueFilter, tables Filt
 	return whereClauses, args, nil
 }
 
-// LooksLikeIssueID returns true if the query string looks like a beads issue ID.
+// LooksLikeIssueID returns true if the query string looks like a bd issue ID.
 func LooksLikeIssueID(query string) bool {
 	idx := strings.Index(query, "-")
 	if idx <= 0 || idx >= len(query)-1 {

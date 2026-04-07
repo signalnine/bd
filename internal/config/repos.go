@@ -21,7 +21,7 @@ type configFile struct {
 	root yaml.Node
 }
 
-// FindConfigYAMLPath finds the config.yaml file in .beads directory
+// FindConfigYAMLPath finds the config.yaml file in .bd directory
 // Walks up from CWD to find .bd/config.yaml
 func FindConfigYAMLPath() (string, error) {
 	cwd, err := os.Getwd()

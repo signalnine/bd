@@ -179,7 +179,7 @@ func getGitBranch() (string, error) {
 	return strings.TrimSpace(string(output)), nil
 }
 
-// createSyncBranch creates a new branch for beads sync
+// createSyncBranch creates a new branch for bd sync
 // Uses CWD repo context since this is for user's project configuration
 func createSyncBranch(branchName string) error {
 	rc, err := project.GetRepoContext()

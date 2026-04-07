@@ -374,7 +374,7 @@ var createCmd = &cobra.Command{
 			targetBdDir := routing.ExpandPath(repoPath)
 			debug.Logf("DEBUG: Routing to target repo: %s\n", targetBdDir)
 
-			// Ensure target beads directory exists with prefix inheritance
+			// Ensure target bd directory exists with prefix inheritance
 			if err := ensureBdDirForPath(rootCtx, targetBdDir, store); err != nil {
 				FatalError("failed to initialize target repo: %v", err)
 			}
@@ -433,7 +433,7 @@ var createCmd = &cobra.Command{
 		if explicitID != "" {
 			// Basic format validation for all issue types.
 			// Note: Orchestrator-specific agent ID validation (mayor, polecat, witness, etc.)
-			// is handled by the orchestrator, not beads core.
+			// is handled by the orchestrator, not bd core.
 			_, err := validation.ValidateIDFormat(explicitID)
 			if err != nil {
 				FatalError("%v", err)
@@ -764,20 +764,20 @@ func formatTimeForRPC(t *time.Time) string {
 	return t.Format(time.RFC3339)
 }
 
-// ensureBdDirForPath ensures a beads directory exists at the target path.
-// If the .beads directory doesn't exist, it creates it and initializes with
+// ensureBdDirForPath ensures a bd directory exists at the target path.
+// If the .bd directory doesn't exist, it creates it and initializes with
 // the same prefix as the source store (T010, T012: prefix inheritance).
 func ensureBdDirForPath(ctx context.Context, targetPath string, sourceStore *embeddeddolt.EmbeddedDoltStore) error {
 	bdDir := filepath.Join(targetPath, ".bd")
 	metadataPath := filepath.Join(bdDir, "metadata.json")
 
-	// Check if beads directory already exists with a Dolt database.
-	// metadata.json is the canonical marker for an initialized beads dir.
+	// Check if bd directory already exists with a Dolt database.
+	// metadata.json is the canonical marker for an initialized bd dir.
 	if _, err := os.Stat(metadataPath); err == nil {
 		return nil
 	}
 
-	// Create .beads directory
+	// Create .bd directory
 	if err := os.MkdirAll(bdDir, 0750); err != nil {
 		return fmt.Errorf("cannot create .bd directory: %w", err)
 	}
@@ -791,7 +791,7 @@ func ensureBdDirForPath(ctx context.Context, targetPath string, sourceStore *emb
 			dbName := strings.ReplaceAll(sourcePrefix, "-", "_")
 
 			// Open target store temporarily to set prefix.
-			// Use newDoltStore with explicit config since the target .beads
+			// Use newDoltStore with explicit config since the target .bd
 			// directory was just created and has no metadata.json yet.
 			tempStore, err := newDoltStore(ctx, bdDir, dbName)
 			if err != nil {

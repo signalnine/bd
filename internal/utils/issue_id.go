@@ -8,7 +8,7 @@ import (
 
 // ExtractIssuePrefix extracts the prefix from an issue ID like "bd-123" -> "bd"
 // Uses the last hyphen before a numeric or hash-like suffix:
-//   - "beads-vscode-1" -> "beads-vscode" (numeric suffix)
+//   - "bd-vscode-1" -> "bd-vscode" (numeric suffix)
 //   - "web-app-a3f8e9" -> "web-app" (hash suffix with digits)
 //   - "my-cool-app-123" -> "my-cool-app" (numeric suffix)
 //   - "bd-a3f" -> "bd" (3-char hash)
@@ -20,7 +20,7 @@ import (
 // This distinguishes hash IDs (which may contain letters but have digits or are 3 chars)
 // from multi-part IDs where the suffix after the first hyphen is the entire ID.
 func ExtractIssuePrefix(issueID string) string {
-	// Try last hyphen first (handles multi-part prefixes like "beads-vscode-1")
+	// Try last hyphen first (handles multi-part prefixes like "bd-vscode-1")
 	lastIdx := strings.LastIndex(issueID, "-")
 	if lastIdx <= 0 {
 		return ""
@@ -78,7 +78,7 @@ func isNumeric(s string) bool {
 //   - 4-char: 36⁴ = 1.6M hashes, ~3000 words = ~0.2% (digit requirement is safe)
 //   - 5+ char: collision rate negligible
 //
-// Hash IDs in beads use adaptive length scaling from 3-8 characters.
+// Hash IDs in bd use adaptive length scaling from 3-8 characters.
 func isLikelyHash(s string) bool {
 	if len(s) < 3 || len(s) > 8 {
 		return false

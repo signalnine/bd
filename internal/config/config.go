@@ -59,7 +59,7 @@ func Initialize() error {
 	// 1. Project: walk up from CWD to find .bd/config.yaml
 	cwd, err := os.Getwd()
 	if err == nil {
-		// In the beads repo, `.bd/config.yaml` is tracked and may set non-default config values.
+		// In the bd repo, `.bd/config.yaml` is tracked and may set non-default config values.
 		// In `go test` (especially for `cmd/bd`), we want to avoid unintentionally picking up
 		// the repo-local config, while still allowing tests to load config.yaml from temp repos.
 		//
@@ -130,7 +130,7 @@ func Initialize() error {
 	v.SetDefault("identity", "")
 
 	// Dolt configuration defaults
-	// Controls whether beads should automatically create Dolt commits after write commands.
+	// Controls whether bd should automatically create Dolt commits after write commands.
 	// Values: off | on
 	v.SetDefault("dolt.auto-commit", "on")
 
@@ -144,7 +144,7 @@ func Initialize() error {
 	v.SetDefault("sync.require_confirmation_on_mass_delete", false)
 
 	// Federation configuration (optional Dolt remote)
-	v.SetDefault("federation.remote", "")      // e.g., dolthub://org/beads, gs://bucket/beads, s3://bucket/beads
+	v.SetDefault("federation.remote", "")      // e.g., dolthub://org/bd, gs://bucket/bd, s3://bucket/bd
 	v.SetDefault("federation.sovereignty", "") // T1 | T2 | T3 | T4 (empty = no restriction)
 
 	// Push configuration defaults
@@ -174,8 +174,8 @@ func Initialize() error {
 	v.SetDefault("hierarchy.max-depth", 3)
 
 	// Git configuration defaults (GH#600)
-	v.SetDefault("git.author", "")         // Override commit author (e.g., "beads-bot <beads@example.com>")
-	v.SetDefault("git.no-gpg-sign", false) // Disable GPG signing for beads commits
+	v.SetDefault("git.author", "")         // Override commit author (e.g., "bd-bot <bd@example.com>")
+	v.SetDefault("git.no-gpg-sign", false) // Disable GPG signing for bd commits
 
 	// Directory-aware label scoping (GH#541)
 	// Maps directory patterns to labels for automatic filtering in monorepos
@@ -189,7 +189,7 @@ func Initialize() error {
 
 	// Auto-export: write git-tracked JSONL after mutations for portability
 	// When no Dolt remote is configured, this is the primary way to share
-	// beads state (issues + memories) across machines via git.
+	// bd state (issues + memories) across machines via git.
 	v.SetDefault("export.auto", false)
 	v.SetDefault("export.interval", "60s")
 	v.SetDefault("export.path", "export.jsonl") // relative to .bd/
@@ -666,7 +666,7 @@ func ResolveExternalProjectPath(projectName string) string {
 	}
 
 	// Resolve relative paths from repo root (parent of .bd/), NOT CWD.
-	// This ensures paths like "../beads" in config resolve correctly
+	// This ensures paths like "../bd" in config resolve correctly
 	// when running from different directories.
 	if !filepath.IsAbs(path) {
 		// Config is at .bd/config.yaml, so go up twice to get repo root
@@ -729,7 +729,7 @@ func GetIdentity(flagValue string) string {
 
 // FederationConfig holds the federation (Dolt remote) configuration.
 type FederationConfig struct {
-	Remote      string      // dolthub://org/beads, gs://bucket/beads, s3://bucket/beads
+	Remote      string      // dolthub://org/bd, gs://bucket/bd, s3://bucket/bd
 	Sovereignty Sovereignty // T1, T2, T3, T4
 }
 

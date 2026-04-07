@@ -159,7 +159,7 @@ func runContributorWizard(ctx context.Context, store *embeddeddolt.EmbeddedDoltS
 			return fmt.Errorf("failed to initialize git in planning repo: %w", err)
 		}
 
-		// Initialize beads in planning repo
+		// Initialize bd in planning repo
 		bdDir := filepath.Join(planningPath, ".bd")
 		if err := os.MkdirAll(bdDir, 0750); err != nil {
 			return fmt.Errorf("failed to create .bd in planning repo: %w", err)
@@ -235,7 +235,7 @@ Created by: bd init --contributor
 	fmt.Printf("%s Hydration enabled for planning repo\n", ui.RenderPass("✓"))
 	fmt.Println("  Issues from planning repo will appear in 'bd list'")
 
-	// If this is a fork, configure sync to pull beads from upstream (bd-bx9)
+	// If this is a fork, configure sync to pull bd from upstream (bd-bx9)
 	// This ensures `bd dolt pull` gets the latest issues from the source repo,
 	// not from the fork's potentially outdated origin/main
 	if isFork {

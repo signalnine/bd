@@ -2,7 +2,7 @@ package main
 
 // hooks_nuclear.go provides the git hooks infrastructure needed by init_git_hooks.go
 // and other files after hooks.go was deleted during nuclear simplification.
-// Source: ported from cmd/bd/hooks.go in the main beads repo.
+// Source: ported from cmd/bd/hooks.go in the main bd repo.
 
 import (
 	"bufio"
@@ -63,7 +63,7 @@ func generateHookSection(hookName string) string {
 		hookSectionEndLine() + "\n"
 }
 
-// injectHookSection merges the beads section into existing hook file content.
+// injectHookSection merges the bd section into existing hook file content.
 func injectHookSection(existing, section string) string {
 	return injectHookSectionWithDepth(existing, section, 0)
 }

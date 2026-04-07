@@ -205,7 +205,7 @@ func prepareSelectedNoDBContext(bdDir string) {
 }
 
 // resolveCommandBdDir maps a discovered Dolt data path back to the owning
-// .beads directory. filepath.Dir(dbPath) only works when the Dolt data lives
+// .bd directory. filepath.Dir(dbPath) only works when the Dolt data lives
 // under .bd/dolt; custom dolt_data_dir values can place it elsewhere.
 func resolveCommandBdDir(dbPath string) string {
 	if dbPath == "" {
@@ -565,8 +565,8 @@ var rootCmd = &cobra.Command{
 				// Invariant: dbPath must always be absolute. Use CanonicalizePath for OS-agnostic
 				// handling (symlinks, case normalization on macOS).
 				//
-				// IMPORTANT: Use FindBdDir() to get the correct .beads directory,
-				// which follows redirect files. Without this, a redirected .beads
+				// IMPORTANT: Use FindBdDir() to get the correct .bd directory,
+				// which follows redirect files. Without this, a redirected .bd
 				// would create a local database instead of using the redirect target.
 				// (GH#bd-0qel)
 				targetBdDir := project.FindBdDir()
@@ -655,7 +655,7 @@ var rootCmd = &cobra.Command{
 		}
 
 		// Initialize hook runner
-		// dbPath is .bd/something.db, so workspace root is parent of .beads
+		// dbPath is .bd/something.db, so workspace root is parent of .bd
 		if dbPath != "" {
 			bdDir := filepath.Dir(dbPath)
 			hookRunner = hooks.NewRunner(filepath.Join(bdDir, "hooks"))

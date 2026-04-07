@@ -1,4 +1,4 @@
-// Package beads provides a minimal public API for extending bd with custom orchestration.
+// Package bd provides a minimal public API for extending bd with custom orchestration.
 //
 // Most extensions should use direct SQL queries against bd's database.
 // This package exports only the essential types and functions needed for
@@ -43,7 +43,7 @@ type (
 	StatusEntry = storage.StatusEntry
 )
 
-// Open opens an embedded Dolt beads database at the given path.
+// Open opens an embedded Dolt bd database at the given path.
 func Open(ctx context.Context, bdDir string) (*Store, error) {
 	return embeddeddolt.New(ctx, bdDir, "bd", "main")
 }
@@ -59,18 +59,18 @@ func FindBdDir() string {
 	return project.FindBdDir()
 }
 
-// DatabaseInfo contains information about a beads database
+// DatabaseInfo contains information about a bd database
 type DatabaseInfo = project.DatabaseInfo
 
-// FindAllDatabases finds all beads databases in the system
+// FindAllDatabases finds all bd databases in the system
 func FindAllDatabases() []DatabaseInfo {
 	return project.FindAllDatabases()
 }
 
-// RedirectInfo contains information about a beads directory redirect
+// RedirectInfo contains information about a bd directory redirect
 type RedirectInfo = project.RedirectInfo
 
-// GetRedirectInfo checks if the current beads directory is redirected.
+// GetRedirectInfo checks if the current bd directory is redirected.
 // Returns RedirectInfo with IsRedirected=true if a redirect is active.
 func GetRedirectInfo() RedirectInfo {
 	return project.GetRedirectInfo()

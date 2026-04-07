@@ -16,7 +16,7 @@ type Diagnostics struct {
 	bdDir string
 }
 
-// NewDiagnostics creates a diagnostics collector for the given .beads directory.
+// NewDiagnostics creates a diagnostics collector for the given .bd directory.
 func NewDiagnostics(t *testing.T, bdDir string) *Diagnostics {
 	return &Diagnostics{t: t, bdDir: bdDir}
 }

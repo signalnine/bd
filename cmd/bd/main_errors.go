@@ -10,7 +10,7 @@ import (
 
 // isFreshCloneError checks if the error is due to a fresh clone scenario
 // where the database exists but is missing required config (like issue_prefix).
-// This happens when someone clones a repo with beads but needs to initialize.
+// This happens when someone clones a repo with bd but needs to initialize.
 func isFreshCloneError(err error) bool {
 	if err == nil {
 		return false

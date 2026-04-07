@@ -1,4 +1,4 @@
-// Package format provides public formatting functions for beads issues.
+// Package format provides public formatting functions for bd issues.
 // These functions are used by gt and other consumers to render issue
 // output without depending on the bd CLI.
 package format

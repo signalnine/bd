@@ -15,12 +15,12 @@ const (
 	BdFilePerm fs.FileMode = 0600
 )
 
-// EnsureBdDir creates the .beads directory with secure permissions.
+// EnsureBdDir creates the .bd directory with secure permissions.
 func EnsureBdDir(path string) error {
 	return os.MkdirAll(path, BdDirPerm)
 }
 
-// CheckBdDirPermissions warns to stderr if the .beads directory has
+// CheckBdDirPermissions warns to stderr if the .bd directory has
 // group or world-accessible permissions. The check is non-fatal.
 func CheckBdDirPermissions(path string) {
 	info, err := os.Stat(path)

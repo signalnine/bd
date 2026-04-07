@@ -10,8 +10,8 @@ import (
 )
 
 // DefaultCredentialsPath returns the platform-appropriate default credentials file path.
-// Linux/macOS: ~/.config/beads/credentials
-// Windows: %APPDATA%\beads\credentials
+// Linux/macOS: ~/.config/bd/credentials
+// Windows: %APPDATA%\bd\credentials
 func DefaultCredentialsPath() string {
 	if runtime.GOOS == "windows" {
 		if appdata := os.Getenv("APPDATA"); appdata != "" {
