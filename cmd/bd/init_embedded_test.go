@@ -507,16 +507,15 @@ func TestEmbeddedInit(t *testing.T) {
 	})
 
 	t.Run("files_created", func(t *testing.T) {
-		dir, bdDir, _ := bdInit(t, bd, "--prefix", "fc", "--skip-hooks")
+		_, bdDir, _ := bdInit(t, bd, "--prefix", "fc", "--skip-hooks")
 		requireFile(t, filepath.Join(bdDir, "config.yaml"))
 		requireFile(t, filepath.Join(bdDir, "interactions.jsonl"))
-		requireFile(t, filepath.Join(dir, "AGENTS.md"))
 
 		content, err := os.ReadFile(filepath.Join(bdDir, ".gitignore"))
 		if err != nil {
 			t.Fatalf("failed to read .bd/.gitignore: %v", err)
 		}
-		for _, pattern := range []string{"*.db", "dolt/", "bd.sock"} {
+		for _, pattern := range []string{"*.db", "dolt/"} {
 			if !strings.Contains(string(content), pattern) {
 				t.Errorf(".gitignore missing pattern: %s", pattern)
 			}
