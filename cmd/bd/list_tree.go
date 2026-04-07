@@ -144,7 +144,7 @@ func displayPrettyListWithDeps(issues []*types.Issue, showHeader bool, allDeps m
 		// Clear screen and show header
 		fmt.Print("\033[2J\033[H")
 		fmt.Println(strings.Repeat("=", 80))
-		fmt.Printf("Beads - Open & In Progress (%s)\n", time.Now().Format("15:04:05"))
+		fmt.Printf("bd - Open & In Progress (%s)\n", time.Now().Format("15:04:05"))
 		fmt.Println(strings.Repeat("=", 80))
 		fmt.Println()
 	}

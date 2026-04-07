@@ -45,8 +45,8 @@ const (
 	hookMarkerStateValid  = "valid"
 	hookMarkerStateBroken = "broken"
 
-	hookMarkerBeginTag = "BEGIN BEADS INTEGRATION"
-	hookMarkerEndTag   = "END BEADS INTEGRATION"
+	hookMarkerBeginTag = "BEGIN BD INTEGRATION"
+	hookMarkerEndTag   = "END BD INTEGRATION"
 )
 
 var managedHookNames = []string{
@@ -198,7 +198,7 @@ func detectHookMarkerState(content string) string {
 func isLegacyBDHook(content string) bool {
 	return strings.Contains(content, "# bd-shim") ||
 		strings.Contains(content, "bd-hooks-version:") ||
-		strings.Contains(content, "# bd (beads)")
+		strings.Contains(content, "# bd")
 }
 
 // IsUnmodifiedLegacyHook returns true if content contains only known BD-managed lines.
@@ -225,7 +225,7 @@ func isKnownLegacyHookLine(line string) bool {
 	}
 	if strings.HasPrefix(trimmed, "#") {
 		lower := strings.ToLower(trimmed)
-		for _, keyword := range []string{"bd", "beads", "hook", "shim"} {
+		for _, keyword := range []string{"bd", "bd", "hook", "shim"} {
 			if strings.Contains(lower, keyword) {
 				return true
 			}
@@ -252,7 +252,7 @@ func isKnownLegacyHookLine(line string) bool {
 	}
 	if strings.HasPrefix(trimmed, "echo") {
 		lower := strings.ToLower(trimmed)
-		if strings.Contains(lower, "bd") || strings.Contains(lower, "beads") {
+		if strings.Contains(lower, "bd") || strings.Contains(lower, "bd") {
 			return true
 		}
 	}

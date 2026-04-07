@@ -44,8 +44,8 @@ func TestResolveDoltBackupURL(t *testing.T) {
 		},
 		{
 			name:    "absolute path gets file:// prefix",
-			input:   "/mnt/usb/beads-backup",
-			wantPfx: "file:///mnt/usb/beads-backup",
+			input:   "/mnt/usb/bd-backup",
+			wantPfx: "file:///mnt/usb/bd-backup",
 		},
 		{
 			name:    "relative path gets resolved and prefixed",

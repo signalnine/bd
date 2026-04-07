@@ -9,20 +9,20 @@ import (
 )
 
 const (
-	// BeadsDirPerm is the permission mode for .bd/ directories (owner-only).
-	BeadsDirPerm fs.FileMode = 0700
-	// BeadsFilePerm is the permission mode for state files inside .bd/ (owner-only).
-	BeadsFilePerm fs.FileMode = 0600
+	// BdDirPerm is the permission mode for .bd/ directories (owner-only).
+	BdDirPerm fs.FileMode = 0700
+	// BdFilePerm is the permission mode for state files inside .bd/ (owner-only).
+	BdFilePerm fs.FileMode = 0600
 )
 
-// EnsureBeadsDir creates the .beads directory with secure permissions.
-func EnsureBeadsDir(path string) error {
-	return os.MkdirAll(path, BeadsDirPerm)
+// EnsureBdDir creates the .beads directory with secure permissions.
+func EnsureBdDir(path string) error {
+	return os.MkdirAll(path, BdDirPerm)
 }
 
-// CheckBeadsDirPermissions warns to stderr if the .beads directory has
+// CheckBdDirPermissions warns to stderr if the .beads directory has
 // group or world-accessible permissions. The check is non-fatal.
-func CheckBeadsDirPermissions(path string) {
+func CheckBdDirPermissions(path string) {
 	info, err := os.Stat(path)
 	if err != nil {
 		return // directory doesn't exist yet

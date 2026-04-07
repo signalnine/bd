@@ -319,7 +319,7 @@ func ensureStoreActive() error {
 
 	bdDir := project.FindBdDir()
 	if bdDir == "" {
-		return fmt.Errorf("no beads database found.\nHint: run 'bd init' to create a database in the current directory")
+		return fmt.Errorf("no bd database found.\nHint: run 'bd init' to create a database in the current directory")
 	}
 
 	s, err := newDoltStoreFromConfig(getRootContext(), bdDir)

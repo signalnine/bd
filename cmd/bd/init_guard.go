@@ -14,7 +14,7 @@ import (
 )
 
 // initGuardDBCheck holds the result of checking whether a database exists on a
-// Dolt server. Extracted from checkExistingBeadsDataAt for testability.
+// Dolt server. Extracted from checkExistingBdDataAt for testability.
 type initGuardDBCheck struct {
 	Exists    bool // database found via SHOW DATABASES
 	Reachable bool // server responded to ping

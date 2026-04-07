@@ -68,7 +68,7 @@ NOTE: This is a rare operation. Most users never need this command.`,
 		if isGitRepo() && git.IsWorktree() {
 			mainRepoRoot, _ := git.GetMainRepoRoot()
 			fmt.Fprintf(os.Stderr, "Error: cannot run 'bd rename-prefix' from a git worktree\n\n")
-			fmt.Fprintf(os.Stderr, "Worktrees share the .beads database from the main repository.\n\n")
+			fmt.Fprintf(os.Stderr, "Worktrees share the .bd database from the main repository.\n\n")
 			fmt.Fprintf(os.Stderr, "Run this command from the main repository instead:\n")
 			fmt.Fprintf(os.Stderr, "  cd %s\n", mainRepoRoot)
 			fmt.Fprintf(os.Stderr, "  bd rename-prefix %s\n", newPrefix)

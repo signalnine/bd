@@ -29,7 +29,7 @@ func createConfigYaml(bdDir string, noDbMode bool, prefix string) error {
 		prefixLine = fmt.Sprintf("issue-prefix: %q", prefix)
 	}
 
-	configYamlTemplate := fmt.Sprintf(`# Beads Configuration File
+	configYamlTemplate := fmt.Sprintf(`# bd Configuration File
 # This file configures default behavior for all bd commands in this repository
 # All settings can also be set via environment variables (BD_* prefix)
 # or overridden with command-line flags
@@ -64,7 +64,7 @@ func createConfigYaml(bdDir string, noDbMode bool, prefix string) error {
 # repos:
 #   primary: "."  # Primary repo (where this database lives)
 #   additional:   # Additional repos to hydrate from (read-only)
-#     - ~/beads-planning  # Personal planning repo
+#     - ~/bd-planning  # Personal planning repo
 #     - ~/work-planning   # Work planning repo
 
 # JSONL backup (periodic export for off-machine recovery)
@@ -101,13 +101,13 @@ func createReadme(bdDir string) error {
 		return nil
 	}
 
-	readmeTemplate := `# Beads - AI-Native Issue Tracking
+	readmeTemplate := `# bd - Issue Tracking
 
-Welcome to Beads! This repository uses **Beads** for issue tracking - a modern, AI-native tool designed to live directly in your codebase alongside your code.
+Welcome to bd! This repository uses **bd** for issue tracking - a modern, AI-native tool designed to live directly in your codebase alongside your code.
 
-## What is Beads?
+## What is bd?
 
-Beads is issue tracking that lives in your repo, making it perfect for AI coding agents and developers who want their issues close to their code. No web UI required - everything works through the CLI and integrates seamlessly with git.
+bd is issue tracking that lives in your repo, making it perfect for AI coding agents and developers who want their issues close to their code. No web UI required - everything works through the CLI and integrates seamlessly with git.
 
 **Learn more:** [github.com/steveyegge/bd](https://github.com/steveyegge/bd)
 
@@ -135,13 +135,13 @@ bd dolt push
 
 ### Working with Issues
 
-Issues in Beads are:
+Issues in bd are:
 - **Git-native**: Stored in Dolt database with version control and branching
 - **AI-friendly**: CLI-first design works perfectly with AI coding agents
 - **Branch-aware**: Issues can follow your branch workflow
 - **Always in sync**: Auto-syncs with your commits
 
-## Why Beads?
+## Why bd?
 
 ✨ **AI-Native Design**
 - Built specifically for AI-assisted development workflows
@@ -158,19 +158,19 @@ Issues in Beads are:
 - Branch-aware issue tracking
 - Dolt-native three-way merge resolution
 
-## Get Started with Beads
+## Get Started
 
-Try Beads in your own projects:
+Try bd in your own projects:
 
 ` + "```bash" + `
-# Install Beads
-curl -sSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
+# Install bd
+curl -sSL https://raw.githubusercontent.com/signalnine/bd/main/scripts/install.sh | bash
 
 # Initialize in your repo
 bd init
 
 # Create your first issue
-bd create "Try out Beads"
+bd create "Try out bd"
 ` + "```" + `
 
 ## Learn More
@@ -181,7 +181,7 @@ bd create "Try out Beads"
 
 ---
 
-*Beads: Issue tracking that moves at the speed of thought* ⚡
+*bd: Issue tracking that moves at the speed of thought* ⚡
 `
 
 	// Write README.md (0644 is standard for markdown files)

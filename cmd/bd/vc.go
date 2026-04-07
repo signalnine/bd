@@ -14,7 +14,7 @@ var vcCmd = &cobra.Command{
 	Use:     "vc",
 	GroupID: "sync",
 	Short:   "Version control operations",
-	Long: `Version control operations for the beads database.
+	Long: `Version control operations for the bd database.
 
 These commands provide git-like version control for your issue data, including branching, merging, and
 viewing history.

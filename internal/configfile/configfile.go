@@ -219,7 +219,7 @@ const (
 	DefaultDoltServerHost     = "127.0.0.1"
 	DefaultDoltServerPort     = 3307 // Use 3307 to avoid conflict with MySQL on 3306
 	DefaultDoltServerUser     = "root"
-	DefaultDoltDatabase       = "beads"
+	DefaultDoltDatabase       = "bd"
 	DefaultDoltRemotesAPIPort = 8080 // Default dolt remotesapi port for federation
 )
 

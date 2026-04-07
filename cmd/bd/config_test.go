@@ -437,24 +437,24 @@ func TestFindBeadsRepoRoot(t *testing.T) {
 	}
 
 	t.Run("from repo root", func(t *testing.T) {
-		got := findBeadsRepoRoot(tmpDir)
+		got := findBdRepoRoot(tmpDir)
 		if got != tmpDir {
-			t.Errorf("findBeadsRepoRoot(%q) = %q, want %q", tmpDir, got, tmpDir)
+			t.Errorf("findBdRepoRoot(%q) = %q, want %q", tmpDir, got, tmpDir)
 		}
 	})
 
 	t.Run("from subdirectory", func(t *testing.T) {
-		got := findBeadsRepoRoot(subDir)
+		got := findBdRepoRoot(subDir)
 		if got != tmpDir {
-			t.Errorf("findBeadsRepoRoot(%q) = %q, want %q", subDir, got, tmpDir)
+			t.Errorf("findBdRepoRoot(%q) = %q, want %q", subDir, got, tmpDir)
 		}
 	})
 
 	t.Run("not in repo", func(t *testing.T) {
 		noRepoDir := t.TempDir()
-		got := findBeadsRepoRoot(noRepoDir)
+		got := findBdRepoRoot(noRepoDir)
 		if got != "" {
-			t.Errorf("findBeadsRepoRoot(%q) = %q, want empty string", noRepoDir, got)
+			t.Errorf("findBdRepoRoot(%q) = %q, want empty string", noRepoDir, got)
 		}
 	})
 }

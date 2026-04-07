@@ -14,7 +14,7 @@ func TestAppend_CreatesFileAndWritesJSONL(t *testing.T) {
 		t.Fatalf("mkdir: %v", err)
 	}
 	// project.FindBdDir() validates that the directory contains project files.
-	// Create metadata.json so BD_DIR is accepted by hasBeadsProjectFiles.
+	// Create metadata.json so BD_DIR is accepted by hasBdProjectFiles.
 	metadataPath := filepath.Join(bdDir, "metadata.json")
 	if err := os.WriteFile(metadataPath, []byte(`{"backend":"dolt"}`), 0644); err != nil {
 		t.Fatalf("write metadata.json: %v", err)

@@ -45,10 +45,10 @@ type (
 
 // Open opens an embedded Dolt beads database at the given path.
 func Open(ctx context.Context, bdDir string) (*Store, error) {
-	return embeddeddolt.New(ctx, bdDir, "beads", "main")
+	return embeddeddolt.New(ctx, bdDir, "bd", "main")
 }
 
-// FindDatabasePath finds the beads database in the current directory tree
+// FindDatabasePath finds the bd database in the current directory tree
 func FindDatabasePath() string {
 	return project.FindDatabasePath()
 }

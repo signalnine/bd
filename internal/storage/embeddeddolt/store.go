@@ -78,12 +78,12 @@ func New(ctx context.Context, bdDir, database, branch string, opts ...Option) (*
 	// Resolve to absolute path — the embedded dolt driver resolves file://
 	// DSN paths relative to its data directory, so relative paths cause
 	// doubled-path errors on subsequent opens.
-	absBeadsDir, err := filepath.Abs(bdDir)
+	absBdDir, err := filepath.Abs(bdDir)
 	if err != nil {
-		return nil, fmt.Errorf("embeddeddolt: resolving beads dir: %w", err)
+		return nil, fmt.Errorf("embeddeddolt: resolving bd dir: %w", err)
 	}
-	dataDir := filepath.Join(absBeadsDir, "embeddeddolt")
-	if err := os.MkdirAll(dataDir, config.BeadsDirPerm); err != nil {
+	dataDir := filepath.Join(absBdDir, "embeddeddolt")
+	if err := os.MkdirAll(dataDir, config.BdDirPerm); err != nil {
 		return nil, fmt.Errorf("embeddeddolt: creating data directory: %w", err)
 	}
 
@@ -102,7 +102,7 @@ func New(ctx context.Context, bdDir, database, branch string, opts ...Option) (*
 
 	s := &EmbeddedDoltStore{
 		dataDir:  dataDir,
-		bdDir:    absBeadsDir,
+		bdDir:    absBdDir,
 		database: database,
 		branch:   branch,
 		lock:     lock,

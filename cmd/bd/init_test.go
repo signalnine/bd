@@ -328,7 +328,7 @@ func TestInitWithCustomDBPath(t *testing.T) {
 	t.Run("init with BD_DB path containing .bd", func(t *testing.T) {
 		dbPath = "" // Reset global
 		// Path contains ".bd" but is outside work directory
-		customPath := filepath.Join(tmpDir, "storage", ".beads-backup", "test.db")
+		customPath := filepath.Join(tmpDir, "storage", ".bd-backup", "test.db")
 		os.Setenv("BD_DB", customPath)
 		defer os.Unsetenv("BD_DB")
 
@@ -495,11 +495,11 @@ func captureStdout(t *testing.T, fn func() error) string {
 
 // TestInitPromptRoleConfig tests the bd.role git config read/write functions
 func TestInitPromptRoleConfig(t *testing.T) {
-	t.Run("getBeadsRole returns empty when not configured", func(t *testing.T) {
+	t.Run("getBdRole returns empty when not configured", func(t *testing.T) {
 		tmpDir := newGitRepo(t)
 		t.Chdir(tmpDir)
 
-		role, hasRole := getBeadsRole()
+		role, hasRole := getBdRole()
 		if hasRole {
 			t.Errorf("Expected hasRole=false when not configured, got true with role=%q", role)
 		}
@@ -508,16 +508,16 @@ func TestInitPromptRoleConfig(t *testing.T) {
 		}
 	})
 
-	t.Run("setBeadsRole and getBeadsRole roundtrip", func(t *testing.T) {
+	t.Run("setBdRole and getBdRole roundtrip", func(t *testing.T) {
 		tmpDir := newGitRepo(t)
 		t.Chdir(tmpDir)
 
 		// Set role to contributor
-		if err := setBeadsRole("contributor"); err != nil {
+		if err := setBdRole("contributor"); err != nil {
 			t.Fatalf("Failed to set bd.role: %v", err)
 		}
 
-		role, hasRole := getBeadsRole()
+		role, hasRole := getBdRole()
 		if !hasRole {
 			t.Error("Expected hasRole=true after setting role")
 		}
@@ -526,11 +526,11 @@ func TestInitPromptRoleConfig(t *testing.T) {
 		}
 
 		// Change to maintainer
-		if err := setBeadsRole("maintainer"); err != nil {
+		if err := setBdRole("maintainer"); err != nil {
 			t.Fatalf("Failed to set bd.role: %v", err)
 		}
 
-		role, hasRole = getBeadsRole()
+		role, hasRole = getBdRole()
 		if !hasRole {
 			t.Error("Expected hasRole=true after setting role")
 		}
@@ -564,7 +564,7 @@ func TestInitPromptSkippedWithFlags(t *testing.T) {
 		t.Chdir(tmpDir)
 
 		// Verify no role is set initially
-		role, hasRole := getBeadsRole()
+		role, hasRole := getBdRole()
 		if hasRole {
 			t.Fatalf("Expected no role initially, got %q", role)
 		}
@@ -600,7 +600,7 @@ func TestInitPromptSkippedWithFlags(t *testing.T) {
 		t.Chdir(tmpDir)
 
 		// Verify no role is set initially
-		role, hasRole := getBeadsRole()
+		role, hasRole := getBdRole()
 		if hasRole {
 			t.Fatalf("Expected no role initially, got %q", role)
 		}
@@ -697,7 +697,7 @@ func TestInitPromptExistingRole(t *testing.T) {
 		t.Chdir(tmpDir)
 
 		// Set role before init
-		if err := setBeadsRole("contributor"); err != nil {
+		if err := setBdRole("contributor"); err != nil {
 			t.Fatalf("Failed to set bd.role: %v", err)
 		}
 
@@ -708,7 +708,7 @@ func TestInitPromptExistingRole(t *testing.T) {
 		}
 
 		// Verify role is still set
-		role, hasRole := getBeadsRole()
+		role, hasRole := getBdRole()
 		if !hasRole {
 			t.Error("Expected bd.role to still be set after init")
 		}
@@ -726,7 +726,7 @@ func TestInitPromptExistingRole(t *testing.T) {
 		}
 
 		// Verify role is still set (not cleared by reinit)
-		role, hasRole = getBeadsRole()
+		role, hasRole = getBdRole()
 		if !hasRole {
 			t.Error("Expected bd.role to still be set after reinit")
 		}
@@ -792,7 +792,7 @@ func TestInitContributorSetsBeadsRoleContributor(t *testing.T) {
 		t.Fatalf("init --contributor failed: %v", err)
 	}
 
-	role, hasRole := getBeadsRole()
+	role, hasRole := getBdRole()
 	if !hasRole {
 		t.Fatal("expected bd.role to be configured")
 	}
@@ -834,7 +834,7 @@ func TestInitNonInteractiveAlwaysSetsRole(t *testing.T) {
 		t.Fatalf("init --non-interactive failed: %v", err)
 	}
 
-	role, hasRole := getBeadsRole()
+	role, hasRole := getBdRole()
 	if !hasRole {
 		t.Fatal("expected bd.role to be configured after non-interactive init (GH#2950)")
 	}
@@ -939,7 +939,7 @@ func TestInitRedirect(t *testing.T) {
 		}
 
 		canonicalDBPath := filepath.Join(canonicalBeadsDir, "bd.db")
-		// Create the db file so checkExistingBeadsData detects it
+		// Create the db file so checkExistingBdData detects it
 		if err := os.WriteFile(canonicalDBPath, []byte{}, 0644); err != nil {
 			t.Fatalf("Failed to create canonical db file: %v", err)
 		}
@@ -955,16 +955,16 @@ func TestInitRedirect(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		// Use os.Chdir since checkExistingBeadsData reads CWD directly
+		// Use os.Chdir since checkExistingBdData reads CWD directly
 		origWd, _ := os.Getwd()
 		if err := os.Chdir(projectDir); err != nil {
 			t.Fatal(err)
 		}
 		defer os.Chdir(origWd)
 
-		err := checkExistingBeadsData("new-prefix")
+		err := checkExistingBdData("new-prefix")
 		if err == nil {
-			t.Fatal("Expected checkExistingBeadsData to return error when redirect target already has database")
+			t.Fatal("Expected checkExistingBdData to return error when redirect target already has database")
 		}
 
 		errorMsg := err.Error()
@@ -1006,7 +1006,7 @@ func TestInitBEADS_DIR(t *testing.T) {
 		initCmd.Flags().Set("backend", "")
 	}
 
-	// checkExistingBeadsData tests (FR-001, FR-004)
+	// checkExistingBdData tests (FR-001, FR-004)
 	t.Run("CheckExisting_NoExistingDB", func(t *testing.T) {
 		resetBeadsDirState(t)
 
@@ -1018,7 +1018,7 @@ func TestInitBEADS_DIR(t *testing.T) {
 		t.Cleanup(func() { os.Unsetenv("BD_DIR") })
 		project.ResetCaches()
 
-		err := checkExistingBeadsData("test")
+		err := checkExistingBdData("test")
 		if err != nil {
 			t.Errorf("Expected no error when BD_DIR has no database, got: %v", err)
 		}
@@ -1033,7 +1033,7 @@ func TestInitBEADS_DIR(t *testing.T) {
 		cwdBeadsDir := filepath.Join(tmpDir, "cwd", ".bd")
 		os.MkdirAll(cwdBeadsDir, 0755)
 		cwdDBPath := filepath.Join(cwdBeadsDir, project.CanonicalDatabaseName)
-		// Create the db file so checkExistingBeadsData detects it
+		// Create the db file so checkExistingBdData detects it
 		if err := os.WriteFile(cwdDBPath, []byte{}, 0644); err != nil {
 			t.Fatal(err)
 		}
@@ -1050,7 +1050,7 @@ func TestInitBEADS_DIR(t *testing.T) {
 		os.Chdir(filepath.Join(tmpDir, "cwd"))
 		defer os.Chdir(origWd)
 
-		err := checkExistingBeadsData("test")
+		err := checkExistingBdData("test")
 		if err != nil {
 			t.Errorf("Expected no error when BD_DIR has no database (CWD should be ignored), got: %v", err)
 		}
@@ -1064,7 +1064,7 @@ func TestInitBEADS_DIR(t *testing.T) {
 		beadsDirPath := filepath.Join(tmpDir, "external", ".bd")
 		os.MkdirAll(beadsDirPath, 0755)
 		testDBPath := filepath.Join(beadsDirPath, project.CanonicalDatabaseName)
-		// Create the db file so checkExistingBeadsData detects it
+		// Create the db file so checkExistingBdData detects it
 		if err := os.WriteFile(testDBPath, []byte{}, 0644); err != nil {
 			t.Fatal(err)
 		}
@@ -1073,7 +1073,7 @@ func TestInitBEADS_DIR(t *testing.T) {
 		t.Cleanup(func() { os.Unsetenv("BD_DIR") })
 		project.ResetCaches()
 
-		err := checkExistingBeadsData("test")
+		err := checkExistingBdData("test")
 		if err == nil {
 			t.Error("Expected error when BD_DIR already has database")
 		}

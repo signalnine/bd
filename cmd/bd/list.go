@@ -1012,7 +1012,7 @@ func init() {
 	listCmd.Flags().Bool("include-gates", false, "Include gate issues in output (normally hidden)")
 
 	// Infra type filtering: exclude agent/rig/role/message by default
-	listCmd.Flags().Bool("include-infra", false, "Include infrastructure beads (agent/rig/role/message) in output")
+	listCmd.Flags().Bool("include-infra", false, "Include infrastructure issues (agent/rig/role/message) in output")
 
 	// Explicit type exclusion
 	listCmd.Flags().StringSlice("exclude-type", nil, "Exclude issue types from results (comma-separated or repeatable, e.g., --exclude-type=convoy,epic)")

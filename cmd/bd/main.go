@@ -109,11 +109,11 @@ func isReadOnlyCommand(cmdName string) bool {
 	return readOnlyCommands[cmdName]
 }
 
-// loadBeadsEnvFile loads .bd/.env into process environment for per-project
+// loadBdEnvFile loads .bd/.env into process environment for per-project
 // Dolt credentials (GH#2520). Uses gotenv.Load which is non-overriding —
 // existing shell env vars always take precedence.
 // Safe to call with an empty bdDir (no-op).
-func loadBeadsEnvFile(bdDir string) {
+func loadBdEnvFile(bdDir string) {
 	if bdDir == "" {
 		return
 	}
@@ -135,9 +135,9 @@ func loadEnvironment() {
 	// FindBdDir is lightweight (filesystem walk, no git subprocesses)
 	// and resolves BD_DIR, redirects, and worktree paths.
 	if bdDir := project.FindBdDir(); bdDir != "" {
-		loadBeadsEnvFile(bdDir)
+		loadBdEnvFile(bdDir)
 		// Non-fatal warning if .bd/ directory has overly permissive access.
-		config.CheckBeadsDirPermissions(bdDir)
+		config.CheckBdDirPermissions(bdDir)
 	}
 }
 
@@ -155,7 +155,7 @@ func preserveRedirectSourceDatabase(bdDir string) {
 	}
 }
 
-func selectedNoDBBeadsDir() string {
+func selectedNoDBBdDir() string {
 	selectedDBPath := ""
 	if rootCmd.PersistentFlags().Changed("db") && dbPath != "" {
 		selectedDBPath = dbPath
@@ -167,8 +167,8 @@ func selectedNoDBBeadsDir() string {
 		selectedDBPath = dbPath
 	}
 	if selectedDBPath != "" {
-		if selectedBeadsDir := resolveCommandBeadsDir(selectedDBPath); selectedBeadsDir != "" {
-			return selectedBeadsDir
+		if selectedBdDir := resolveCommandBdDir(selectedDBPath); selectedBdDir != "" {
+			return selectedBdDir
 		}
 	}
 	return project.FindBdDir()
@@ -197,17 +197,17 @@ func prepareSelectedNoDBContext(bdDir string) {
 		return
 	}
 	_ = os.Setenv("BD_DIR", bdDir)
-	loadBeadsEnvFile(bdDir)
+	loadBdEnvFile(bdDir)
 	preserveRedirectSourceDatabase(bdDir)
 	if err := config.Initialize(); err != nil {
-		fmt.Fprintf(os.Stderr, "Warning: failed to reinitialize config for selected beads dir: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Warning: failed to reinitialize config for selected bd dir: %v\n", err)
 	}
 }
 
-// resolveCommandBeadsDir maps a discovered Dolt data path back to the owning
+// resolveCommandBdDir maps a discovered Dolt data path back to the owning
 // .beads directory. filepath.Dir(dbPath) only works when the Dolt data lives
 // under .bd/dolt; custom dolt_data_dir values can place it elsewhere.
-func resolveCommandBeadsDir(dbPath string) string {
+func resolveCommandBdDir(dbPath string) string {
 	if dbPath == "" {
 		return ""
 	}
@@ -217,7 +217,7 @@ func resolveCommandBeadsDir(dbPath string) string {
 	// FindBdDir — but only returns a candidate whose metadata.json
 	// actually points to dbPath, preventing CWD discovery from overriding
 	// an explicit --db flag.
-	if bdDir := resolveBeadsDirForDBPath(dbPath); bdDir != "" {
+	if bdDir := resolveBdDirForDBPath(dbPath); bdDir != "" {
 		return bdDir
 	}
 
@@ -244,8 +244,8 @@ func getActorWithGit() string {
 	}
 
 	// Check BD_ACTOR env var (primary env override)
-	if beadsActor := os.Getenv("BD_ACTOR"); beadsActor != "" {
-		return beadsActor
+	if bdActor := os.Getenv("BD_ACTOR"); bdActor != "" {
+		return bdActor
 	}
 
 	// Check BD_ACTOR env var (deprecated alias, kept for backwards compatibility)
@@ -331,7 +331,7 @@ func init() {
 var rootCmd = &cobra.Command{
 	Use:   "bd",
 	Short: "bd - Dependency-aware issue tracker",
-	Long:  `Issues chained together like beads. A lightweight issue tracker with first-class dependency support.`,
+	Long:  `Issues A lightweight issue tracker with first-class dependency support.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// Handle --version flag on root command
 		if v, _ := cmd.Flags().GetBool("version"); v {
@@ -556,9 +556,9 @@ var rootCmd = &cobra.Command{
 
 				if cmd.Name() != "import" && cmd.Name() != "setup" && !isYamlOnlyConfigOp {
 					// No database found - provide context-aware error message
-					fmt.Fprintf(os.Stderr, "Error: no beads database found\n")
+					fmt.Fprintf(os.Stderr, "Error: no bd database found\n")
 					fmt.Fprintf(os.Stderr, "Hint: %s\n", diagHint())
-					fmt.Fprintf(os.Stderr, "      or set BD_DIR to point to your .beads directory\n")
+					fmt.Fprintf(os.Stderr, "      or set BD_DIR to point to your .bd directory\n")
 					os.Exit(1)
 				}
 				// For import/setup commands, set default database path
@@ -569,11 +569,11 @@ var rootCmd = &cobra.Command{
 				// which follows redirect files. Without this, a redirected .beads
 				// would create a local database instead of using the redirect target.
 				// (GH#bd-0qel)
-				targetBeadsDir := project.FindBdDir()
-				if targetBeadsDir == "" {
-					targetBeadsDir = ".bd"
+				targetBdDir := project.FindBdDir()
+				if targetBdDir == "" {
+					targetBdDir = ".bd"
 				}
-				dbPath = utils.CanonicalizePath(filepath.Join(targetBeadsDir, project.CanonicalDatabaseName))
+				dbPath = utils.CanonicalizePath(filepath.Join(targetBdDir, project.CanonicalDatabaseName))
 			}
 		}
 
@@ -594,7 +594,7 @@ var rootCmd = &cobra.Command{
 		// opens its own store connection, writes the version metadata, commits it,
 		// and closes BEFORE the main store is opened. This ensures bd doctor and
 		// read-only commands see the correct version after a CLI upgrade.
-		bdDir := resolveCommandBeadsDir(dbPath)
+		bdDir := resolveCommandBdDir(dbPath)
 
 		autoMigrateOnVersionBump(bdDir)
 
@@ -604,14 +604,14 @@ var rootCmd = &cobra.Command{
 		// Load config to get database name
 		cfg, cfgErr := configfile.Load(bdDir)
 		if cfgErr != nil {
-			fmt.Fprintf(os.Stderr, "warning: failed to load beads config from %s: %v\n", bdDir, cfgErr)
+			fmt.Fprintf(os.Stderr, "warning: failed to load bd config from %s: %v\n", bdDir, cfgErr)
 		}
 
 		database := configfile.DefaultDoltDatabase
 		if cfg != nil {
 			database = cfg.GetDoltDatabase()
 		} else if cfgErr == nil {
-			fmt.Fprintf(os.Stderr, "warning: no beads configuration found in %s; database name may default incorrectly\n", bdDir)
+			fmt.Fprintf(os.Stderr, "warning: no bd configuration found in %s; database name may default incorrectly\n", bdDir)
 		}
 
 		// Default auto-commit to OFF

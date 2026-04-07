@@ -93,10 +93,10 @@ func runBDForCoverage(t *testing.T, dir string, args ...string) (stdout string, 
 			os.Unsetenv("BD_ACTOR")
 		}
 	}()
-	oldBeadsActor, beadsActorWasSet := os.LookupEnv("BD_ACTOR")
+	oldBeadsActor, bdActorWasSet := os.LookupEnv("BD_ACTOR")
 	os.Setenv("BD_ACTOR", "test-user")
 	defer func() {
-		if beadsActorWasSet {
+		if bdActorWasSet {
 			_ = os.Setenv("BD_ACTOR", oldBeadsActor)
 		} else {
 			os.Unsetenv("BD_ACTOR")

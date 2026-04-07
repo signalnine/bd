@@ -15,7 +15,7 @@ import (
 // runTeamWizard guides the user through team workflow setup
 func runTeamWizard(ctx context.Context, store *embeddeddolt.EmbeddedDoltStore) error {
 	fmt.Printf("\n%s %s\n\n", ui.RenderBold("bd"), ui.RenderBold("Team Workflow Setup Wizard"))
-	fmt.Println("This wizard will configure beads for team collaboration.")
+	fmt.Println("This wizard will configure bd for team collaboration.")
 	fmt.Println()
 
 	if ctx == nil {
@@ -65,8 +65,8 @@ func runTeamWizard(ctx context.Context, store *embeddeddolt.EmbeddedDoltStore) e
 
 	if protectedMain {
 		fmt.Printf("\n%s Protected main detected\n", ui.RenderPass("✓"))
-		fmt.Println("\n  Beads will commit issue updates to a separate branch.")
-		fmt.Printf("  Default sync branch: %s\n", ui.RenderAccent("beads-metadata"))
+		fmt.Println("\n  bd will commit issue updates to a separate branch.")
+		fmt.Printf("  Default sync branch: %s\n", ui.RenderAccent("bd-metadata"))
 		fmt.Print("\n  Sync branch name [press Enter for default]: ")
 
 		branchName, err := readLineWithContext(ctx, reader, os.Stdin)
@@ -79,7 +79,7 @@ func runTeamWizard(ctx context.Context, store *embeddeddolt.EmbeddedDoltStore) e
 		branchName = strings.TrimSpace(branchName)
 
 		if branchName == "" {
-			syncBranch = "beads-metadata"
+			syncBranch = "bd-metadata"
 		} else {
 			syncBranch = branchName
 		}

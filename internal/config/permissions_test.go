@@ -10,34 +10,34 @@ import (
 	"testing"
 )
 
-func TestBeadsDirPermConstants(t *testing.T) {
-	if BeadsDirPerm != 0700 {
-		t.Errorf("BeadsDirPerm = %04o, want 0700", BeadsDirPerm)
+func TestBdDirPermConstants(t *testing.T) {
+	if BdDirPerm != 0700 {
+		t.Errorf("BdDirPerm = %04o, want 0700", BdDirPerm)
 	}
-	if BeadsFilePerm != 0600 {
-		t.Errorf("BeadsFilePerm = %04o, want 0600", BeadsFilePerm)
+	if BdFilePerm != 0600 {
+		t.Errorf("BdFilePerm = %04o, want 0600", BdFilePerm)
 	}
 }
 
-func TestEnsureBeadsDir(t *testing.T) {
+func TestEnsureBdDir(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), ".bd")
-	if err := EnsureBeadsDir(dir); err != nil {
-		t.Fatalf("EnsureBeadsDir(%q) = %v", dir, err)
+	if err := EnsureBdDir(dir); err != nil {
+		t.Fatalf("EnsureBdDir(%q) = %v", dir, err)
 	}
 	info, err := os.Stat(dir)
 	if err != nil {
 		t.Fatalf("Stat(%q) = %v", dir, err)
 	}
 	perm := info.Mode().Perm()
-	if perm != BeadsDirPerm {
-		t.Errorf("directory permissions = %04o, want %04o", perm, BeadsDirPerm)
+	if perm != BdDirPerm {
+		t.Errorf("directory permissions = %04o, want %04o", perm, BdDirPerm)
 	}
 }
 
-func TestEnsureBeadsDirNested(t *testing.T) {
+func TestEnsureBdDirNested(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), ".bd", "dolt")
-	if err := EnsureBeadsDir(dir); err != nil {
-		t.Fatalf("EnsureBeadsDir(%q) = %v", dir, err)
+	if err := EnsureBdDir(dir); err != nil {
+		t.Fatalf("EnsureBdDir(%q) = %v", dir, err)
 	}
 	// Both parent and child should exist
 	for _, d := range []string{filepath.Dir(dir), dir} {
@@ -46,13 +46,13 @@ func TestEnsureBeadsDirNested(t *testing.T) {
 			t.Fatalf("Stat(%q) = %v", d, err)
 		}
 		perm := info.Mode().Perm()
-		if perm != BeadsDirPerm {
-			t.Errorf("%s permissions = %04o, want %04o", d, perm, BeadsDirPerm)
+		if perm != BdDirPerm {
+			t.Errorf("%s permissions = %04o, want %04o", d, perm, BdDirPerm)
 		}
 	}
 }
 
-func TestCheckBeadsDirPermissions_Secure(t *testing.T) {
+func TestCheckBdDirPermissions_Secure(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), ".bd")
 	if err := os.MkdirAll(dir, 0700); err != nil {
 		t.Fatal(err)
@@ -62,7 +62,7 @@ func TestCheckBeadsDirPermissions_Secure(t *testing.T) {
 	r, w, _ := os.Pipe()
 	os.Stderr = w
 
-	CheckBeadsDirPermissions(dir)
+	CheckBdDirPermissions(dir)
 
 	w.Close()
 	os.Stderr = old
@@ -73,7 +73,7 @@ func TestCheckBeadsDirPermissions_Secure(t *testing.T) {
 	}
 }
 
-func TestCheckBeadsDirPermissions_Permissive(t *testing.T) {
+func TestCheckBdDirPermissions_Permissive(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), ".bd")
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		t.Fatal(err)
@@ -83,7 +83,7 @@ func TestCheckBeadsDirPermissions_Permissive(t *testing.T) {
 	r, w, _ := os.Pipe()
 	os.Stderr = w
 
-	CheckBeadsDirPermissions(dir)
+	CheckBdDirPermissions(dir)
 
 	w.Close()
 	os.Stderr = old
@@ -95,14 +95,14 @@ func TestCheckBeadsDirPermissions_Permissive(t *testing.T) {
 	}
 }
 
-func TestCheckBeadsDirPermissions_Nonexistent(t *testing.T) {
+func TestCheckBdDirPermissions_Nonexistent(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), "no-such-dir")
 	// Capture stderr — should produce no output
 	old := os.Stderr
 	r, w, _ := os.Pipe()
 	os.Stderr = w
 
-	CheckBeadsDirPermissions(dir)
+	CheckBdDirPermissions(dir)
 
 	w.Close()
 	os.Stderr = old

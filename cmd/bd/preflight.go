@@ -83,7 +83,7 @@ func runPreflight(cmd *cobra.Command, args []string) {
 	fmt.Println("[ ] Tests pass: go test -short ./...")
 	fmt.Println("[ ] Lint passes: golangci-lint run ./...")
 	fmt.Println("[ ] Formatting: gofmt -l .")
-	fmt.Println("[ ] No beads pollution: check .bd/issues.jsonl diff")
+	fmt.Println("[ ] No bd pollution: check .bd/issues.jsonl diff")
 	fmt.Println("[ ] Nix hash current: go.sum unchanged or vendorHash updated")
 	fmt.Println("[ ] Version sync: version.go matches default.nix")
 	fmt.Println()
@@ -107,8 +107,8 @@ func runChecks(jsonOutput, skipLint bool) {
 	results = append(results, fmtResult)
 
 	// Run beads pollution check
-	beadsResult := runBeadsPollutionCheck()
-	results = append(results, beadsResult)
+	bdResult := runBdPollutionCheck()
+	results = append(results, bdResult)
 
 	// Run nix hash check
 	nixResult := runNixHashCheck()
@@ -285,8 +285,8 @@ func runFmtCheck() CheckResult {
 	}
 }
 
-// runBeadsPollutionCheck detects .bd/issues.jsonl modifications vs merge base.
-func runBeadsPollutionCheck() CheckResult {
+// runBdPollutionCheck detects .bd/issues.jsonl modifications vs merge base.
+func runBdPollutionCheck() CheckResult {
 	command := "git diff -- .bd/issues.jsonl"
 
 	// Determine current branch
@@ -294,7 +294,7 @@ func runBeadsPollutionCheck() CheckResult {
 	branchOut, err := branchCmd.Output()
 	if err != nil {
 		return CheckResult{
-			Name:    "No beads pollution",
+			Name:    "No bd pollution",
 			Passed:  false,
 			Skipped: true,
 			Output:  fmt.Sprintf("Cannot determine branch: %v", err),
@@ -319,7 +319,7 @@ func runBeadsPollutionCheck() CheckResult {
 
 	if len(strings.TrimSpace(string(diffOutput))) > 0 {
 		return CheckResult{
-			Name:    "No beads pollution",
+			Name:    "No bd pollution",
 			Passed:  false,
 			Output:  ".bd/issues.jsonl has been modified — revert changes before pushing",
 			Command: command,
@@ -327,7 +327,7 @@ func runBeadsPollutionCheck() CheckResult {
 	}
 
 	return CheckResult{
-		Name:    "No beads pollution",
+		Name:    "No bd pollution",
 		Passed:  true,
 		Command: command,
 	}

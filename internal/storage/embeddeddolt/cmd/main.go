@@ -13,8 +13,8 @@ import (
 )
 
 func main() {
-	dir := flag.String("dir", "", "path to .beads directory")
-	database := flag.String("database", "beads", "database name")
+	dir := flag.String("dir", "", "path to .bd directory")
+	database := flag.String("database", "bd", "database name")
 	branch := flag.String("branch", "main", "branch name")
 	flag.Parse()
 

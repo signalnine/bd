@@ -15,14 +15,14 @@ import (
 func DefaultCredentialsPath() string {
 	if runtime.GOOS == "windows" {
 		if appdata := os.Getenv("APPDATA"); appdata != "" {
-			return filepath.Join(appdata, "beads", "credentials")
+			return filepath.Join(appdata, "bd", "credentials")
 		}
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return ""
 	}
-	return filepath.Join(home, ".config", "beads", "credentials")
+	return filepath.Join(home, ".config", "bd", "credentials")
 }
 
 // LookupCredentialsPassword reads a password from an INI-style credentials file,
@@ -33,7 +33,7 @@ func DefaultCredentialsPath() string {
 //	[127.0.0.1:3307]
 //	password=localDevPassword
 //
-//	[beads.company.com:3307]
+//	[example.company.com:3307]
 //	password=teamServerPassword
 //
 // The file path is determined by:

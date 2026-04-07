@@ -168,7 +168,7 @@ func TestInitGuard_FreshCloneWithMetadataJSON(t *testing.T) {
 		}
 
 		// No embeddeddolt/ directory — simulates fresh clone
-		err := checkExistingBeadsDataAt(bdDir, "test")
+		err := checkExistingBdDataAt(bdDir, "test")
 		if err != nil {
 			t.Errorf("fresh clone with embedded metadata should allow init, got: %v", err)
 		}
@@ -199,7 +199,7 @@ func TestInitGuard_FreshCloneWithMetadataJSON(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		err := checkExistingBeadsDataAt(bdDir, "test")
+		err := checkExistingBdDataAt(bdDir, "test")
 		if err == nil {
 			t.Error("existing embedded database should block init")
 		}
@@ -216,7 +216,7 @@ func TestInitGuard_FreshCloneWithMetadataJSON(t *testing.T) {
 		}
 
 		// No metadata.json, no dolt/ — fresh project, never initialized
-		err := checkExistingBeadsDataAt(bdDir, "test")
+		err := checkExistingBdDataAt(bdDir, "test")
 		if err != nil {
 			t.Errorf("empty beads dir should allow init, got: %v", err)
 		}

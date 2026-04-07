@@ -37,7 +37,7 @@ func TestDetectExistingHooks(t *testing.T) {
 			{
 				name:         "bd hook",
 				setupHook:    "pre-commit",
-				hookContent:  "#!/bin/sh\n# bd (beads) pre-commit hook\necho test",
+				hookContent:  "#!/bin/sh\n# bd pre-commit hook\necho test",
 				wantExists:   true,
 				wantIsBdHook: true,
 			},
@@ -116,7 +116,7 @@ func TestInstallGitHooks_NoExistingHooks(t *testing.T) {
 
 		if _, err := os.Stat(preCommitPath); err == nil {
 			content, _ := os.ReadFile(preCommitPath)
-			if !strings.Contains(string(content), "bd (beads)") {
+			if !strings.Contains(string(content), "bd") {
 				t.Error("pre-commit hook doesn't contain bd marker")
 			}
 			if strings.Contains(string(content), "chained") {
@@ -126,7 +126,7 @@ func TestInstallGitHooks_NoExistingHooks(t *testing.T) {
 
 		if _, err := os.Stat(postMergePath); err == nil {
 			content, _ := os.ReadFile(postMergePath)
-			if !strings.Contains(string(content), "bd (beads)") {
+			if !strings.Contains(string(content), "bd") {
 				t.Error("post-merge hook doesn't contain bd marker")
 			}
 		}
@@ -274,41 +274,41 @@ func TestInjectHookSection(t *testing.T) {
 		},
 		{
 			name:     "update existing section",
-			existing: "#!/bin/sh\necho before\n# --- BEGIN BEADS INTEGRATION v0.40.0 ---\nold content\n# --- END BEADS INTEGRATION ---\necho after\n",
+			existing: "#!/bin/sh\necho before\n# --- BEGIN BD INTEGRATION v0.40.0 ---\nold content\n# --- END BD INTEGRATION ---\necho after\n",
 			wantHas:  []string{"echo before", "echo after", "bd hooks run pre-commit", hookSectionEndPrefix},
 		},
 		{
 			name:     "orphaned BEGIN without END",
-			existing: "#!/bin/sh\n# --- BEGIN BEADS INTEGRATION v0.57.0 ---\nbd hook pre-commit \"$@\"\n",
+			existing: "#!/bin/sh\n# --- BEGIN BD INTEGRATION v0.57.0 ---\nbd hook pre-commit \"$@\"\n",
 			wantHas:  []string{"#!/bin/sh\n", hookSectionBeginPrefix, "bd hooks run pre-commit"},
 		},
 		{
 			name: "orphaned BEGIN followed by valid block",
 			existing: "#!/bin/sh\n" +
-				"# --- BEGIN BEADS INTEGRATION v0.57.0 ---\n" +
+				"# --- BEGIN BD INTEGRATION v0.57.0 ---\n" +
 				"bd hook pre-commit \"$@\"\n" +
 				"\n" +
-				"# --- BEGIN BEADS INTEGRATION v0.58.0 ---\n" +
+				"# --- BEGIN BD INTEGRATION v0.58.0 ---\n" +
 				"# This section is managed by beads. Do not remove these markers.\n" +
 				"if command -v bd >/dev/null 2>&1; then\n" +
 				"  export BD_GIT_HOOK=1\n" +
 				"  bd hooks run pre-commit \"$@\"\n" +
 				"  _bd_exit=$?; if [ $_bd_exit -ne 0 ]; then exit $_bd_exit; fi\n" +
 				"fi\n" +
-				"# --- END BEADS INTEGRATION ---\n",
+				"# --- END BD INTEGRATION ---\n",
 			wantHas: []string{"#!/bin/sh\n", hookSectionBeginPrefix, "bd hooks run pre-commit"},
 		},
 		{
 			name: "reversed markers (END before BEGIN)",
 			existing: "#!/bin/sh\necho user-linter\n" +
-				"# --- END BEADS INTEGRATION ---\n" +
-				"# --- BEGIN BEADS INTEGRATION v0.57.0 ---\n" +
+				"# --- END BD INTEGRATION ---\n" +
+				"# --- BEGIN BD INTEGRATION v0.57.0 ---\n" +
 				"bd hook pre-commit \"$@\"\n",
 			wantHas: []string{"#!/bin/sh\n", "echo user-linter", hookSectionBeginPrefix, "bd hooks run pre-commit"},
 		},
 		{
 			name:     "update existing section with versioned END marker",
-			existing: "#!/bin/sh\necho before\n# --- BEGIN BEADS INTEGRATION v0.57.0 ---\nold content\n# --- END BEADS INTEGRATION v0.57.0 ---\necho after\n",
+			existing: "#!/bin/sh\necho before\n# --- BEGIN BD INTEGRATION v0.57.0 ---\nold content\n# --- END BD INTEGRATION v0.57.0 ---\necho after\n",
 			wantHas:  []string{"echo before", "echo after", "bd hooks run pre-commit", hookSectionEndPrefix},
 		},
 	}
@@ -385,7 +385,7 @@ func TestRemoveHookSection(t *testing.T) {
 		},
 		{
 			name:      "orphaned BEGIN without END",
-			content:   "#!/bin/sh\necho before\n\n# --- BEGIN BEADS INTEGRATION v0.57.0 ---\nbd hook pre-commit \"$@\"\n",
+			content:   "#!/bin/sh\necho before\n\n# --- BEGIN BD INTEGRATION v0.57.0 ---\nbd hook pre-commit \"$@\"\n",
 			wantFound: true,
 			wantHas:   []string{"echo before"},
 			wantNot:   []string{hookSectionBeginPrefix, "bd hook pre-commit"},
@@ -393,8 +393,8 @@ func TestRemoveHookSection(t *testing.T) {
 		{
 			name: "reversed markers (END before BEGIN)",
 			content: "#!/bin/sh\necho user-linter\n" +
-				"# --- END BEADS INTEGRATION ---\n" +
-				"# --- BEGIN BEADS INTEGRATION v0.57.0 ---\n" +
+				"# --- END BD INTEGRATION ---\n" +
+				"# --- BEGIN BD INTEGRATION v0.57.0 ---\n" +
 				"bd hook pre-commit \"$@\"\n",
 			wantFound: true,
 			wantHas:   []string{"echo user-linter"},
@@ -694,13 +694,13 @@ func TestConfigureBeadsHooksPath_AbsolutePath(t *testing.T) {
 	tmpDir := newGitRepo(t)
 	runInDir(t, tmpDir, func() {
 		// Create .bd/hooks/ directory
-		beadsHooksDir := filepath.Join(tmpDir, ".bd", "hooks")
-		if err := os.MkdirAll(beadsHooksDir, 0750); err != nil {
+		bdHooksDir := filepath.Join(tmpDir, ".bd", "hooks")
+		if err := os.MkdirAll(bdHooksDir, 0750); err != nil {
 			t.Fatalf("Failed to create .bd/hooks/: %v", err)
 		}
 
-		if err := configureBeadsHooksPath(); err != nil {
-			t.Fatalf("configureBeadsHooksPath() failed: %v", err)
+		if err := configureBdHooksPath(); err != nil {
+			t.Fatalf("configureBdHooksPath() failed: %v", err)
 		}
 
 		// Read back core.hooksPath
@@ -940,22 +940,22 @@ func TestHooksNeedUpdate(t *testing.T) {
 		{
 			name:           "current version hooks",
 			setupHooks:     true,
-			preCommitBody:  "#!/bin/sh\n# bd-hooks-version: " + Version + "\n# bd (beads) pre-commit hook\nbd sync --flush-only\n",
-			postMergeBody:  "#!/bin/sh\n# bd-hooks-version: " + Version + "\n# bd (beads) post-merge hook\nbd import\n",
+			preCommitBody:  "#!/bin/sh\n# bd-hooks-version: " + Version + "\n# bd pre-commit hook\nbd sync --flush-only\n",
+			postMergeBody:  "#!/bin/sh\n# bd-hooks-version: " + Version + "\n# bd post-merge hook\nbd import\n",
 			wantNeedUpdate: false,
 		},
 		{
 			name:           "outdated version hooks",
 			setupHooks:     true,
-			preCommitBody:  "#!/bin/sh\n# bd-hooks-version: 0.40.0\n# bd (beads) pre-commit hook\nbd sync --flush-only\n",
-			postMergeBody:  "#!/bin/sh\n# bd-hooks-version: 0.40.0\n# bd (beads) post-merge hook\nbd import\n",
+			preCommitBody:  "#!/bin/sh\n# bd-hooks-version: 0.40.0\n# bd pre-commit hook\nbd sync --flush-only\n",
+			postMergeBody:  "#!/bin/sh\n# bd-hooks-version: 0.40.0\n# bd post-merge hook\nbd import\n",
 			wantNeedUpdate: true,
 		},
 		{
 			name:           "inline hooks without version",
 			setupHooks:     true,
-			preCommitBody:  "#!/bin/sh\n#\n# bd (beads) pre-commit hook\n#\nbd sync --flush-only\n",
-			postMergeBody:  "#!/bin/sh\n#\n# bd (beads) post-merge hook\n#\nbd import\n",
+			preCommitBody:  "#!/bin/sh\n#\n# bd pre-commit hook\n#\nbd sync --flush-only\n",
+			postMergeBody:  "#!/bin/sh\n#\n# bd post-merge hook\n#\nbd import\n",
 			wantNeedUpdate: true,
 		},
 		{
@@ -982,36 +982,36 @@ func TestHooksNeedUpdate(t *testing.T) {
 		{
 			name:           "version prefix with empty version",
 			setupHooks:     true,
-			preCommitBody:  "#!/bin/sh\n# bd-hooks-version: \n# bd (beads) pre-commit hook\n",
-			postMergeBody:  "#!/bin/sh\n# bd-hooks-version: \n# bd (beads) post-merge hook\n",
+			preCommitBody:  "#!/bin/sh\n# bd-hooks-version: \n# bd pre-commit hook\n",
+			postMergeBody:  "#!/bin/sh\n# bd-hooks-version: \n# bd post-merge hook\n",
 			wantNeedUpdate: true,
 		},
 		{
 			name:           "mixed state: one outdated one current",
 			setupHooks:     true,
-			preCommitBody:  "#!/bin/sh\n# bd-hooks-version: 0.40.0\n# bd (beads) pre-commit hook\nbd sync --flush-only\n",
-			postMergeBody:  "#!/bin/sh\n# bd-hooks-version: " + Version + "\n# bd (beads) post-merge hook\nbd import\n",
+			preCommitBody:  "#!/bin/sh\n# bd-hooks-version: 0.40.0\n# bd pre-commit hook\nbd sync --flush-only\n",
+			postMergeBody:  "#!/bin/sh\n# bd-hooks-version: " + Version + "\n# bd post-merge hook\nbd import\n",
 			wantNeedUpdate: true,
 		},
 		{
 			name:           "mixed state: shim and outdated template",
 			setupHooks:     true,
 			preCommitBody:  "#!/bin/sh\n# bd-shim 0.49.6\nexec bd hooks run pre-commit \"$@\"\n",
-			postMergeBody:  "#!/bin/sh\n# bd-hooks-version: 0.40.0\n# bd (beads) post-merge hook\n",
+			postMergeBody:  "#!/bin/sh\n# bd-hooks-version: 0.40.0\n# bd post-merge hook\n",
 			wantNeedUpdate: true,
 		},
 		{
 			name:           "only pre-commit exists",
 			setupHooks:     true,
-			preCommitBody:  "#!/bin/sh\n# bd-hooks-version: 0.40.0\n# bd (beads) pre-commit hook\nbd sync --flush-only\n",
+			preCommitBody:  "#!/bin/sh\n# bd-hooks-version: 0.40.0\n# bd pre-commit hook\nbd sync --flush-only\n",
 			skipPostMerge:  true,
 			wantNeedUpdate: true,
 		},
 		{
 			name:           "non-executable current version hooks",
 			setupHooks:     true,
-			preCommitBody:  "#!/bin/sh\n# bd-hooks-version: " + Version + "\n# bd (beads) pre-commit hook\nbd sync --flush-only\n",
-			postMergeBody:  "#!/bin/sh\n# bd-hooks-version: " + Version + "\n# bd (beads) post-merge hook\nbd import\n",
+			preCommitBody:  "#!/bin/sh\n# bd-hooks-version: " + Version + "\n# bd pre-commit hook\nbd sync --flush-only\n",
+			postMergeBody:  "#!/bin/sh\n# bd-hooks-version: " + Version + "\n# bd post-merge hook\nbd import\n",
 			fileMode:       0644,
 			wantNeedUpdate: false, // hooksNeedUpdate checks version, not permissions
 		},
@@ -1025,8 +1025,8 @@ func TestHooksNeedUpdate(t *testing.T) {
 		{
 			name:           "section marker hooks older version (shim-like, not outdated)",
 			setupHooks:     true,
-			preCommitBody:  "#!/bin/sh\n# --- BEGIN BEADS INTEGRATION v0.40.0 ---\nbd hooks run pre-commit \"$@\"\n# --- END BEADS INTEGRATION ---\n",
-			postMergeBody:  "#!/bin/sh\n# --- BEGIN BEADS INTEGRATION v0.40.0 ---\nbd hooks run post-merge \"$@\"\n# --- END BEADS INTEGRATION ---\n",
+			preCommitBody:  "#!/bin/sh\n# --- BEGIN BD INTEGRATION v0.40.0 ---\nbd hooks run pre-commit \"$@\"\n# --- END BD INTEGRATION ---\n",
+			postMergeBody:  "#!/bin/sh\n# --- BEGIN BD INTEGRATION v0.40.0 ---\nbd hooks run post-merge \"$@\"\n# --- END BD INTEGRATION ---\n",
 			wantNeedUpdate: false, // section-marker hooks delegate to bd hooks run, like shims
 		},
 		{

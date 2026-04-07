@@ -19,7 +19,7 @@ func main() {
 	// Find the Beads database (looks for .bd/*.db in current/parent dirs)
 	dbPath := bd.FindDatabasePath()
 	if dbPath == "" {
-		log.Fatal("No Beads database found. Run 'bd init' first.")
+		log.Fatal("No bd database found. Run 'bd init' first.")
 	}
 
 	fmt.Printf("Using database: %s\n\n", dbPath)
@@ -50,7 +50,7 @@ func main() {
 	newIssue := &bd.Issue{
 		ID:          "", // Empty = auto-generate
 		Title:       "Example library-created issue",
-		Description: "This issue was created programmatically using Beads as a library",
+		Description: "This issue was created programmatically using bd as a library",
 		Status:      bd.StatusOpen,
 		Priority:    2,
 		IssueType:   bd.TypeTask,

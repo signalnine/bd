@@ -20,7 +20,7 @@ var configCmd = &cobra.Command{
 	Short:   "Manage configuration settings",
 	Long: `Manage configuration settings for external integrations and preferences.
 
-Configuration is stored per-project in the beads database and is version-control-friendly.
+Configuration is stored per-project in the bd database and is version-control-friendly.
 
 Common namespaces:
   - jira.*            Jira integration settings
@@ -402,9 +402,9 @@ Examples:
 		}
 
 		// Find repo root by walking up to find .beads directory
-		repoPath := findBeadsRepoRoot(cwd)
+		repoPath := findBdRepoRoot(cwd)
 		if repoPath == "" {
-			fmt.Fprintf(os.Stderr, "Error: not in a beads repository (no .beads directory found)\n")
+			fmt.Fprintf(os.Stderr, "Error: not in a bd repository (no .bd directory found)\n")
 			os.Exit(1)
 		}
 
@@ -485,8 +485,8 @@ func isValidRemoteURL(url string) bool {
 		strings.HasPrefix(url, "git+")
 }
 
-// findBeadsRepoRoot walks up from the given path to find the repo root (containing .beads)
-func findBeadsRepoRoot(startPath string) string {
+// findBdRepoRoot walks up from the given path to find the repo root (containing .beads)
+func findBdRepoRoot(startPath string) string {
 	path := startPath
 	for {
 		bdDir := filepath.Join(path, ".bd")

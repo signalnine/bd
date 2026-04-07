@@ -650,7 +650,7 @@ func GetMultiRepoConfig() *MultiRepoConfig {
 // Example config.yaml:
 //
 //	external_projects:
-//	  beads: ../beads
+//	  bd: ../bd
 //	  other-project: /absolute/path/to/other-project
 func GetExternalProjects() map[string]string {
 	return GetStringMapString("external_projects")

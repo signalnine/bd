@@ -82,7 +82,7 @@ var createCmd = &cobra.Command{
 				fmt.Fprintf(os.Stderr, "%s Creating test issue in production database\n", ui.RenderWarn("⚠"))
 				fmt.Fprintf(os.Stderr, "  Title: %q appears to be test data\n", title)
 				fmt.Fprintf(os.Stderr, "  Recommendation: Use isolated test database with --db\n")
-				fmt.Fprintf(os.Stderr, "    bd --db /tmp/test-beads create %q\n", title)
+				fmt.Fprintf(os.Stderr, "    bd --db /tmp/test-bd create %q\n", title)
 			}
 		}
 
@@ -371,18 +371,18 @@ var createCmd = &cobra.Command{
 		// When routing to a different repo, we use direct storage access
 		var targetStore *embeddeddolt.EmbeddedDoltStore
 		if repoPath != "." {
-			targetBeadsDir := routing.ExpandPath(repoPath)
-			debug.Logf("DEBUG: Routing to target repo: %s\n", targetBeadsDir)
+			targetBdDir := routing.ExpandPath(repoPath)
+			debug.Logf("DEBUG: Routing to target repo: %s\n", targetBdDir)
 
 			// Ensure target beads directory exists with prefix inheritance
-			if err := ensureBeadsDirForPath(rootCtx, targetBeadsDir, store); err != nil {
+			if err := ensureBdDirForPath(rootCtx, targetBdDir, store); err != nil {
 				FatalError("failed to initialize target repo: %v", err)
 			}
 
 			// Open new store for target repo using factory to respect backend config
-			targetBeadsDirPath := filepath.Join(targetBeadsDir, ".bd")
+			targetBdDirPath := filepath.Join(targetBdDir, ".bd")
 			var err error
-			targetStore, err = newDoltStoreFromConfig(rootCtx, targetBeadsDirPath)
+			targetStore, err = newDoltStoreFromConfig(rootCtx, targetBdDirPath)
 			if err != nil {
 				FatalError("failed to open target store: %v", err)
 			}
@@ -731,7 +731,7 @@ func init() {
 	createCmd.Flags().String("repo", "", "Target repository for issue (overrides auto-routing)")
 	createCmd.Flags().IntP("estimate", "e", 0, "Time estimate in minutes (e.g., 60 for 1 hour)")
 	createCmd.Flags().Bool("ephemeral", false, "Create as ephemeral (short-lived, subject to TTL compaction)")
-	createCmd.Flags().Bool("no-history", false, "Skip Dolt commit history without making GC-eligible (for permanent agent beads)")
+	createCmd.Flags().Bool("no-history", false, "Skip Dolt commit history without making GC-eligible (for permanent agent issues)")
 	createCmd.Flags().String("mol-type", "", "Molecule type: swarm (multi-agent), patrol (recurring ops), work (default)")
 	createCmd.Flags().String("wisp-type", "", "Wisp type for TTL-based compaction: heartbeat, ping, patrol, gc_report, recovery, error, escalation")
 	createCmd.Flags().Bool("validate", false, "Validate description contains required sections for issue type")
@@ -764,10 +764,10 @@ func formatTimeForRPC(t *time.Time) string {
 	return t.Format(time.RFC3339)
 }
 
-// ensureBeadsDirForPath ensures a beads directory exists at the target path.
+// ensureBdDirForPath ensures a beads directory exists at the target path.
 // If the .beads directory doesn't exist, it creates it and initializes with
 // the same prefix as the source store (T010, T012: prefix inheritance).
-func ensureBeadsDirForPath(ctx context.Context, targetPath string, sourceStore *embeddeddolt.EmbeddedDoltStore) error {
+func ensureBdDirForPath(ctx context.Context, targetPath string, sourceStore *embeddeddolt.EmbeddedDoltStore) error {
 	bdDir := filepath.Join(targetPath, ".bd")
 	metadataPath := filepath.Join(bdDir, "metadata.json")
 
@@ -779,7 +779,7 @@ func ensureBeadsDirForPath(ctx context.Context, targetPath string, sourceStore *
 
 	// Create .beads directory
 	if err := os.MkdirAll(bdDir, 0750); err != nil {
-		return fmt.Errorf("cannot create .beads directory: %w", err)
+		return fmt.Errorf("cannot create .bd directory: %w", err)
 	}
 
 	// Initialize database via NewFromConfigWithOptions to respect Dolt config.

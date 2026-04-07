@@ -24,7 +24,7 @@ type pushState struct {
 func pushStatePath() (string, error) {
 	bdDir := project.FindBdDir()
 	if bdDir == "" {
-		return "", fmt.Errorf("not in a beads repository")
+		return "", fmt.Errorf("not in a bd repository")
 	}
 	return filepath.Join(bdDir, "push-state.json"), nil
 }

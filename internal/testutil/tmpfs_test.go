@@ -17,8 +17,8 @@ func TestTempDirInMemory(t *testing.T) {
 	}
 
 	// Verify it's a beads test directory
-	if !strings.Contains(filepath.Base(tmpDir), "beads-test") {
-		t.Errorf("Expected directory name to contain 'beads-test', got: %s", tmpDir)
+	if !strings.Contains(filepath.Base(tmpDir), "bd-test") {
+		t.Errorf("Expected directory name to contain 'bd-test', got: %s", tmpDir)
 	}
 
 	// On Linux CI, verify we're using /dev/shm if available

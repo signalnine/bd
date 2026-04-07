@@ -19,7 +19,7 @@ var repoCmd = &cobra.Command{
 	Short:   "Manage multiple repository configuration",
 	Long: `Configure and manage multiple repository support for multi-repo hydration.
 
-Multi-repo support allows hydrating issues from multiple beads repositories
+Multi-repo support allows hydrating issues from multiple bd repositories
 into a single database for unified cross-repo issue tracking.
 
 Configuration is stored in .bd/config.yaml under the 'repos' section:
@@ -27,14 +27,14 @@ Configuration is stored in .bd/config.yaml under the 'repos' section:
   repos:
     primary: "."
     additional:
-      - ~/beads-planning
+      - ~/bd-planning
       - ~/work-repo
 
 Examples:
-  bd repo add ~/beads-planning       # Add planning repo
+  bd repo add ~/bd-planning       # Add planning repo
   bd repo add ../other-repo          # Add relative path repo
   bd repo list                       # Show all configured repos
-  bd repo remove ~/beads-planning    # Remove by path
+  bd repo remove ~/bd-planning    # Remove by path
   bd repo sync                       # Sync from all configured repos`,
 }
 
@@ -43,7 +43,7 @@ var repoAddCmd = &cobra.Command{
 	Short: "Add an additional repository to sync",
 	Long: `Add a repository path to the repos.additional list in config.yaml.
 
-The path should point to a directory containing a .beads folder.
+The path should point to a directory containing a .bd folder.
 Paths can be absolute or relative (they are stored as-is).
 
 This modifies .bd/config.yaml, which is version-controlled and
@@ -67,7 +67,7 @@ shared across all clones of this repository.`,
 
 			bdDir := filepath.Join(expandedPath, ".bd")
 			if _, err := os.Stat(bdDir); os.IsNotExist(err) {
-				return fmt.Errorf("no .beads directory found at %s - is this a beads repository?", expandedPath)
+				return fmt.Errorf("no .bd directory found at %s - is this a bd repository?", expandedPath)
 			}
 		}
 

@@ -16,7 +16,7 @@ import (
 var backupRestoreCmd = &cobra.Command{
 	Use:   "restore [path]",
 	Short: "Restore database from a Dolt backup",
-	Long: `Restore the beads database from a Dolt-native backup.
+	Long: `Restore the bd database from a Dolt-native backup.
 
 By default, reads from .bd/backup/ (or the configured backup directory).
 Optionally specify a path to a directory containing a Dolt backup.
@@ -122,7 +122,7 @@ func syncProjectIDFromDB(ctx context.Context, s *embeddeddolt.EmbeddedDoltStore)
 
 	bdDir := project.FindBdDir()
 	if bdDir == "" {
-		return fmt.Errorf("cannot find .beads directory")
+		return fmt.Errorf("cannot find .bd directory")
 	}
 
 	cfg, err := configfile.Load(bdDir)

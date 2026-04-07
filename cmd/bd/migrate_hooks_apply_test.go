@@ -162,7 +162,7 @@ func TestApplyHookMigrationExecution_MarkerBrokenIsRepaired(t *testing.T) {
 	repoDir, hooksDir := setupHookMigrationRepo(t)
 	preCommitPath := filepath.Join(hooksDir, "pre-commit")
 
-	brokenContent := "#!/usr/bin/env sh\n# --- BEGIN BEADS INTEGRATION v0.57.0 ---\nbd hooks run pre-commit \"$@\"\n"
+	brokenContent := "#!/usr/bin/env sh\n# --- BEGIN BD INTEGRATION v0.57.0 ---\nbd hooks run pre-commit \"$@\"\n"
 	writeHookMigrationFile(t, preCommitPath, brokenContent)
 
 	plan, err := PlanHookMigration(repoDir)

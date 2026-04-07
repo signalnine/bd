@@ -405,8 +405,8 @@ func init() {
 	rootCmd.AddCommand(doltCmd)
 }
 
-func selectedDoltBeadsDir() string {
-	bdDir := selectedNoDBBeadsDir()
+func selectedDoltBdDir() string {
+	bdDir := selectedNoDBBdDir()
 	if bdDir == "" {
 		return ""
 	}

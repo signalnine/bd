@@ -40,7 +40,7 @@ func hooksInstalled() bool {
 		return false
 	}
 	preCommitStr := string(preCommitContent)
-	if !strings.Contains(preCommitStr, "bd (beads) pre-commit hook") &&
+	if !strings.Contains(preCommitStr, "bd pre-commit hook") &&
 		!strings.Contains(preCommitStr, hookSectionBeginPrefix) {
 		return false
 	}
@@ -51,7 +51,7 @@ func hooksInstalled() bool {
 		return false
 	}
 	postMergeStr := string(postMergeContent)
-	if !strings.Contains(postMergeStr, "bd (beads) post-merge hook") &&
+	if !strings.Contains(postMergeStr, "bd post-merge hook") &&
 		!strings.Contains(postMergeStr, hookSectionBeginPrefix) {
 		return false
 	}
@@ -115,7 +115,7 @@ func detectExistingHooks() []hookInfo {
 		if err == nil {
 			hooks[i].exists = true
 			hooks[i].content = string(content)
-			hooks[i].isBdHook = strings.Contains(hooks[i].content, "bd (beads)") ||
+			hooks[i].isBdHook = strings.Contains(hooks[i].content, "bd") ||
 				strings.Contains(hooks[i].content, hookSectionBeginPrefix)
 			// Only detect pre-commit/prek framework if not a bd hook
 			// Use regex for consistency with DetectActiveHookManager patterns
@@ -303,7 +303,7 @@ func buildJJPreCommitHook(chainHooks bool, existingHooks []hookInfo) string {
 // Since jj doesn't have native hooks yet, users need to set up aliases.
 func printJJAliasInstructions() {
 	fmt.Printf("\n%s Jujutsu repository detected (not colocated with git)\n\n", ui.RenderWarn("⚠"))
-	fmt.Printf("Jujutsu doesn't support hooks yet. To auto-export beads on push,\n")
+	fmt.Printf("Jujutsu doesn't support hooks yet. To auto-export bd on push,\n")
 	fmt.Printf("add this alias to your jj config (~/.config/jj/config.toml):\n\n")
 	fmt.Printf("  %s\n", ui.RenderAccent("[aliases]"))
 	fmt.Printf("  %s\n", ui.RenderAccent(`push = ["util", "exec", "--", "sh", "-c", "bd dolt commit && bd dolt push && jj git push \"$@\"", ""]`))

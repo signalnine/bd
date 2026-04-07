@@ -21,7 +21,7 @@ var bootstrapCmd = &cobra.Command{
 	Use:     "bootstrap",
 	GroupID: "setup",
 	Short:   "Non-destructive database setup for fresh clones and recovery",
-	Long: `Bootstrap sets up the beads database without destroying existing data.
+	Long: `Bootstrap sets up the bd database without destroying existing data.
 Unlike 'bd init --force', bootstrap will never delete existing issues.
 
 Bootstrap auto-detects the right action:
@@ -32,7 +32,7 @@ Bootstrap auto-detects the right action:
   • If database already exists: validates and reports status
 
 This is the recommended command for:
-  • Setting up beads on a fresh clone
+  • Setting up bd on a fresh clone
   • Recovering after moving to a new machine
   • Repairing a broken database configuration
 
@@ -57,7 +57,7 @@ Examples:
 		// Find beads directory
 		bdDir := project.FindBdDir()
 		if bdDir == "" {
-			// No .beads directory exists yet. Before giving up, probe the
+			// No .bd directory exists yet. Before giving up, probe the
 			// git remote for existing Beads data (refs/dolt/data). This is
 			// the "fresh second clone" case: clone1 pushed Beads state to
 			// origin, and clone2 needs to bootstrap from it. (GH#2792)
@@ -84,11 +84,11 @@ Examples:
 			if jsonOutput {
 				outputJSON(map[string]interface{}{
 					"action":     "none",
-					"reason":     "no .beads directory found",
+					"reason":     "no .bd directory found",
 					"suggestion": "Run 'bd init' to create a new project",
 				})
 			} else {
-				fmt.Fprintf(os.Stderr, "No .beads directory found.\n")
+				fmt.Fprintf(os.Stderr, "No .bd directory found.\n")
 				fmt.Fprintf(os.Stderr, "To create a new project, use: bd init\n")
 				fmt.Fprintf(os.Stderr, "Bootstrap is for existing projects that need database setup.\n")
 			}
@@ -127,7 +127,7 @@ Examples:
 type BootstrapPlan struct {
 	Action      string `json:"action"` // "sync", "restore", "jsonl-import", "init", "none"
 	Reason      string `json:"reason"` // Human-readable explanation
-	BdDir       string `json:"beads_dir"`
+	BdDir       string `json:"bd_dir"`
 	Database    string `json:"database"`
 	SyncRemote  string `json:"sync_remote,omitempty"`
 	BackupDir   string `json:"backup_dir,omitempty"`
@@ -168,7 +168,7 @@ func detectBootstrapAction(bdDir string, cfg *configfile.Config) BootstrapPlan {
 			if gitLsRemoteHasRef("origin", "refs/dolt/data") {
 				plan.SyncRemote = gitURLToDoltRemote(originURL)
 				plan.Action = "sync"
-				plan.Reason = "Found existing beads database on origin (refs/dolt/data) — will clone from " + originURL
+				plan.Reason = "Found existing bd database on origin (refs/dolt/data) — will clone from " + originURL
 				return plan
 			}
 		}
@@ -313,7 +313,7 @@ func executeSyncAction(ctx context.Context, plan BootstrapPlan, cfg *configfile.
 	// bootstrap path where we detected remote data before .beads was
 	// created. Deferred here to preserve --dry-run semantics. (GH#2792)
 	if err := os.MkdirAll(plan.BdDir, 0o750); err != nil {
-		return fmt.Errorf("create beads directory: %w", err)
+		return fmt.Errorf("create bd directory: %w", err)
 	}
 
 	dbName := cfg.GetDoltDatabase()
@@ -342,7 +342,7 @@ func executeSyncAction(ctx context.Context, plan BootstrapPlan, cfg *configfile.
 
 func inferPrefix(cfg *configfile.Config) string {
 	db := cfg.GetDoltDatabase()
-	if db != "" && db != "beads" {
+	if db != "" && db != "bd" {
 		return db
 	}
 	cwd, _ := os.Getwd()

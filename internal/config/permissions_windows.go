@@ -8,17 +8,17 @@ import (
 )
 
 const (
-	// BeadsDirPerm is the permission mode for .bd/ directories (owner-only).
-	BeadsDirPerm fs.FileMode = 0700
-	// BeadsFilePerm is the permission mode for state files inside .bd/ (owner-only).
-	BeadsFilePerm fs.FileMode = 0600
+	// BdDirPerm is the permission mode for .bd/ directories (owner-only).
+	BdDirPerm fs.FileMode = 0700
+	// BdFilePerm is the permission mode for state files inside .bd/ (owner-only).
+	BdFilePerm fs.FileMode = 0600
 )
 
-// EnsureBeadsDir creates the .beads directory with secure permissions.
-func EnsureBeadsDir(path string) error {
-	return os.MkdirAll(path, BeadsDirPerm)
+// EnsureBdDir creates the .beads directory with secure permissions.
+func EnsureBdDir(path string) error {
+	return os.MkdirAll(path, BdDirPerm)
 }
 
-// CheckBeadsDirPermissions is a no-op on Windows where filesystem
+// CheckBdDirPermissions is a no-op on Windows where filesystem
 // permissions use ACLs rather than Unix permission bits.
-func CheckBeadsDirPermissions(path string) {}
+func CheckBdDirPermissions(path string) {}

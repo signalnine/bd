@@ -21,14 +21,14 @@ type WhereResult struct {
 var whereCmd = &cobra.Command{
 	Use:     "where",
 	GroupID: "setup",
-	Short:   "Show active beads location",
-	Long: `Show the active beads database location, including redirect information.
+	Short:   "Show active bd location",
+	Long: `Show the active bd database location, including redirect information.
 
 This command is useful for debugging when using redirects, to understand
-which .beads directory is actually being used.
+which .bd directory is actually being used.
 
 Examples:
-  bd where           # Show active beads location
+  bd where           # Show active bd location
   bd where --json    # Output in JSON format
 `,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -38,9 +38,9 @@ Examples:
 		bdDir := project.FindBdDir()
 		if bdDir == "" {
 			if jsonOutput {
-				outputJSON(map[string]string{"error": "no beads directory found"})
+				outputJSON(map[string]string{"error": "no bd directory found"})
 			} else {
-				fmt.Fprintln(os.Stderr, "Error: no beads directory found")
+				fmt.Fprintln(os.Stderr, "Error: no bd directory found")
 				fmt.Fprintln(os.Stderr, "Hint: "+diagHint())
 			}
 			os.Exit(1)
@@ -50,9 +50,9 @@ Examples:
 
 		// Check if we got here via redirect by looking for the original .beads directory
 		// Walk up from cwd to find any .beads with a redirect file
-		originalBeadsDir := findOriginalBeadsDir()
-		if originalBeadsDir != "" && originalBeadsDir != bdDir {
-			result.RedirectedFrom = originalBeadsDir
+		originalBdDir := findOriginalBdDir()
+		if originalBdDir != "" && originalBdDir != bdDir {
+			result.RedirectedFrom = originalBdDir
 		}
 
 		// Find the database path
@@ -92,9 +92,9 @@ Examples:
 	},
 }
 
-// findOriginalBeadsDir walks up from cwd looking for a .beads directory with a redirect file
+// findOriginalBdDir walks up from cwd looking for a .beads directory with a redirect file
 // Returns the original .beads path if found, empty string otherwise
-func findOriginalBeadsDir() string {
+func findOriginalBdDir() string {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return ""

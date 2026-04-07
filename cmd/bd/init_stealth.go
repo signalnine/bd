@@ -33,7 +33,7 @@ func setupStealthMode(verbose bool) error {
 	if verbose {
 		fmt.Printf("\n%s Stealth mode configured successfully!\n\n", ui.RenderPass("✓"))
 		fmt.Printf("  Git exclude: %s\n", ui.RenderAccent(".git/info/exclude configured"))
-		fmt.Printf("\nYour beads setup is now %s - other repo collaborators won't see any beads-related files.\n", ui.RenderAccent("invisible"))
+		fmt.Printf("\nYour bd setup is now %s - other repo collaborators won't see any bd-related files.\n", ui.RenderAccent("invisible"))
 		fmt.Printf("To set up a specific AI tool, run: %s\n\n", ui.RenderAccent("bd setup <claude|cursor|aider|...> --stealth"))
 	}
 
@@ -69,13 +69,13 @@ func setupGitExclude(verbose bool) error {
 	}
 
 	// Use relative patterns (these work correctly in .git/info/exclude)
-	beadsPattern := ".bd/"
+	bdPattern := ".bd/"
 	claudePattern := ".claude/settings.local.json"
 
-	hasBeads := strings.Contains(existingContent, beadsPattern)
+	hasBdDir := strings.Contains(existingContent, bdPattern)
 	hasClaude := strings.Contains(existingContent, claudePattern)
 
-	if hasBeads && hasClaude {
+	if hasBdDir && hasClaude {
 		if verbose {
 			fmt.Printf("Git exclude already configured for stealth mode\n")
 		}
@@ -88,12 +88,12 @@ func setupGitExclude(verbose bool) error {
 		newContent += "\n"
 	}
 
-	if !hasBeads || !hasClaude {
-		newContent += "\n# Beads stealth mode (added by bd init --stealth)\n"
+	if !hasBdDir || !hasClaude {
+		newContent += "\n# bd stealth mode (added by bd init --stealth)\n"
 	}
 
-	if !hasBeads {
-		newContent += beadsPattern + "\n"
+	if !hasBdDir {
+		newContent += bdPattern + "\n"
 	}
 	if !hasClaude {
 		newContent += claudePattern + "\n"
@@ -113,7 +113,7 @@ func setupGitExclude(verbose bool) error {
 }
 
 // setupForkExclude configures .git/info/exclude for fork workflows (GH#742)
-// Adds beads files and Claude artifacts to keep PRs to upstream clean.
+// Adds bd files and Claude artifacts to keep PRs to upstream clean.
 // This is separate from stealth mode - fork protection is specifically about
 // preventing beads/Claude files from appearing in upstream PRs.
 func setupForkExclude(verbose bool) error {
@@ -160,7 +160,7 @@ func setupForkExclude(verbose bool) error {
 	if !strings.HasSuffix(newContent, "\n") && len(newContent) > 0 {
 		newContent += "\n"
 	}
-	newContent += "\n# Beads fork protection (bd init)\n"
+	newContent += "\n# bd fork protection (bd init)\n"
 	for _, p := range toAdd {
 		newContent += p + "\n"
 	}
@@ -198,8 +198,8 @@ func promptForkExclude(upstreamURL string, quiet bool) (bool, error) {
 	}
 
 	fmt.Printf("\n%s Detected fork (upstream: %s)\n\n", ui.RenderAccent("▶"), upstreamURL)
-	fmt.Println("Would you like to configure .git/info/exclude to keep beads files local?")
-	fmt.Println("This prevents beads from appearing in PRs to upstream.")
+	fmt.Println("Would you like to configure .git/info/exclude to keep bd files local?")
+	fmt.Println("This prevents bd from appearing in PRs to upstream.")
 	fmt.Print("\n[Y/n]: ")
 
 	reader := bufio.NewReader(os.Stdin)
@@ -277,13 +277,13 @@ func setupGlobalGitIgnore(homeDir string, projectPath string, verbose bool) erro
 
 	// Use absolute paths for this specific project (fixes GitHub #538)
 	// This allows other projects to use beads openly while this one stays stealth
-	beadsPattern := projectPath + "/.bd/"
+	bdPattern := projectPath + "/.bd/"
 	claudePattern := projectPath + "/.claude/settings.local.json"
 
-	hasBeads := strings.Contains(existingContent, beadsPattern)
+	hasBdDir := strings.Contains(existingContent, bdPattern)
 	hasClaude := strings.Contains(existingContent, claudePattern)
 
-	if hasBeads && hasClaude {
+	if hasBdDir && hasClaude {
 		if verbose {
 			fmt.Printf("Global gitignore already configured for stealth mode in %s\n", projectPath)
 		}
@@ -296,12 +296,12 @@ func setupGlobalGitIgnore(homeDir string, projectPath string, verbose bool) erro
 		newContent += "\n"
 	}
 
-	if !hasBeads || !hasClaude {
-		newContent += fmt.Sprintf("\n# Beads stealth mode: %s (added by bd init --stealth)\n", projectPath)
+	if !hasBdDir || !hasClaude {
+		newContent += fmt.Sprintf("\n# bd stealth mode: %s (added by bd init --stealth)\n", projectPath)
 	}
 
-	if !hasBeads {
-		newContent += beadsPattern + "\n"
+	if !hasBdDir {
+		newContent += bdPattern + "\n"
 	}
 	if !hasClaude {
 		newContent += claudePattern + "\n"
@@ -312,11 +312,11 @@ func setupGlobalGitIgnore(homeDir string, projectPath string, verbose bool) erro
 	if err := os.WriteFile(ignorePath, []byte(newContent), 0644); err != nil {
 		fmt.Printf("\nUnable to write to %s (file is read-only)\n\n", ignorePath)
 		fmt.Printf("To enable stealth mode, add these lines to your global gitignore:\n\n")
-		if !hasBeads || !hasClaude {
-			fmt.Printf("# Beads stealth mode: %s\n", projectPath)
+		if !hasBdDir || !hasClaude {
+			fmt.Printf("# bd stealth mode: %s\n", projectPath)
 		}
-		if !hasBeads {
-			fmt.Printf("%s\n", beadsPattern)
+		if !hasBdDir {
+			fmt.Printf("%s\n", bdPattern)
 		}
 		if !hasClaude {
 			fmt.Printf("%s\n", claudePattern)

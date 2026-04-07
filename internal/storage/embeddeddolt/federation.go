@@ -29,7 +29,7 @@ func (s *EmbeddedDoltStore) ensureCredentialKey() error {
 		return nil
 	}
 	if s.bdDir == "" {
-		return fmt.Errorf("beads directory not set; credential encryption unavailable")
+		return fmt.Errorf("bd directory not set; credential encryption unavailable")
 	}
 
 	keyPath := filepath.Join(s.bdDir, credentialKeyFile)

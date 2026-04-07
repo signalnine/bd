@@ -26,7 +26,7 @@ func TempDirInMemory(t testing.TB) string {
 		// Try /dev/shm (tmpfs ramdisk) first
 		if stat, err := os.Stat("/dev/shm"); err == nil && stat.IsDir() {
 			// Create subdirectory with proper permissions
-			tmpBase := filepath.Join("/dev/shm", "beads-test")
+			tmpBase := filepath.Join("/dev/shm", "bd-test")
 			if err := os.MkdirAll(tmpBase, 0755); err == nil {
 				baseDir = tmpBase
 			}
@@ -48,7 +48,7 @@ func TempDirInMemory(t testing.TB) string {
 	}
 
 	// Create unique temp directory
-	tmpDir, err := os.MkdirTemp(baseDir, "beads-test-*")
+	tmpDir, err := os.MkdirTemp(baseDir, "bd-test-*")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}

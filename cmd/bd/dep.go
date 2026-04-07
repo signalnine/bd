@@ -202,7 +202,7 @@ Examples:
   bd dep add bd-42 bd-41                              # Positional args
   bd dep add bd-42 --blocked-by bd-41                 # Flag syntax (same effect)
   bd dep add bd-42 --depends-on bd-41                 # Alias (same effect)
-  bd dep add gt-xyz external:beads:mol-run-assignee   # Cross-project dependency`,
+  bd dep add gt-xyz external:bd:dep-run-assignee   # Cross-project dependency`,
 	Args: func(cmd *cobra.Command, args []string) error {
 		blockedBy, _ := cmd.Flags().GetString("blocked-by")
 		dependsOn, _ := cmd.Flags().GetString("depends-on")

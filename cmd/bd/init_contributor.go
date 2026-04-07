@@ -17,7 +17,7 @@ import (
 // runContributorWizard guides the user through OSS contributor setup
 func runContributorWizard(ctx context.Context, store *embeddeddolt.EmbeddedDoltStore) error {
 	fmt.Printf("\n%s %s\n\n", ui.RenderBold("bd"), ui.RenderBold("Contributor Workflow Setup Wizard"))
-	fmt.Println("This wizard will configure beads for OSS contribution.")
+	fmt.Println("This wizard will configure bd for OSS contribution.")
 	fmt.Println()
 
 	if ctx == nil {
@@ -117,9 +117,9 @@ func runContributorWizard(ctx context.Context, store *embeddeddolt.EmbeddedDoltS
 
 	// Use BD_DIR as default if set (user explicitly set it and continued past warning)
 	// Otherwise fall back to ~/.bd-planning
-	defaultPlanningRepo := filepath.Join(homeDir, ".beads-planning")
-	if envBeadsDir := os.Getenv("BD_DIR"); envBeadsDir != "" {
-		defaultPlanningRepo = envBeadsDir
+	defaultPlanningRepo := filepath.Join(homeDir, ".bd-planning")
+	if envBdDir := os.Getenv("BD_DIR"); envBdDir != "" {
+		defaultPlanningRepo = envBdDir
 	}
 
 	fmt.Printf("\nWhere should contributor planning issues be stored?\n")
@@ -162,12 +162,12 @@ func runContributorWizard(ctx context.Context, store *embeddeddolt.EmbeddedDoltS
 		// Initialize beads in planning repo
 		bdDir := filepath.Join(planningPath, ".bd")
 		if err := os.MkdirAll(bdDir, 0750); err != nil {
-			return fmt.Errorf("failed to create .beads in planning repo: %w", err)
+			return fmt.Errorf("failed to create .bd in planning repo: %w", err)
 		}
 
 		// Create README in planning repo
 		readmePath := filepath.Join(planningPath, "README.md")
-		readmeContent := fmt.Sprintf(`# Beads Planning Repository
+		readmeContent := fmt.Sprintf(`# bd Planning Repository
 
 This repository stores contributor planning issues for OSS projects.
 
@@ -193,7 +193,7 @@ Created by: bd init --contributor
 		cmd.Dir = planningPath
 		_ = cmd.Run()
 
-		cmd = exec.Command("git", "commit", "-m", "Initial commit: beads planning repository")
+		cmd = exec.Command("git", "commit", "-m", "Initial commit: bd planning repository")
 		cmd.Dir = planningPath
 		_ = cmd.Run()
 

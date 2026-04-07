@@ -21,7 +21,7 @@ func openReadOnlyStoreForDBPath(ctx context.Context, dbPath string) (*embeddeddo
 		return nil, fmt.Errorf("no database path available")
 	}
 
-	if bdDir := resolveBeadsDirForDBPath(dbPath); bdDir != "" {
+	if bdDir := resolveBdDirForDBPath(dbPath); bdDir != "" {
 		return newReadOnlyStoreFromConfig(ctx, bdDir)
 	}
 
@@ -29,10 +29,10 @@ func openReadOnlyStoreForDBPath(ctx context.Context, dbPath string) (*embeddeddo
 	return newReadOnlyStoreFromConfig(ctx, filepath.Dir(dbPath))
 }
 
-// resolveBeadsDirForDBPath maps a database path back to its owning .beads
+// resolveBdDirForDBPath maps a database path back to its owning .beads
 // directory when metadata.json is available. This is needed for repos that use
 // non-default dolt_database names or custom dolt_data_dir locations.
-func resolveBeadsDirForDBPath(dbPath string) string {
+func resolveBdDirForDBPath(dbPath string) string {
 	actualDBPath := utils.CanonicalizePath(dbPath)
 	if parent := filepath.Dir(dbPath); filepath.Base(parent) == ".bd" {
 		if _, err := os.Stat(filepath.Join(parent, "metadata.json")); err == nil {

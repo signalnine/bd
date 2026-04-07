@@ -226,7 +226,7 @@ func (s *EmbeddedDoltStore) PushTo(ctx context.Context, peer string) error {
 func (s *EmbeddedDoltStore) PullFrom(ctx context.Context, peer string) ([]storage.Conflict, error) {
 	// Auto-commit pending changes before pull to prevent
 	// "cannot merge with uncommitted changes" errors.
-	if _, err := s.CommitPending(ctx, "beads"); err != nil {
+	if _, err := s.CommitPending(ctx, "bd"); err != nil {
 		return nil, fmt.Errorf("commit pending before pull: %w", err)
 	}
 

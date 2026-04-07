@@ -263,7 +263,7 @@ func TestRunFmtCheck_Unformatted(t *testing.T) {
 
 func TestRunBeadsPollutionCheck_Clean(t *testing.T) {
 	// In a clean repo state (no uncommitted .beads changes), the check should pass.
-	result := runBeadsPollutionCheck()
+	result := runBdPollutionCheck()
 	if !result.Passed {
 		// If this fails, it means the test environment itself has .beads changes,
 		// which is valid — skip rather than fail.

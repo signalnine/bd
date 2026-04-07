@@ -139,7 +139,7 @@ func startDoltContainer() error {
 	defer cancel()
 
 	ctr, err := dolt.Run(ctx, DoltDockerImage,
-		dolt.WithDatabase("beads_test"),
+		dolt.WithDatabase("bd_test"),
 		// Docker port-forwarding makes connections appear as non-localhost
 		// (e.g., 172.17.0.1). The entrypoint defaults DOLT_ROOT_HOST to
 		// "localhost", so root@localhost won't match external connections.
@@ -191,7 +191,7 @@ func StartIsolatedDoltContainer(t *testing.T) string {
 	ctx, cancel := context.WithTimeout(context.Background(), serverStartTimeout)
 	defer cancel()
 	ctr, err := dolt.Run(ctx, DoltDockerImage,
-		dolt.WithDatabase("beads_test"),
+		dolt.WithDatabase("bd_test"),
 		testcontainers.WithEnv(map[string]string{"DOLT_ROOT_HOST": "%"}),
 	)
 	if err != nil {

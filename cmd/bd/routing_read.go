@@ -78,8 +78,8 @@ func openRoutedReadStore(ctx context.Context, store *embeddeddolt.EmbeddedDoltSt
 	}
 
 	targetRepoPath := routing.ExpandPath(repoPath)
-	targetBeadsDir := filepath.Join(targetRepoPath, ".bd")
-	targetStore, err := newReadOnlyStoreFromConfig(ctx, targetBeadsDir)
+	targetBdDir := filepath.Join(targetRepoPath, ".bd")
+	targetStore, err := newReadOnlyStoreFromConfig(ctx, targetBdDir)
 	if err != nil {
 		return nil, false, fmt.Errorf("failed to open routed store at %s: %w", targetRepoPath, err)
 	}

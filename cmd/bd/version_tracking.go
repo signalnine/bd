@@ -24,7 +24,7 @@ func trackBdVersion() {
 	// Find the beads directory
 	bdDir := project.FindBdDir()
 	if bdDir == "" {
-		// No .beads directory found - this is fine (e.g., bd init, bd version, etc.)
+		// No .bd directory found - this is fine (e.g., bd init, bd version, etc.)
 		return
 	}
 
@@ -147,7 +147,7 @@ func autoMigrateOnVersionBump(bdDir string) {
 
 	// Validate bdDir
 	if bdDir == "" {
-		debug.Logf("auto-migrate: skipping migration, no beads directory")
+		debug.Logf("auto-migrate: skipping migration, no bd directory")
 		return
 	}
 

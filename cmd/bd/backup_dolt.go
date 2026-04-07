@@ -34,11 +34,11 @@ DoltHub remote URL. If the destination was previously configured, it is
 updated to the new path.
 
 Filesystem examples:
-  bd backup add /mnt/usb/beads-backup
-  bd backup add ~/Dropbox/beads-backup
+  bd backup add /mnt/usb/bd-backup
+  bd backup add ~/Dropbox/bd-backup
 
 DoltHub (recommended for cloud backup):
-  bd backup add https://doltremoteapi.dolthub.com/myuser/beads-backup
+  bd backup add https://doltremoteapi.dolthub.com/myuser/bd-backup
 
 After adding, run 'bd backup sync' to push your data.`,
 	Args: cobra.ExactArgs(1),
@@ -98,7 +98,7 @@ After adding, run 'bd backup sync' to push your data.`,
 var backupSyncCmd = &cobra.Command{
 	Use:   "sync",
 	Short: "Push database to configured Dolt backup",
-	Long: `Sync the current beads database to the configured Dolt backup destination.
+	Long: `Sync the current bd database to the configured Dolt backup destination.
 
 This pushes the entire database state (all branches, full history) to the
 backup location configured with 'bd backup init'.
@@ -194,7 +194,7 @@ type doltBackupState struct {
 func doltBackupConfigPath() (string, error) {
 	bdDir := project.FindBdDir()
 	if bdDir == "" {
-		return "", fmt.Errorf("not in a beads repository")
+		return "", fmt.Errorf("not in a bd repository")
 	}
 	return filepath.Join(bdDir, "dolt-backup.json"), nil
 }
@@ -202,7 +202,7 @@ func doltBackupConfigPath() (string, error) {
 func doltBackupStatePath() (string, error) {
 	bdDir := project.FindBdDir()
 	if bdDir == "" {
-		return "", fmt.Errorf("not in a beads repository")
+		return "", fmt.Errorf("not in a bd repository")
 	}
 	return filepath.Join(bdDir, "dolt-backup-state.json"), nil
 }
@@ -330,7 +330,7 @@ func showDoltBackupStatusJSON() map[string]interface{} {
 func doltBackupSize() (int64, error) {
 	bdDir := project.FindBdDir()
 	if bdDir == "" {
-		return 0, fmt.Errorf("not in a beads repository")
+		return 0, fmt.Errorf("not in a bd repository")
 	}
 	dataDir := filepath.Join(bdDir, "embeddeddolt")
 	return dirSize(dataDir)

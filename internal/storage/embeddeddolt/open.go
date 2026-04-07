@@ -23,8 +23,8 @@ import (
 var validIdentifier = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)
 
 const (
-	commitName  = "beads"
-	commitEmail = "beads@local"
+	commitName  = "bd"
+	commitEmail = "bd@local"
 )
 
 // OpenSQL opens an embedded Dolt database at dir. The returned cleanup

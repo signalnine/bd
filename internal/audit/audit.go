@@ -51,7 +51,7 @@ type Entry struct {
 func Path() (string, error) {
 	bdDir := project.FindBdDir()
 	if bdDir == "" {
-		return "", fmt.Errorf("no .beads directory found")
+		return "", fmt.Errorf("no .bd directory found")
 	}
 	return filepath.Join(bdDir, FileName), nil
 }
@@ -63,7 +63,7 @@ func EnsureFile() (string, error) {
 		return "", err
 	}
 	if err := os.MkdirAll(filepath.Dir(p), 0700); err != nil {
-		return "", fmt.Errorf("failed to create .beads directory: %w", err)
+		return "", fmt.Errorf("failed to create .bd directory: %w", err)
 	}
 	_, statErr := os.Stat(p)
 	if statErr == nil {

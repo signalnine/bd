@@ -11,8 +11,8 @@ import (
 
 var backupCmd = &cobra.Command{
 	Use:   "backup",
-	Short: "Back up your beads database",
-	Long: `Back up your beads database for off-machine recovery.
+	Short: "Back up your bd database",
+	Long: `Back up your bd database for off-machine recovery.
 
 Commands:
   bd backup init <path>    Set up a backup destination (filesystem or DoltHub)

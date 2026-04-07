@@ -54,12 +54,12 @@ Subcommands:
 		if bdDir == "" {
 			if jsonOutput {
 				outputJSON(map[string]interface{}{
-					"error":   "no_beads_directory",
-					"message": "No .beads directory found. " + diagHint() + ".",
+					"error":   "no_bd_directory",
+					"message": "No .bd directory found. " + diagHint() + ".",
 				})
 				os.Exit(1)
 			} else {
-				FatalErrorWithHint("no .beads directory found", diagHint())
+				FatalErrorWithHint("no .bd directory found", diagHint())
 			}
 		}
 
@@ -289,11 +289,11 @@ func handleUpdateRepoID(dryRun bool, autoYes bool) {
 		if jsonOutput {
 			outputJSON(map[string]interface{}{
 				"error":   "no_database",
-				"message": "No beads database found. " + diagHint() + ".",
+				"message": "No bd database found. " + diagHint() + ".",
 			})
 			os.Exit(1)
 		}
-		FatalErrorWithHint("no beads database found", diagHint())
+		FatalErrorWithHint("no bd database found", diagHint())
 	}
 
 	// Compute new repo ID
@@ -402,12 +402,12 @@ func handleInspect() {
 	if bdDir == "" {
 		if jsonOutput {
 			outputJSON(map[string]interface{}{
-				"error":   "no_beads_directory",
-				"message": "No .beads directory found. " + diagHint() + ".",
+				"error":   "no_bd_directory",
+				"message": "No .bd directory found. " + diagHint() + ".",
 			})
 			os.Exit(1)
 		}
-		FatalErrorWithHint("no .beads directory found", diagHint())
+		FatalErrorWithHint("no .bd directory found", diagHint())
 	}
 
 	// Check if database is available via the global store
@@ -547,12 +547,12 @@ func handleToSeparateBranch(branch string, dryRun bool) {
 	if bdDir == "" {
 		if jsonOutput {
 			outputJSON(map[string]interface{}{
-				"error":   "no_beads_directory",
-				"message": "No .beads directory found. " + diagHint() + ".",
+				"error":   "no_bd_directory",
+				"message": "No .bd directory found. " + diagHint() + ".",
 			})
 			os.Exit(1)
 		}
-		FatalErrorWithHint("no .beads directory found", diagHint())
+		FatalErrorWithHint("no .bd directory found", diagHint())
 	}
 
 	store := getStore()
@@ -645,7 +645,7 @@ func listMigrations() []string {
 // migrateSyncCmd is the "bd migrate sync <branch>" subcommand that
 // configures the separate-branch workflow for multi-clone setups.
 // Previously this was documented but never wired as an actual subcommand,
-// so bd doctor's recommendation to run "bd migrate sync beads-sync" would fail.
+// so bd doctor's recommendation to run "bd migrate sync bd-sync" would fail.
 var migrateSyncCmd = &cobra.Command{
 	Use:   "sync <branch>",
 	Short: "Set up sync.branch workflow for multi-clone setups",
@@ -655,7 +655,7 @@ This sets the sync.branch config value so that issue data is committed
 to a dedicated branch, keeping your main branch clean.
 
 Example:
-  bd migrate sync beads-sync`,
+  bd migrate sync bd-sync`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		dryRun, _ := cmd.Flags().GetBool("dry-run")

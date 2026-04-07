@@ -20,11 +20,11 @@ const hookVersionPrefix = "# bd-hooks-version: "
 const shimVersionPrefix = "# bd-shim "
 
 // inlineHookMarker identifies inline hooks created by bd init.
-const inlineHookMarker = "# bd (beads)"
+const inlineHookMarker = "# bd"
 
 // Section markers for git hooks.
-const hookSectionBeginPrefix = "# --- BEGIN BEADS INTEGRATION"
-const hookSectionEndPrefix = "# --- END BEADS INTEGRATION"
+const hookSectionBeginPrefix = "# --- BEGIN BD INTEGRATION"
+const hookSectionEndPrefix = "# --- END BD INTEGRATION"
 
 const hookTimeoutSeconds = 300
 
@@ -39,7 +39,7 @@ func hookSectionEndLine() string {
 // generateHookSection returns the marked section content for a given hook name.
 func generateHookSection(hookName string) string {
 	return hookSectionBeginLine() + "\n" +
-		"# This section is managed by beads. Do not remove these markers.\n" +
+		"# This section is managed by bd. Do not remove these markers.\n" +
 		"if command -v bd >/dev/null 2>&1; then\n" +
 		"  export BD_GIT_HOOK=1\n" +
 		"  _bd_timeout=${BD_HOOK_TIMEOUT:-" + fmt.Sprintf("%d", hookTimeoutSeconds) + "}\n" +
@@ -47,7 +47,7 @@ func generateHookSection(hookName string) string {
 		"    timeout \"$_bd_timeout\" bd hooks run " + hookName + " \"$@\"\n" +
 		"    _bd_exit=$?\n" +
 		"    if [ $_bd_exit -eq 124 ]; then\n" +
-		"      echo >&2 \"beads: hook '" + hookName + "' timed out after ${_bd_timeout}s -- continuing without beads\"\n" +
+		"      echo >&2 \"bd: hook '" + hookName + "' timed out after ${_bd_timeout}s -- continuing without bd\"\n" +
 		"      _bd_exit=0\n" +
 		"    fi\n" +
 		"  else\n" +
@@ -55,7 +55,7 @@ func generateHookSection(hookName string) string {
 		"    _bd_exit=$?\n" +
 		"  fi\n" +
 		"  if [ $_bd_exit -eq 3 ]; then\n" +
-		"    echo >&2 \"beads: database not initialized -- skipping hook '" + hookName + "'\"\n" +
+		"    echo >&2 \"bd: database not initialized -- skipping hook '" + hookName + "'\"\n" +
 		"    _bd_exit=0\n" +
 		"  fi\n" +
 		"  if [ $_bd_exit -ne 0 ]; then exit $_bd_exit; fi\n" +
@@ -291,16 +291,16 @@ func CheckGitHooks() []HookStatus {
 }
 
 //nolint:unparam // force and chain kept for CLI flag compatibility
-func installHooksWithOptions(hookNames []string, force bool, shared bool, chain bool, beadsHooks bool) error {
+func installHooksWithOptions(hookNames []string, force bool, shared bool, chain bool, bdHooks bool) error {
 	var hooksDir string
-	if beadsHooks {
+	if bdHooks {
 		bdDir := project.FindBdDir()
 		if bdDir == "" {
-			return fmt.Errorf("not in a beads workspace (no .beads directory found)")
+			return fmt.Errorf("not in a bd workspace (no .bd directory found)")
 		}
 		hooksDir = filepath.Join(bdDir, "hooks")
 	} else if shared {
-		hooksDir = ".beads-hooks"
+		hooksDir = ".bd-hooks"
 	} else {
 		var err error
 		hooksDir, err = git.GetGitHooksDir()
@@ -313,7 +313,7 @@ func installHooksWithOptions(hookNames []string, force bool, shared bool, chain 
 		return fmt.Errorf("failed to create hooks directory: %w", err)
 	}
 
-	if beadsHooks || shared {
+	if bdHooks || shared {
 		preservePreexistingHooks(hooksDir)
 	}
 
@@ -353,8 +353,8 @@ func installHooksWithOptions(hookNames []string, force bool, shared bool, chain 
 		}
 	}
 
-	if beadsHooks {
-		if err := configureBeadsHooksPath(); err != nil {
+	if bdHooks {
+		if err := configureBdHooksPath(); err != nil {
 			return fmt.Errorf("failed to configure git hooks path: %w", err)
 		}
 	} else if shared {
@@ -384,9 +384,9 @@ func preservePreexistingHooks(targetDir string) {
 	}
 	repoRoot := git.GetRepoRoot()
 	if repoRoot != "" {
-		absBeadsHooks, _ := filepath.Abs(filepath.Join(repoRoot, ".bd", "hooks"))
-		absSharedHooks, _ := filepath.Abs(filepath.Join(repoRoot, ".beads-hooks"))
-		if absCurrent == absBeadsHooks || absCurrent == absSharedHooks {
+		absBdHooks, _ := filepath.Abs(filepath.Join(repoRoot, ".bd", "hooks"))
+		absSharedHooks, _ := filepath.Abs(filepath.Join(repoRoot, ".bd-hooks"))
+		if absCurrent == absBdHooks || absCurrent == absSharedHooks {
 			return
 		}
 	}
@@ -425,7 +425,7 @@ func configureSharedHooksPath() error {
 	if repoRoot == "" {
 		return fmt.Errorf("not in a git repository")
 	}
-	absHooksPath := filepath.Join(repoRoot, ".beads-hooks")
+	absHooksPath := filepath.Join(repoRoot, ".bd-hooks")
 	cmd := exec.Command("git", "config", "core.hooksPath", absHooksPath)
 	cmd.Dir = repoRoot
 	if output, err := cmd.CombinedOutput(); err != nil {
@@ -434,7 +434,7 @@ func configureSharedHooksPath() error {
 	return nil
 }
 
-func configureBeadsHooksPath() error {
+func configureBdHooksPath() error {
 	repoRoot := git.GetRepoRoot()
 	if repoRoot == "" {
 		return fmt.Errorf("not in a git repository")
@@ -492,13 +492,13 @@ func uninstallHooks() error {
 			}
 		}
 	}
-	if err := resetHooksPathIfBeadsManaged(); err != nil {
+	if err := resetHooksPathIfBdManaged(); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: failed to reset core.hooksPath: %v\n", err)
 	}
 	return nil
 }
 
-func resetHooksPathIfBeadsManaged() error {
+func resetHooksPathIfBdManaged() error {
 	repoRoot := git.GetRepoRoot()
 	if repoRoot == "" {
 		return nil
@@ -510,10 +510,10 @@ func resetHooksPathIfBeadsManaged() error {
 		return nil
 	}
 	hooksPath := strings.TrimSpace(string(out))
-	absBeadsHooks := filepath.Join(repoRoot, ".bd", "hooks")
-	absSharedHooks := filepath.Join(repoRoot, ".beads-hooks")
-	if hooksPath == ".bd/hooks" || hooksPath == ".beads-hooks" ||
-		hooksPath == absBeadsHooks || hooksPath == absSharedHooks {
+	absBdHooks := filepath.Join(repoRoot, ".bd", "hooks")
+	absSharedHooks := filepath.Join(repoRoot, ".bd-hooks")
+	if hooksPath == ".bd/hooks" || hooksPath == ".bd-hooks" ||
+		hooksPath == absBdHooks || hooksPath == absSharedHooks {
 		cmd = exec.Command("git", "config", "--unset", "core.hooksPath")
 		cmd.Dir = repoRoot
 		if output, err := cmd.CombinedOutput(); err != nil {
