@@ -146,78 +146,7 @@ func TestInitGuard_FreshCloneWithMetadataJSON(t *testing.T) {
 	// but dolt/ directory is gitignored. The init guard should recognize this
 	// as a fresh clone and allow init to proceed.
 
-	t.Run("server_mode_metadata_no_dolt_dir_allows_init", func(t *testing.T) {
-		// Switch to server mode for this subtest
-		oldServerMode := serverMode
-		serverMode = true
-		defer func() { serverMode = oldServerMode }()
-
-		tmpDir := t.TempDir()
-		bdDir := filepath.Join(tmpDir, ".bd")
-		if err := os.MkdirAll(bdDir, 0755); err != nil {
-			t.Fatal(err)
-		}
-
-		// Write metadata.json as it would be on a fresh clone:
-		// DoltMode=server, DoltDatabase set, but no dolt/ directory.
-		metadata := map[string]interface{}{
-			"database":      "dolt",
-			"backend":       "dolt",
-			"dolt_mode":     "server",
-			"dolt_database": "myproject",
-		}
-		data, _ := json.Marshal(metadata)
-		metadataPath := filepath.Join(bdDir, "metadata.json")
-		if err := os.WriteFile(metadataPath, data, 0644); err != nil {
-			t.Fatal(err)
-		}
-
-		// No dolt/ directory — simulates fresh clone with gitignored dolt/.
-		// No server running — simulates machine B with no local server.
-		err := checkExistingBeadsDataAt(bdDir, "myproject")
-		if err != nil {
-			t.Errorf("fresh clone with metadata.json should allow init, got: %v", err)
-		}
-	})
-
-	t.Run("server_mode_with_dolt_dir_blocks_init", func(t *testing.T) {
-		// Switch to server mode for this subtest
-		oldServerMode := serverMode
-		serverMode = true
-		defer func() { serverMode = oldServerMode }()
-
-		tmpDir := t.TempDir()
-		bdDir := filepath.Join(tmpDir, ".bd")
-		if err := os.MkdirAll(bdDir, 0755); err != nil {
-			t.Fatal(err)
-		}
-
-		// Write metadata.json with server mode
-		metadata := map[string]interface{}{
-			"database":      "dolt",
-			"backend":       "dolt",
-			"dolt_mode":     "server",
-			"dolt_database": "myproject",
-		}
-		data, _ := json.Marshal(metadata)
-		if err := os.WriteFile(filepath.Join(bdDir, "metadata.json"), data, 0644); err != nil {
-			t.Fatal(err)
-		}
-
-		// Create dolt/ directory — this is NOT a fresh clone
-		doltDir := filepath.Join(bdDir, "dolt")
-		if err := os.MkdirAll(doltDir, 0755); err != nil {
-			t.Fatal(err)
-		}
-
-		err := checkExistingBeadsDataAt(bdDir, "myproject")
-		if err == nil {
-			t.Error("existing dolt directory should block init")
-		}
-		if err != nil && !strings.Contains(err.Error(), "already initialized") {
-			t.Errorf("expected 'already initialized' message, got: %v", err)
-		}
-	})
+	// Server-mode subtests removed: serverMode global was deleted with Dolt server backend.
 
 	t.Run("embedded_mode_no_embeddeddolt_dir_allows_init", func(t *testing.T) {
 		// Embedded mode is the default — no need to set serverMode

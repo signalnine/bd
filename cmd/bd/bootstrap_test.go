@@ -3,11 +3,9 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/steveyegge/bd/internal/configfile"
@@ -118,123 +116,8 @@ func TestDetectBootstrapAction_InitWhenNothingExists(t *testing.T) {
 	}
 }
 
-func TestDetectBootstrapAction_ServerModeMissingConfiguredDBDoesNotReturnNone(t *testing.T) {
-	t.Setenv("BD_DOLT_DATA_DIR", "")
-	t.Setenv("BD_DOLT_SERVER_DATABASE", "")
-	t.Setenv("BD_DOLT_SERVER_HOST", "")
-	t.Setenv("BD_DOLT_SERVER_PORT", "")
-	tmpDir := t.TempDir()
-	bdDir := filepath.Join(tmpDir, ".bd")
-	if err := os.MkdirAll(bdDir, 0o750); err != nil {
-		t.Fatal(err)
-	}
-	sharedDir := filepath.Join(tmpDir, "shared-dolt")
-	if err := os.MkdirAll(filepath.Join(sharedDir, "hq"), 0o750); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(sharedDir, "dolt-server.port"), []byte("3311"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-
-	oldWd, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer func() { _ = os.Chdir(oldWd) }()
-	if err := os.Chdir(tmpDir); err != nil {
-		t.Fatal(err)
-	}
-
-	cfg := configfile.DefaultConfig()
-	cfg.DoltMode = configfile.DoltModeServer
-	cfg.DoltDatabase = "project_missing"
-	cfg.DoltDataDir = sharedDir
-	t.Setenv("BD_DOLT_SHARED_SERVER", "1")
-	t.Setenv("BD_DOLT_DATA_DIR", sharedDir)
-
-	origCheck := checkBootstrapServerDB
-	checkBootstrapServerDB = func(probeCfg bootstrapServerProbeConfig) bootstrapServerDBCheck {
-		if probeCfg.database != "project_missing" {
-			t.Fatalf("unexpected dbName: %s", probeCfg.database)
-		}
-		if probeCfg.port != 3311 {
-			t.Fatalf("expected resolved server port 3311, got %d", probeCfg.port)
-		}
-		return bootstrapServerDBCheck{Exists: false, Reachable: true}
-	}
-	defer func() { checkBootstrapServerDB = origCheck }()
-
-	plan := detectBootstrapAction(bdDir, cfg)
-	if plan.Action == "none" {
-		t.Fatalf("expected bootstrap to continue recovery when configured server DB is missing, got plan %#v", plan)
-	}
-	if plan.Action != "init" {
-		t.Fatalf("expected init fallback when no remote/backup/jsonl exists, got %q", plan.Action)
-	}
-}
-
-func TestDetectBootstrapAction_ServerModeProbeErrorStopsWithReason(t *testing.T) {
-	t.Setenv("BD_DOLT_DATA_DIR", "")
-	t.Setenv("BD_DOLT_SERVER_DATABASE", "")
-	t.Setenv("BD_DOLT_SERVER_HOST", "")
-	t.Setenv("BD_DOLT_SERVER_PORT", "")
-	tmpDir := t.TempDir()
-	bdDir := filepath.Join(tmpDir, ".bd")
-	if err := os.MkdirAll(bdDir, 0o750); err != nil {
-		t.Fatal(err)
-	}
-	sharedDir := filepath.Join(tmpDir, "shared-dolt")
-	if err := os.MkdirAll(filepath.Join(sharedDir, "hq"), 0o750); err != nil {
-		t.Fatal(err)
-	}
-
-	oldWd, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer func() { _ = os.Chdir(oldWd) }()
-	if err := os.Chdir(tmpDir); err != nil {
-		t.Fatal(err)
-	}
-
-	cfg := configfile.DefaultConfig()
-	cfg.DoltMode = configfile.DoltModeServer
-	cfg.DoltDatabase = "project_missing"
-	cfg.DoltDataDir = sharedDir
-	t.Setenv("BD_DOLT_DATA_DIR", sharedDir)
-
-	origCheck := checkBootstrapServerDB
-	checkBootstrapServerDB = func(probeCfg bootstrapServerProbeConfig) bootstrapServerDBCheck {
-		return bootstrapServerDBCheck{Reachable: true, Err: fmt.Errorf("permission denied")}
-	}
-	defer func() { checkBootstrapServerDB = origCheck }()
-
-	plan := detectBootstrapAction(bdDir, cfg)
-	if plan.Action != "none" {
-		t.Fatalf("expected bootstrap to stop when server probe errors, got %#v", plan)
-	}
-	if !strings.Contains(plan.Reason, "permission denied") {
-		t.Fatalf("expected probe error in plan reason, got %#v", plan)
-	}
-}
-
-func TestCheckBootstrapServerDB_HonorsTLSFlagInDSN(t *testing.T) {
-	probeCfg := bootstrapServerProbeConfig{
-		host:     "127.0.0.1",
-		port:     1,
-		user:     "root",
-		database: "beads",
-		tls:      true,
-	}
-
-	result := checkBootstrapServerDB(probeCfg)
-	if result.Reachable {
-		t.Fatal("expected unreachable test connection")
-	}
-	if result.Err == nil {
-		t.Fatal("expected connection error for unreachable test host")
-	}
-}
+// Server-mode bootstrap tests removed: checkBootstrapServerDB, bootstrapServerProbeConfig,
+// and bootstrapServerDBCheck were part of the deleted Dolt server-mode backend.
 
 func TestDetectBootstrapAction_SyncWhenOriginHasDoltRef(t *testing.T) {
 	t.Setenv("BD_DOLT_DATA_DIR", "")
@@ -470,64 +353,5 @@ func TestBootstrapExistingBeadsDirUnchanged(t *testing.T) {
 	}
 }
 
-// TestDetectBootstrapAction_SharedServerEnvUsesSharedPath verifies that when
-// BD_DOLT_SHARED_SERVER=1 is set but cfg.DoltMode is the default (embedded),
-// detectBootstrapAction looks in the shared-server directory — not embeddeddolt/.
-// This is the root cause of GH#30.
-func TestDetectBootstrapAction_SharedServerEnvUsesSharedPath(t *testing.T) {
-	t.Setenv("BD_DOLT_DATA_DIR", "")
-	t.Setenv("BD_DOLT_SERVER_DATABASE", "")
-	t.Setenv("BD_DOLT_SERVER_HOST", "")
-	t.Setenv("BD_DOLT_SERVER_PORT", "")
-
-	tmpDir := t.TempDir()
-	bdDir := filepath.Join(tmpDir, ".bd")
-	if err := os.MkdirAll(bdDir, 0o750); err != nil {
-		t.Fatal(err)
-	}
-
-	// Override HOME so SharedDoltDir() resolves to our temp directory
-	// instead of the real ~/.bd/shared-server/dolt/.
-	t.Setenv("HOME", tmpDir)
-
-	// Create a database directory at the shared-server location.
-	// SharedDoltDir() returns $HOME/.bd/shared-server/dolt/.
-	sharedDoltDir := filepath.Join(tmpDir, ".bd", "shared-server", "dolt")
-	if err := os.MkdirAll(filepath.Join(sharedDoltDir, "beads"), 0o750); err != nil {
-		t.Fatal(err)
-	}
-
-	oldWd, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer func() { _ = os.Chdir(oldWd) }()
-	if err := os.Chdir(tmpDir); err != nil {
-		t.Fatal(err)
-	}
-
-	// Shared server enabled, but cfg.DoltMode is default (embedded).
-	// Before the fix, this would look in embeddeddolt/ and miss the
-	// existing shared-server database.
-	t.Setenv("BD_DOLT_SHARED_SERVER", "1")
-
-	cfg := configfile.DefaultConfig()
-	// Deliberately do NOT set cfg.DoltMode = configfile.DoltModeServer.
-	// This reproduces the bug: shared-server via env var with default DoltMode.
-
-	// The server probe stub: report the DB exists so we get action=none.
-	origCheck := checkBootstrapServerDB
-	checkBootstrapServerDB = func(probeCfg bootstrapServerProbeConfig) bootstrapServerDBCheck {
-		return bootstrapServerDBCheck{Exists: true, Reachable: true}
-	}
-	defer func() { checkBootstrapServerDB = origCheck }()
-
-	plan := detectBootstrapAction(bdDir, cfg)
-
-	if plan.Action != "none" {
-		t.Fatalf("expected action=none (existing shared-server DB detected), got %q: %s", plan.Action, plan.Reason)
-	}
-	if !plan.HasExisting {
-		t.Error("HasExisting = false, want true")
-	}
-}
+// TestDetectBootstrapAction_SharedServerEnvUsesSharedPath removed:
+// server-mode Dolt backend was removed in the nuclear simplification.

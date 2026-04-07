@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/steveyegge/bd/internal/storage/dolt"
 	"github.com/steveyegge/bd/internal/types"
 )
 
@@ -30,18 +29,9 @@ func TestStatusCommand(t *testing.T) {
 	}
 
 	// Initialize the database
-	store, err := dolt.New(context.Background(), &dolt.Config{Path: dbPath})
-	if err != nil {
-		t.Skipf("skipping: Dolt server not available: %v", err)
-	}
-	defer store.Close()
+	testStore := newTestStore(t, dbPath)
 
 	ctx := context.Background()
-
-	// Set issue prefix
-	if err := store.SetConfig(ctx, "issue_prefix", "test"); err != nil {
-		t.Fatalf("Failed to set issue prefix: %v", err)
-	}
 
 	// Create some test issues with different statuses
 	testIssues := []*types.Issue{
@@ -84,13 +74,13 @@ func TestStatusCommand(t *testing.T) {
 	}
 
 	for _, issue := range testIssues {
-		if err := store.CreateIssue(ctx, issue, "test"); err != nil {
+		if err := testStore.CreateIssue(ctx, issue, "test"); err != nil {
 			t.Fatalf("Failed to create test issue: %v", err)
 		}
 	}
 
 	// Test GetStatistics
-	stats, err := store.GetStatistics(ctx)
+	stats, err := testStore.GetStatistics(ctx)
 	if err != nil {
 		t.Fatalf("GetStatistics failed: %v", err)
 	}
@@ -181,18 +171,9 @@ func TestGetAssignedStatistics(t *testing.T) {
 	}
 
 	// Initialize the database
-	testStore, err := dolt.New(context.Background(), &dolt.Config{Path: dbPath})
-	if err != nil {
-		t.Skipf("skipping: Dolt server not available: %v", err)
-	}
-	defer testStore.Close()
+	testStore := newTestStore(t, dbPath)
 
 	ctx := context.Background()
-
-	// Set issue prefix
-	if err := testStore.SetConfig(ctx, "issue_prefix", "test"); err != nil {
-		t.Fatalf("Failed to set issue prefix: %v", err)
-	}
 
 	// Set global store and rootCtx for getAssignedStatistics
 	oldRootCtx := rootCtx

@@ -8,12 +8,12 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/steveyegge/bd/internal/storage/dolt"
+	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
 	"github.com/steveyegge/bd/internal/types"
 )
 
 type reopenTestHelper struct {
-	s   *dolt.DoltStore
+	s   *embeddeddolt.EmbeddedDoltStore
 	ctx context.Context
 	t   *testing.T
 }

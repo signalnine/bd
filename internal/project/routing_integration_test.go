@@ -13,7 +13,7 @@ import (
 	"testing"
 
 	"github.com/steveyegge/bd/internal/routing"
-	"github.com/steveyegge/bd/internal/storage/dolt"
+	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
 )
 
 func TestRoutingIntegration(t *testing.T) {
@@ -147,7 +147,7 @@ func TestMultiRepoEndToEnd(t *testing.T) {
 	}
 
 	// Initialize database
-	store, err := dolt.New(context.Background(), &dolt.Config{Path: bdDir})
+	store, err := embeddeddolt.New(context.Background(), bdDir, "testdb", "main")
 	if err != nil {
 		t.Fatalf("failed to create storage: %v", err)
 	}

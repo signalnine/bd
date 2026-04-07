@@ -7,14 +7,15 @@ import (
 	"context"
 	"testing"
 
-	"github.com/steveyegge/bd/internal/storage/dolt"
+	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
 	"github.com/steveyegge/bd/internal/testutil"
 	"github.com/steveyegge/bd/internal/types"
 )
 
 func TestLargeDolt(t *testing.T) {
 	testutil.RequireDoltContainer(t)
-	store, err := dolt.New(context.Background(), &dolt.Config{Path: t.TempDir()})
+	bdDir := t.TempDir()
+	store, err := embeddeddolt.New(context.Background(), bdDir, "testdb", "main")
 	if err != nil {
 		t.Fatalf("Failed to create storage: %v", err)
 	}
@@ -22,7 +23,6 @@ func TestLargeDolt(t *testing.T) {
 
 	ctx := context.Background()
 
-	// Initialize database with prefix
 	if err := store.SetConfig(ctx, "issue_prefix", "bd-"); err != nil {
 		t.Fatalf("Failed to set issue_prefix: %v", err)
 	}
@@ -31,7 +31,6 @@ func TestLargeDolt(t *testing.T) {
 		t.Fatalf("LargeDolt failed: %v", err)
 	}
 
-	// Verify issue count
 	allIssues, err := store.SearchIssues(ctx, "", types.IssueFilter{})
 	if err != nil {
 		t.Fatalf("Failed to search issues: %v", err)
@@ -41,7 +40,6 @@ func TestLargeDolt(t *testing.T) {
 		t.Errorf("Expected 10000 issues, got %d", len(allIssues))
 	}
 
-	// Verify we have epics, features, and tasks
 	var epics, features, tasks int
 	for _, issue := range allIssues {
 		switch issue.IssueType {
@@ -67,7 +65,8 @@ func TestXLargeDolt(t *testing.T) {
 	}
 	testutil.RequireDoltContainer(t)
 
-	store, err := dolt.New(context.Background(), &dolt.Config{Path: t.TempDir()})
+	bdDir := t.TempDir()
+	store, err := embeddeddolt.New(context.Background(), bdDir, "testdb", "main")
 	if err != nil {
 		t.Fatalf("Failed to create storage: %v", err)
 	}
@@ -75,7 +74,6 @@ func TestXLargeDolt(t *testing.T) {
 
 	ctx := context.Background()
 
-	// Initialize database with prefix
 	if err := store.SetConfig(ctx, "issue_prefix", "bd-"); err != nil {
 		t.Fatalf("Failed to set issue_prefix: %v", err)
 	}
@@ -84,7 +82,6 @@ func TestXLargeDolt(t *testing.T) {
 		t.Fatalf("XLargeDolt failed: %v", err)
 	}
 
-	// Verify issue count
 	allIssues, err := store.SearchIssues(ctx, "", types.IssueFilter{})
 	if err != nil {
 		t.Fatalf("Failed to search issues: %v", err)
@@ -101,7 +98,8 @@ func TestLargeFromJSONL(t *testing.T) {
 	}
 	testutil.RequireDoltContainer(t)
 
-	store, err := dolt.New(context.Background(), &dolt.Config{Path: t.TempDir()})
+	bdDir := t.TempDir()
+	store, err := embeddeddolt.New(context.Background(), bdDir, "testdb", "main")
 	if err != nil {
 		t.Fatalf("Failed to create storage: %v", err)
 	}
@@ -109,7 +107,6 @@ func TestLargeFromJSONL(t *testing.T) {
 
 	ctx := context.Background()
 
-	// Initialize database with prefix
 	if err := store.SetConfig(ctx, "issue_prefix", "bd-"); err != nil {
 		t.Fatalf("Failed to set issue_prefix: %v", err)
 	}
@@ -120,7 +117,6 @@ func TestLargeFromJSONL(t *testing.T) {
 		t.Fatalf("LargeFromJSONL failed: %v", err)
 	}
 
-	// Verify issue count
 	allIssues, err := store.SearchIssues(ctx, "", types.IssueFilter{})
 	if err != nil {
 		t.Fatalf("Failed to search issues: %v", err)

@@ -13,6 +13,12 @@ import (
 )
 
 // bdVC runs "bd vc" with extra args. Returns combined output.
+// bdBranch creates a new branch via "bd vc branch <name>".
+func bdBranch(t *testing.T, bd, dir, branchName string) {
+	t.Helper()
+	bdVC(t, bd, dir, "branch", branchName)
+}
+
 func bdVC(t *testing.T, bd, dir string, args ...string) string {
 	t.Helper()
 	fullArgs := append([]string{"vc"}, args...)

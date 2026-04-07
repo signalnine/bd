@@ -17,7 +17,7 @@ import (
 	"github.com/steveyegge/bd/internal/project"
 	"github.com/steveyegge/bd/internal/configfile"
 	"github.com/steveyegge/bd/internal/git"
-	"github.com/steveyegge/bd/internal/storage/dolt"
+	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
 )
 
 // skipIfNoDolt skips the test when no Dolt server is available.
@@ -375,150 +375,8 @@ func TestInitWithCustomDBPath(t *testing.T) {
 	})
 }
 
-// TestSetupClaudeSettings_InvalidJSON verifies that invalid JSON in existing
-// settings.local.json returns an error instead of silently overwriting.
-// This is a regression test for bd-5bj where user settings were lost.
-func TestSetupClaudeSettings_InvalidJSON(t *testing.T) {
-	tmpDir := t.TempDir()
-	t.Chdir(tmpDir)
-
-	// Create .claude directory
-	claudeDir := filepath.Join(tmpDir, ".claude")
-	if err := os.MkdirAll(claudeDir, 0755); err != nil {
-		t.Fatalf("Failed to create .claude directory: %v", err)
-	}
-
-	// Create settings.local.json with invalid JSON (array syntax in object context)
-	// This is the exact pattern that caused the bug in the user's file
-	invalidJSON := `{
-  "permissions": {
-    "allow": [
-      "Bash(python3:*)"
-    ],
-    "deny": [
-      "_comment": "Add commands to block here"
-    ]
-  }
-}`
-	settingsPath := filepath.Join(claudeDir, "settings.local.json")
-	if err := os.WriteFile(settingsPath, []byte(invalidJSON), 0644); err != nil {
-		t.Fatalf("Failed to write invalid settings: %v", err)
-	}
-
-	// Call setupClaudeSettings - should return an error
-	var err error
-	err = setupClaudeSettings(false)
-	if err == nil {
-		t.Fatal("Expected error for invalid JSON, got nil")
-	}
-
-	// Verify the error message mentions invalid JSON
-	if !strings.Contains(err.Error(), "invalid JSON") {
-		t.Errorf("Expected error to mention 'invalid JSON', got: %v", err)
-	}
-
-	// Verify the original file was NOT modified
-	content, err := os.ReadFile(settingsPath)
-	if err != nil {
-		t.Fatalf("Failed to read settings file: %v", err)
-	}
-
-	if !strings.Contains(string(content), "permissions") {
-		t.Error("Original file content should be preserved")
-	}
-
-	if strings.Contains(string(content), "bd prime") {
-		t.Error("File should NOT contain bd prime prompt after error")
-	}
-}
-
-// TestSetupClaudeSettings_ValidJSON verifies that valid JSON is properly updated
-func TestSetupClaudeSettings_ValidJSON(t *testing.T) {
-	tmpDir := t.TempDir()
-	t.Chdir(tmpDir)
-
-	// Create .claude directory
-	claudeDir := filepath.Join(tmpDir, ".claude")
-	if err := os.MkdirAll(claudeDir, 0755); err != nil {
-		t.Fatalf("Failed to create .claude directory: %v", err)
-	}
-
-	// Create settings.local.json with valid JSON
-	validJSON := `{
-  "permissions": {
-    "allow": [
-      "Bash(python3:*)"
-    ]
-  },
-  "hooks": {
-    "PreToolUse": []
-  }
-}`
-	settingsPath := filepath.Join(claudeDir, "settings.local.json")
-	if err := os.WriteFile(settingsPath, []byte(validJSON), 0644); err != nil {
-		t.Fatalf("Failed to write valid settings: %v", err)
-	}
-
-	// Call setupClaudeSettings - should succeed
-	var err error
-	err = setupClaudeSettings(false)
-	if err != nil {
-		t.Fatalf("Expected no error for valid JSON, got: %v", err)
-	}
-
-	// Verify the file was updated with prompt AND preserved existing settings
-	content, err := os.ReadFile(settingsPath)
-	if err != nil {
-		t.Fatalf("Failed to read settings file: %v", err)
-	}
-
-	contentStr := string(content)
-
-	// Should contain the new prompt
-	if !strings.Contains(contentStr, "bd prime") {
-		t.Error("File should contain bd prime prompt")
-	}
-
-	// Should preserve existing permissions
-	if !strings.Contains(contentStr, "permissions") {
-		t.Error("File should preserve permissions section")
-	}
-
-	// Should preserve existing hooks
-	if !strings.Contains(contentStr, "hooks") {
-		t.Error("File should preserve hooks section")
-	}
-
-	if !strings.Contains(contentStr, "PreToolUse") {
-		t.Error("File should preserve PreToolUse hook")
-	}
-}
-
-// TestSetupClaudeSettings_NoExistingFile verifies behavior when no file exists
-func TestSetupClaudeSettings_NoExistingFile(t *testing.T) {
-	tmpDir := t.TempDir()
-	t.Chdir(tmpDir)
-
-	// Don't create .claude directory - setupClaudeSettings should create it
-
-	// Call setupClaudeSettings - should succeed
-	var err error
-	err = setupClaudeSettings(false)
-	if err != nil {
-		t.Fatalf("Expected no error when no file exists, got: %v", err)
-	}
-
-	// Verify the file was created with prompt
-	settingsPath := filepath.Join(tmpDir, ".claude", "settings.local.json")
-	content, err := os.ReadFile(settingsPath)
-	if err != nil {
-		t.Fatalf("Failed to read settings file: %v", err)
-	}
-
-	if !strings.Contains(string(content), "bd prime") {
-		t.Error("File should contain bd prime prompt")
-	}
-}
+// TestSetupClaudeSettings_* tests removed: setupClaudeSettings was deleted
+// in the nuclear simplification.
 
 // setupIsolatedGitConfig creates an empty git config in tmpDir and sets GIT_CONFIG_GLOBAL
 // to prevent tests from using the real user's global git config.
@@ -1584,19 +1442,16 @@ func TestInitDoltMetadata(t *testing.T) {
 	}
 }
 
-// openDoltStoreForTest opens an existing Dolt store for read-only verification in tests.
-func openDoltStoreForTest(t *testing.T, ctx context.Context, doltPath, dbName string) (*dolt.DoltStore, error) {
+// openDoltStoreForTest opens an existing embedded dolt store for read-only verification in tests.
+func openDoltStoreForTest(t *testing.T, ctx context.Context, doltPath, dbName string) (*embeddeddolt.EmbeddedDoltStore, error) {
 	t.Helper()
-	return dolt.New(ctx, &dolt.Config{
-		Path:     doltPath,
-		Database: dbName,
-		ReadOnly: true,
-	})
+	bdDir := filepath.Dir(doltPath)
+	return embeddeddolt.New(ctx, bdDir, dbName, "main")
 }
 
 // TestVerifyMetadataSuccess verifies that verifyMetadata writes and reads back metadata.
 // Note: Failure path tests (write errors, read-back mismatches) were removed because
-// verifyMetadata now takes *dolt.DoltStore (concrete type), making interface-based
+// verifyMetadata now takes *embeddeddolt.EmbeddedDoltStore (concrete type), making interface-based
 // mocking impossible. The failure paths are simple error-to-stderr logic.
 func TestVerifyMetadataSuccess(t *testing.T) {
 	skipIfNoDolt(t)
@@ -2198,14 +2053,7 @@ func TestInitDatabaseAdoptsExistingProjectID(t *testing.T) {
 	}
 
 	doltNewMutex.Lock()
-	firstStore, err := dolt.New(ctx, &dolt.Config{
-		Path:            filepath.Join(firstBeadsDir, "dolt"),
-		BdDir:        firstBeadsDir,
-		ServerHost:      "127.0.0.1",
-		ServerPort:      testDoltServerPort,
-		Database:        database,
-		CreateIfMissing: true,
-	})
+	firstStore, err := embeddeddolt.New(ctx, firstBeadsDir, database, "main")
 	doltNewMutex.Unlock()
 	if err != nil {
 		t.Fatalf("create first store: %v", err)

@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	"github.com/steveyegge/bd/internal/config"
-	"github.com/steveyegge/bd/internal/storage/dolt"
+	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
 	"github.com/steveyegge/bd/internal/types"
 )
 
@@ -200,18 +200,24 @@ func TestYamlOnlyConfigWithoutDatabase(t *testing.T) {
 	}
 }
 
-// setupTestDB creates a temporary test database
-func setupTestDB(t *testing.T) (*dolt.DoltStore, func()) {
+// setupTestDB creates a temporary test database using embeddeddolt
+func setupTestDB(t *testing.T) (*embeddeddolt.EmbeddedDoltStore, func()) {
 	tmpDir, err := os.MkdirTemp("", "bd-test-config-*")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
 
-	testDB := filepath.Join(tmpDir, "test.db")
-	store, err := dolt.New(context.Background(), &dolt.Config{Path: testDB})
+	bdDir := filepath.Join(tmpDir, ".bd")
+	if err := os.MkdirAll(bdDir, 0755); err != nil {
+		os.RemoveAll(tmpDir)
+		t.Fatalf("Failed to create bdDir: %v", err)
+	}
+
+	database := uniqueTestDBName(t)
+	store, err := embeddeddolt.New(context.Background(), bdDir, database, "main")
 	if err != nil {
 		os.RemoveAll(tmpDir)
-		t.Skipf("skipping: Dolt server not available: %v", err)
+		t.Fatalf("Failed to create embedded dolt store: %v", err)
 	}
 
 	// CRITICAL (bd-166): Set issue_prefix to prevent "database not initialized" errors
@@ -555,7 +561,7 @@ func TestCustomStatusConfig(t *testing.T) {
 			t.Fatalf("expected [alpha], got %+v", detailed1)
 		}
 
-		// Set different value — cache should be invalidated
+		// Set different value -- cache should be invalidated
 		err = store.SetConfig(ctx, "status.custom", "beta:wip,gamma:done")
 		if err != nil {
 			t.Fatalf("SetConfig failed: %v", err)
@@ -663,8 +669,6 @@ func TestConfigSetMany(t *testing.T) {
 	})
 
 	t.Run("batch set mixed namespaces in single operation", func(t *testing.T) {
-		// Simulates what set-many does: multiple keys from different
-		// namespaces all written to the DB in one logical batch.
 		mixed := map[string]string{
 			"jira.url":             "https://jira.example.com",
 			"jira.project":         "BEADS",
@@ -679,7 +683,6 @@ func TestConfigSetMany(t *testing.T) {
 			}
 		}
 
-		// Verify every key was persisted
 		for k, expected := range mixed {
 			got, err := store.GetConfig(ctx, k)
 			if err != nil {
@@ -690,7 +693,6 @@ func TestConfigSetMany(t *testing.T) {
 			}
 		}
 
-		// Verify all appear in GetAllConfig
 		all, err := store.GetAllConfig(ctx)
 		if err != nil {
 			t.Fatalf("GetAllConfig failed: %v", err)
@@ -703,7 +705,6 @@ func TestConfigSetMany(t *testing.T) {
 	})
 
 	t.Run("batch set preserves previously written keys", func(t *testing.T) {
-		// Write batch 1
 		if err := store.SetConfig(ctx, "retain.alpha", "aaa"); err != nil {
 			t.Fatalf("SetConfig failed: %v", err)
 		}
@@ -711,12 +712,10 @@ func TestConfigSetMany(t *testing.T) {
 			t.Fatalf("SetConfig failed: %v", err)
 		}
 
-		// Write batch 2 (different keys)
 		if err := store.SetConfig(ctx, "retain.gamma", "ggg"); err != nil {
 			t.Fatalf("SetConfig failed: %v", err)
 		}
 
-		// Verify batch 1 keys are still intact after batch 2
 		got, err := store.GetConfig(ctx, "retain.alpha")
 		if err != nil {
 			t.Fatalf("GetConfig failed: %v", err)
@@ -767,7 +766,6 @@ func TestConfigSetManyValidationIntegration(t *testing.T) {
 	})
 
 	t.Run("empty status.custom is allowed", func(t *testing.T) {
-		// Empty value skips validation in the command handler
 		result, err := types.ParseCustomStatusConfig("")
 		if err != nil {
 			t.Errorf("expected empty status.custom to be valid: %v", err)

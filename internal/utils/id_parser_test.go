@@ -7,31 +7,20 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"os/exec"
 	"testing"
 
-	"github.com/steveyegge/bd/internal/storage/dolt"
+	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
 	"github.com/steveyegge/bd/internal/types"
 )
 
-func newTestStore(t *testing.T) *dolt.DoltStore {
+func newTestStore(t *testing.T) *embeddeddolt.EmbeddedDoltStore {
 	t.Helper()
-	if _, err := exec.LookPath("dolt"); err != nil {
-		t.Skip("Dolt not installed, skipping test")
-	}
-	if testServerPort == 0 {
-		t.Skip("Test Dolt server not running, skipping test")
-	}
 	ctx := context.Background()
+	bdDir := t.TempDir()
 	dbName := uniqueTestDBName(t)
-	store, err := dolt.New(ctx, &dolt.Config{
-		Path:            t.TempDir(),
-		Database:        dbName,
-		ServerPort:      testServerPort,
-		CreateIfMissing: true, // test creates fresh database
-	})
+	store, err := embeddeddolt.New(ctx, bdDir, dbName, "main")
 	if err != nil {
-		t.Fatalf("Failed to create dolt store: %v", err)
+		t.Fatalf("Failed to create embedded dolt store: %v", err)
 	}
 	if err := store.SetConfig(ctx, "issue_prefix", "bd"); err != nil {
 		store.Close()

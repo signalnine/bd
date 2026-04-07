@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/steveyegge/bd/internal/storage/dolt"
 	"github.com/steveyegge/bd/internal/types"
 )
 
@@ -20,16 +19,7 @@ func TestUpdateMetadataInlineJSON(t *testing.T) {
 
 	// Create storage
 	ctx := context.Background()
-	store, err := dolt.New(ctx, &dolt.Config{Path: dbPath})
-	if err != nil {
-		t.Skipf("skipping: Dolt server not available: %v", err)
-	}
-	defer store.Close()
-
-	// Initialize database with issue prefix
-	if err := store.SetConfig(ctx, "issue_prefix", "bd"); err != nil {
-		t.Fatalf("failed to set issue_prefix: %v", err)
-	}
+	testStore := newTestStoreWithPrefix(t, dbPath, "bd")
 
 	// Create an issue
 	issue := &types.Issue{
@@ -38,7 +28,7 @@ func TestUpdateMetadataInlineJSON(t *testing.T) {
 		Status:    "open",
 		IssueType: "task",
 	}
-	if err := store.CreateIssue(ctx, issue, "test-actor"); err != nil {
+	if err := testStore.CreateIssue(ctx, issue, "test-actor"); err != nil {
 		t.Fatalf("failed to create issue: %v", err)
 	}
 
@@ -47,12 +37,12 @@ func TestUpdateMetadataInlineJSON(t *testing.T) {
 	updates := map[string]interface{}{
 		"metadata": json.RawMessage(metadata),
 	}
-	if err := store.UpdateIssue(ctx, "bd-test1", updates, "test-actor"); err != nil {
+	if err := testStore.UpdateIssue(ctx, "bd-test1", updates, "test-actor"); err != nil {
 		t.Fatalf("failed to update issue with metadata: %v", err)
 	}
 
 	// Verify the metadata was stored
-	updated, err := store.GetIssue(ctx, "bd-test1")
+	updated, err := testStore.GetIssue(ctx, "bd-test1")
 	if err != nil {
 		t.Fatalf("failed to get issue: %v", err)
 	}
@@ -111,7 +101,6 @@ func TestUpdateMetadataInvalidJSON(t *testing.T) {
 
 	for _, invalid := range invalidCases {
 		if invalid == "" {
-			// Empty string is not invalid for json.Valid per se, but we might want it
 			continue
 		}
 		if json.Valid([]byte(invalid)) {

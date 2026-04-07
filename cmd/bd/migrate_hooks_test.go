@@ -4,11 +4,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/steveyegge/bd/cmd/bd/doctor"
+	
 )
 
 func TestBuildHookMigrationJSON(t *testing.T) {
-	plan := doctor.HookMigrationPlan{
+	plan := HookMigrationPlan{
 		Path:                "/tmp/repo",
 		IsGitRepo:           true,
 		NeedsMigrationCount: 2,
@@ -94,7 +94,7 @@ func TestValidateHookMigrationApplyConsent(t *testing.T) {
 }
 
 func TestFormatHookMigrationPlan_NotGitRepo(t *testing.T) {
-	lines := formatHookMigrationPlan(doctor.HookMigrationPlan{
+	lines := formatHookMigrationPlan(HookMigrationPlan{
 		Path:      "/tmp/no-git",
 		IsGitRepo: false,
 	}, hookMigrationMode{RequestedDryRun: true})
@@ -106,14 +106,14 @@ func TestFormatHookMigrationPlan_NotGitRepo(t *testing.T) {
 }
 
 func TestFormatHookMigrationPlan_WithMigrations(t *testing.T) {
-	plan := doctor.HookMigrationPlan{
+	plan := HookMigrationPlan{
 		Path:                "/tmp/repo",
 		RepoRoot:            "/tmp/repo",
 		HooksDir:            "/tmp/repo/.git/hooks",
 		IsGitRepo:           true,
 		TotalHooks:          5,
 		NeedsMigrationCount: 1,
-		Hooks: []doctor.HookMigrationHookPlan{
+		Hooks: []HookMigrationHookPlan{
 			{
 				Name:           "pre-commit",
 				State:          "legacy_with_old_sidecar",

@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/steveyegge/bd/internal/project"
-	"github.com/steveyegge/bd/internal/storage/dolt"
+	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
 	"github.com/steveyegge/bd/internal/types"
 )
 
@@ -20,10 +20,10 @@ import (
 type integrationTestHelper struct {
 	t     *testing.T
 	ctx   context.Context
-	store beads.Storage
+	store *embeddeddolt.EmbeddedDoltStore
 }
 
-func newIntegrationHelper(t *testing.T, store beads.Storage) *integrationTestHelper {
+func newIntegrationHelper(t *testing.T, store *embeddeddolt.EmbeddedDoltStore) *integrationTestHelper {
 	return &integrationTestHelper{t: t, ctx: context.Background(), store: store}
 }
 
@@ -171,9 +171,9 @@ func TestLibraryIntegration(t *testing.T) {
 
 	dbPath := filepath.Join(tmpDir, "test.db")
 	ctx := context.Background()
-	store, err := dolt.New(ctx, &dolt.Config{Path: filepath.Dir(dbPath)})
+	store, err := embeddeddolt.New(ctx, filepath.Dir(dbPath), "testdb", "main")
 	if err != nil {
-		t.Fatalf("dolt.New failed: %v", err)
+		t.Fatalf("embeddeddolt.New failed: %v", err)
 	}
 	defer store.Close()
 
@@ -337,9 +337,9 @@ func TestBatchCreateIssues(t *testing.T) {
 
 	dbPath := filepath.Join(tmpDir, "test.db")
 	ctx := context.Background()
-	store, err := dolt.New(ctx, &dolt.Config{Path: filepath.Dir(dbPath)})
+	store, err := embeddeddolt.New(ctx, filepath.Dir(dbPath), "testdb", "main")
 	if err != nil {
-		t.Fatalf("dolt.New failed: %v", err)
+		t.Fatalf("embeddeddolt.New failed: %v", err)
 	}
 	defer store.Close()
 
@@ -418,9 +418,9 @@ func TestRoundTripIssue(t *testing.T) {
 
 	dbPath := filepath.Join(tmpDir, "test.db")
 	ctx := context.Background()
-	store, err := dolt.New(ctx, &dolt.Config{Path: filepath.Dir(dbPath)})
+	store, err := embeddeddolt.New(ctx, filepath.Dir(dbPath), "testdb", "main")
 	if err != nil {
-		t.Fatalf("dolt.New failed: %v", err)
+		t.Fatalf("embeddeddolt.New failed: %v", err)
 	}
 	defer store.Close()
 
@@ -508,9 +508,9 @@ func TestImportWithDeletedParent(t *testing.T) {
 
 	// Phase 2: Create fresh database and import only the child
 	// (simulating scenario where parent was deleted)
-	store, err := dolt.New(ctx, &dolt.Config{Path: filepath.Dir(dbPath)})
+	store, err := embeddeddolt.New(ctx, filepath.Dir(dbPath), "testdb", "main")
 	if err != nil {
-		t.Fatalf("dolt.New failed: %v", err)
+		t.Fatalf("embeddeddolt.New failed: %v", err)
 	}
 	defer store.Close()
 

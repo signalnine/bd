@@ -6,12 +6,6 @@ import (
 	"github.com/steveyegge/bd/internal/utils"
 )
 
-func TestGetWorktreeGitDir(_ *testing.T) {
-	gitDir := getWorktreeGitDir()
-	// Just verify it doesn't panic and returns a string
-	_ = gitDir
-}
-
 func TestExtractPrefix(t *testing.T) {
 	tests := []struct {
 		input    string

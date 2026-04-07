@@ -7,21 +7,16 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/steveyegge/bd/internal/storage/dolt"
 	"github.com/steveyegge/bd/internal/types"
 )
 
 func TestRepairMultiplePrefixes(t *testing.T) {
 	tmpDir := t.TempDir()
-	testDBPath := filepath.Join(tmpDir, "test.db")
+	testDBPath := filepath.Join(tmpDir, ".bd", "test.db")
 
 	ctx := context.Background()
 
-	testStore, err := dolt.New(ctx, &dolt.Config{Path: testDBPath})
-	if err != nil {
-		t.Skipf("skipping: Dolt server not available: %v", err)
-	}
-	defer testStore.Close()
+	testStore := newTestStoreWithPrefix(t, testDBPath, "test")
 
 	// Set globals following TestRenamePrefixCommand pattern
 	oldStore := store
@@ -35,11 +30,6 @@ func TestRepairMultiplePrefixes(t *testing.T) {
 		actor = oldActor
 		dbPath = oldDBPath
 	}()
-
-	// Set initial prefix
-	if err := testStore.SetConfig(ctx, "issue_prefix", "test"); err != nil {
-		t.Fatalf("failed to set prefix: %v", err)
-	}
 
 	// Create issues with multiple prefixes (simulating corruption).
 	// CreateIssue accepts explicit IDs without prefix validation,
@@ -70,7 +60,7 @@ func TestRepairMultiplePrefixes(t *testing.T) {
 		t.Fatalf("expected 3 prefixes, got %d: %v", len(prefixes), prefixes)
 	}
 
-	// Test repair — now uses UpdateIssueID (Dolt rename semantics)
+	// Test repair -- now uses UpdateIssueID (Dolt rename semantics)
 	// instead of the old CreateIssue+DeleteIssue approach that caused deadlocks
 	if err := repairPrefixes(ctx, testStore, "test", "test", allIssues, prefixes, false); err != nil {
 		t.Fatalf("repair failed: %v", err)

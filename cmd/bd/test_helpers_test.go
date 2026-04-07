@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
-	"database/sql"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -20,13 +19,12 @@ import (
 	"time"
 
 	"github.com/steveyegge/bd/internal/config"
-	"github.com/steveyegge/bd/internal/configfile"
-	"github.com/steveyegge/bd/internal/storage/dolt"
 	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
-	"github.com/steveyegge/bd/internal/testutil"
 )
 
 // testDoltServerPort is the port of the shared test Dolt server (0 = not running).
+// Server-mode Dolt was removed in the nuclear simplification; this is kept for
+// tests that skip when no server is available.
 var testDoltServerPort int
 
 // uniqueTestDBName generates a unique database name for test isolation.
@@ -39,7 +37,7 @@ func uniqueTestDBName(t *testing.T) string {
 // testIDCounter ensures unique IDs across all test runs
 var testIDCounter atomic.Uint64
 
-// doltNewMutex serializes dolt.New() calls in tests. The Dolt embedded engine's
+// doltNewMutex serializes embeddeddolt.New() calls in tests. The Dolt embedded engine's
 // InitStatusVariables() has an internal race condition when called concurrently
 // from multiple goroutines (writes to a shared global map without synchronization).
 // Serializing store creation prevents this race while allowing tests to run their
@@ -54,7 +52,7 @@ var doltNewMutex sync.Mutex
 // MUST NOT be parallel (no t.Parallel()), OR must serialize those calls
 // under stdioMutex. Setting cmd.SetOut() is NOT sufficient because cobra's
 // OutOrStdout() eagerly evaluates os.Stdout as the default argument even
-// when outWriter is set — the Go race detector catches this read.
+// when outWriter is set -- the Go race detector catches this read.
 //
 // TestCobraParallelPolicyGuard in stdio_race_guard_test.go enforces this.
 var stdioMutex sync.Mutex
@@ -68,6 +66,11 @@ func generateUniqueTestID(t *testing.T, prefix string, index int) string {
 	data := []byte(t.Name() + prefix + string(rune(counter)) + string(rune(index)))
 	hash := sha256.Sum256(data)
 	return prefix + "-" + hex.EncodeToString(hash[:])[:8]
+}
+
+// ptrTime returns a pointer to the given time.Time value.
+func ptrTime(t time.Time) *time.Time {
+	return &t
 }
 
 const windowsOS = "windows"
@@ -111,19 +114,6 @@ type savedGlobals struct {
 
 // saveAndRestoreGlobals snapshots all commonly-mutated package-level globals
 // and registers a t.Cleanup() to restore them when the test completes.
-// This replaces the fragile manual save/defer pattern:
-//
-//	oldDBPath := dbPath
-//	defer func() { dbPath = oldDBPath }()
-//
-// With the safer:
-//
-//	saveAndRestoreGlobals(t)
-//
-// Benefits:
-//   - All globals saved atomically (can't forget one)
-//   - t.Cleanup runs even on panic (no risk of missed defer registration)
-//   - Single call replaces multiple save/defer pairs
 func saveAndRestoreGlobals(t *testing.T) *savedGlobals {
 	t.Helper()
 	saved := &savedGlobals{
@@ -141,69 +131,39 @@ func saveAndRestoreGlobals(t *testing.T) *savedGlobals {
 	return saved
 }
 
-// writeTestMetadata writes metadata.json in the .beads directory (parent of dbPath)
-// so that NewFromConfig can find the correct database name and server settings when
-// routing reopens a store by path.
-func writeTestMetadata(t *testing.T, dbPath string, database string) {
-	t.Helper()
-	bdDir := filepath.Dir(dbPath)
-	if err := os.MkdirAll(bdDir, 0755); err != nil {
-		t.Fatalf("Failed to create beads dir: %v", err)
-	}
-	cfg := &configfile.Config{
-		Database:       "dolt",
-		Backend:        configfile.BackendDolt,
-		DoltMode:       configfile.DoltModeServer,
-		DoltDatabase:   database,
-		DoltServerHost: "127.0.0.1",
-		DoltServerPort: testDoltServerPort,
-	}
-	if err := cfg.Save(bdDir); err != nil {
-		t.Fatalf("Failed to write test metadata.json: %v", err)
-	}
-}
-
-// newTestStore creates a dolt store with issue_prefix configured (bd-166).
-// Uses shared database with branch-per-test isolation (bd-xmf) to avoid
-// the overhead of CREATE/DROP DATABASE per test.
-// Falls back to per-test databases if the shared DB is not available.
-func newTestStore(t *testing.T, dbPath string) *dolt.DoltStore {
+// newTestStore creates an embedded dolt store with issue_prefix configured.
+func newTestStore(t *testing.T, dbPath string) *embeddeddolt.EmbeddedDoltStore {
 	t.Helper()
 	return newTestStoreWithPrefix(t, dbPath, "test")
 }
 
-// newTestStoreIsolatedDB creates a dolt store with its own dedicated database.
-// Use this instead of newTestStoreWithPrefix when the test needs a truly separate
-// database (e.g., routing tests that create multiple stores with different paths
-// and expect routing to reopen them by path via metadata.json).
-func newTestStoreIsolatedDB(t *testing.T, dbPath string, prefix string) *dolt.DoltStore {
+// newTestStoreIsolatedDB creates an embedded dolt store with its own dedicated database.
+func newTestStoreIsolatedDB(t *testing.T, dbPath string, prefix string) *embeddeddolt.EmbeddedDoltStore {
+	t.Helper()
+	return newTestStoreWithPrefix(t, dbPath, prefix)
+}
+
+// newTestStoreWithPrefix creates an embedded dolt store with custom issue_prefix configured.
+func newTestStoreWithPrefix(t *testing.T, dbPath string, prefix string) *embeddeddolt.EmbeddedDoltStore {
 	t.Helper()
 
 	ensureTestMode(t)
 
-	if testDoltServerPort == 0 {
-		t.Skip("Dolt test server not available, skipping")
-	}
-	if testutil.DoltContainerCrashed() {
-		t.Skipf("Dolt test server crashed: %v", testutil.DoltContainerCrashError())
-	}
-
 	ctx := context.Background()
 
-	cfg := &dolt.Config{
-		Path:            dbPath,
-		ServerHost:      "127.0.0.1",
-		ServerPort:      testDoltServerPort,
-		Database:        uniqueTestDBName(t),
-		CreateIfMissing: true,
+	// Derive bdDir from dbPath (parent directory)
+	bdDir := filepath.Dir(dbPath)
+	if err := os.MkdirAll(bdDir, 0755); err != nil {
+		t.Fatalf("Failed to create bdDir: %v", err)
 	}
-	writeTestMetadata(t, dbPath, cfg.Database)
+
+	database := uniqueTestDBName(t)
 
 	doltNewMutex.Lock()
-	s, err := dolt.New(ctx, cfg)
+	s, err := embeddeddolt.New(ctx, bdDir, database, "main")
 	doltNewMutex.Unlock()
 	if err != nil {
-		t.Fatalf("Failed to create dolt store: %v", err)
+		t.Fatalf("Failed to create embedded dolt store: %v", err)
 	}
 
 	if err := s.SetConfig(ctx, "issue_prefix", prefix); err != nil {
@@ -217,156 +177,31 @@ func newTestStoreIsolatedDB(t *testing.T, dbPath string, prefix string) *dolt.Do
 
 	t.Cleanup(func() {
 		s.Close()
-		if cfg.Database != "" {
-			dropTestDatabase(cfg.Database, testDoltServerPort)
-		}
 	})
 	return s
 }
 
-// newTestStoreWithPrefix creates a dolt store with custom issue_prefix configured.
-// Uses shared database with branch-per-test isolation (bd-xmf) when available,
-// falling back to per-test databases otherwise.
-func newTestStoreWithPrefix(t *testing.T, dbPath string, prefix string) *dolt.DoltStore {
+// openExistingTestDB reopens an existing embedded dolt store for verification in tests.
+func openExistingTestDB(t *testing.T, dbPath string) (*embeddeddolt.EmbeddedDoltStore, error) {
 	t.Helper()
-
-	ensureTestMode(t)
-
-	if testDoltServerPort == 0 {
-		t.Skip("Dolt test server not available, skipping")
-	}
-	if testutil.DoltContainerCrashed() {
-		t.Skipf("Dolt test server crashed: %v", testutil.DoltContainerCrashError())
-	}
-
-	ctx := context.Background()
-
-	// Fast path: use shared DB with branch-per-test isolation (bd-xmf)
-	if testSharedDB != "" {
-		return newTestStoreSharedBranch(t, dbPath, prefix)
-	}
-
-	// Fallback: per-test database (original slow path)
-	cfg := &dolt.Config{
-		Path:            dbPath,
-		ServerHost:      "127.0.0.1",
-		ServerPort:      testDoltServerPort,
-		Database:        uniqueTestDBName(t),
-		CreateIfMissing: true,
-	}
-	writeTestMetadata(t, dbPath, cfg.Database)
-
-	doltNewMutex.Lock()
-	s, err := dolt.New(ctx, cfg)
-	doltNewMutex.Unlock()
-	if err != nil {
-		t.Fatalf("Failed to create dolt store: %v", err)
-	}
-
-	if err := s.SetConfig(ctx, "issue_prefix", prefix); err != nil {
-		s.Close()
-		t.Fatalf("Failed to set issue_prefix: %v", err)
-	}
-	if err := s.SetConfig(ctx, "types.custom", "molecule,gate,convoy,merge-request,slot,agent,role,rig,event,message"); err != nil {
-		s.Close()
-		t.Fatalf("Failed to set types.custom: %v", err)
-	}
-
-	t.Cleanup(func() {
-		s.Close()
-		if cfg.Database != "" {
-			dropTestDatabase(cfg.Database, testDoltServerPort)
-		}
-	})
-	return s
-}
-
-// newTestStoreSharedBranch creates a store using the shared database with
-// branch-per-test isolation. Each test gets its own Dolt branch, avoiding
-// the expensive CREATE DATABASE + schema init + DROP DATABASE + PURGE cycle.
-func newTestStoreSharedBranch(t *testing.T, dbPath string, prefix string) *dolt.DoltStore {
-	t.Helper()
-	ctx := context.Background()
-
-	// Write metadata.json pointing to the shared database
-	writeTestMetadata(t, dbPath, testSharedDB)
-
-	// Open store against the shared database with MaxOpenConns=1
-	// (required for DOLT_CHECKOUT session affinity)
-	doltNewMutex.Lock()
-	s, err := dolt.New(ctx, &dolt.Config{
-		Path:         dbPath,
-		ServerHost:   "127.0.0.1",
-		ServerPort:   testDoltServerPort,
-		Database:     testSharedDB,
-		MaxOpenConns: 1,
-	})
-	doltNewMutex.Unlock()
-	if err != nil {
-		t.Fatalf("Failed to create dolt store (shared): %v", err)
-	}
-
-	// Create isolated branch for this test
-	_, branchCleanup := testutil.StartTestBranch(t, s.DB(), testSharedDB)
-
-	// Create ignored tables on this branch
-	if err := dolt.CreateIgnoredTables(s.DB()); err != nil {
-		branchCleanup()
-		s.Close()
-		t.Fatalf("CreateIgnoredTables: %v", err)
-	}
-
-	// Set prefix for this test (overrides the shared schema's default)
-	if err := s.SetConfig(ctx, "issue_prefix", prefix); err != nil {
-		branchCleanup()
-		s.Close()
-		t.Fatalf("Failed to set issue_prefix: %v", err)
-	}
-
-	t.Cleanup(func() {
-		branchCleanup()
-		s.Close()
-	})
-	return s
-}
-
-// dropTestDatabase drops a test database from the shared server (best-effort cleanup).
-func dropTestDatabase(dbName string, port int) {
-	dsn := fmt.Sprintf("root@tcp(127.0.0.1:%d)/?parseTime=true&timeout=5s", port)
-	db, err := sql.Open("mysql", dsn)
-	if err != nil {
-		return
-	}
-	defer db.Close()
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	//nolint:gosec // G201: dbName is generated by uniqueTestDBName (testdb_ + random hex)
-	_, _ = db.ExecContext(ctx, fmt.Sprintf("DROP DATABASE IF EXISTS `%s`", dbName))
-	// Purge dropped databases from Dolt's trash directory to reclaim disk space
-	_, _ = db.ExecContext(ctx, "CALL dolt_purge_dropped_databases()")
-}
-
-// openExistingTestDB reopens an existing Dolt store for verification in tests.
-// It tries NewFromConfig first (reads metadata.json for correct database name),
-// then falls back to direct open for BD_DB or other non-standard paths.
-func openExistingTestDB(t *testing.T, dbPath string) (*dolt.DoltStore, error) {
-	t.Helper()
-	// Serialize dolt.New() to avoid race in Dolt's InitStatusVariables (bd-cqjoi)
 	doltNewMutex.Lock()
 	defer doltNewMutex.Unlock()
 	ctx := context.Background()
-	// Try NewFromConfig which reads metadata.json for correct database name
 	bdDir := filepath.Dir(dbPath)
-	if store, err := dolt.NewFromConfig(ctx, bdDir); err == nil {
-		return store, nil
-	}
-	// Fallback: open directly with test server config
-	cfg := &dolt.Config{Path: dbPath}
-	if testDoltServerPort != 0 {
-		cfg.ServerHost = "127.0.0.1"
-		cfg.ServerPort = testDoltServerPort
-	}
-	return dolt.New(ctx, cfg)
+	database := uniqueTestDBName(t)
+	return embeddeddolt.New(ctx, bdDir, database, "main")
+}
+
+// writeTestMetadata is a no-op stub; server-mode Dolt was removed.
+// Kept for backward compatibility with tests that call it.
+func writeTestMetadata(t *testing.T, dbPath string, database string) {
+	t.Helper()
+	// No-op: server-mode metadata.json is no longer needed.
+}
+
+// dropTestDatabase is a no-op stub; server-mode Dolt was removed.
+func dropTestDatabase(dbName string, port int) {
+	// No-op: server-mode database cleanup is no longer needed.
 }
 
 // runCommandInDir runs a command in the specified directory

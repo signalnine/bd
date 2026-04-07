@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/steveyegge/bd/internal/storage/dolt"
+	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
 	"github.com/steveyegge/bd/internal/types"
 )
 
@@ -276,7 +276,7 @@ func TestCoverage_TemplateAndPinnedProtections(t *testing.T) {
 
 	// Insert a template issue directly and verify update/close protect it.
 	dbFile := filepath.Join(dir, ".bd", "bd.db")
-	s, err := dolt.New(context.Background(), &dolt.Config{Path: dbFile})
+	s, err := embeddeddolt.New(context.Background(), filepath.Dir(dbFile), uniqueTestDBName(t), "main")
 	if err != nil {
 		t.Skipf("skipping: Dolt server not available: %v", err)
 	}
@@ -313,7 +313,7 @@ func TestCoverage_TemplateAndPinnedProtections(t *testing.T) {
 		t.Fatalf("expected 1 issue from show, got %d", len(showDetails))
 	}
 	// Re-open the DB after running the CLI to confirm is_template persisted.
-	s2, err := dolt.New(context.Background(), &dolt.Config{Path: dbFile})
+	s2, err := embeddeddolt.New(context.Background(), filepath.Dir(dbFile), uniqueTestDBName(t), "main")
 	if err != nil {
 		t.Skipf("skipping: Dolt server not available: %v", err)
 	}
@@ -352,7 +352,7 @@ func TestCoverage_ShowThread(t *testing.T) {
 	runBDForCoverage(t, dir, "init", "--prefix", "test", "--quiet")
 
 	dbFile := filepath.Join(dir, ".bd", "bd.db")
-	s, err := dolt.New(context.Background(), &dolt.Config{Path: dbFile})
+	s, err := embeddeddolt.New(context.Background(), filepath.Dir(dbFile), uniqueTestDBName(t), "main")
 	if err != nil {
 		t.Skipf("skipping: Dolt server not available: %v", err)
 	}

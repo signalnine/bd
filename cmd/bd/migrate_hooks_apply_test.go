@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/steveyegge/bd/cmd/bd/doctor"
+	
 	"github.com/steveyegge/bd/internal/git"
 )
 
@@ -18,7 +18,7 @@ func TestApplyHookMigrationExecution_LegacyWithOldSidecar(t *testing.T) {
 	writeHookMigrationFile(t, preCommitPath, "#!/usr/bin/env sh\n# bd-shim v2\n# bd-hooks-version: 0.56.1\nexec bd hooks run pre-commit \"$@\"\n")
 	writeHookMigrationFile(t, preCommitPath+".old", "#!/usr/bin/env sh\necho old-custom\n")
 
-	plan, err := doctor.PlanHookMigration(repoDir)
+	plan, err := PlanHookMigration(repoDir)
 	if err != nil {
 		t.Fatalf("PlanHookMigration failed: %v", err)
 	}
@@ -55,7 +55,7 @@ func TestApplyHookMigrationExecution_LegacyWithBothSidecarsPrefersOld(t *testing
 	writeHookMigrationFile(t, preCommitPath+".old", "#!/usr/bin/env sh\necho from-old\n")
 	writeHookMigrationFile(t, preCommitPath+".backup", "#!/usr/bin/env sh\necho from-backup\n")
 
-	plan, err := doctor.PlanHookMigration(repoDir)
+	plan, err := PlanHookMigration(repoDir)
 	if err != nil {
 		t.Fatalf("PlanHookMigration failed: %v", err)
 	}
@@ -86,12 +86,12 @@ func TestApplyHookMigrationExecution_LegacyWithBackupSidecar(t *testing.T) {
 	writeHookMigrationFile(t, preCommitPath, "#!/usr/bin/env sh\n# bd-shim v2\n# bd-hooks-version: 0.56.1\nexec bd hooks run pre-commit \"$@\"\n")
 	writeHookMigrationFile(t, preCommitPath+".backup", "#!/usr/bin/env sh\necho backup-custom\n")
 
-	plan, err := doctor.PlanHookMigration(repoDir)
+	plan, err := PlanHookMigration(repoDir)
 	if err != nil {
 		t.Fatalf("PlanHookMigration failed: %v", err)
 	}
 
-	var hook *doctor.HookMigrationHookPlan
+	var hook *HookMigrationHookPlan
 	for i := range plan.Hooks {
 		if plan.Hooks[i].Name == "pre-commit" {
 			hook = &plan.Hooks[i]
@@ -137,7 +137,7 @@ func TestApplyHookMigrationExecution_CustomWithSidecarsPreservesHookBody(t *test
 	writeHookMigrationFile(t, preCommitPath+".old", "#!/usr/bin/env sh\necho stale-old\n")
 	writeHookMigrationFile(t, preCommitPath+".backup", "#!/usr/bin/env sh\necho stale-backup\n")
 
-	plan, err := doctor.PlanHookMigration(repoDir)
+	plan, err := PlanHookMigration(repoDir)
 	if err != nil {
 		t.Fatalf("PlanHookMigration failed: %v", err)
 	}
@@ -166,7 +166,7 @@ func TestApplyHookMigrationExecution_MarkerBrokenIsRepaired(t *testing.T) {
 	brokenContent := "#!/usr/bin/env sh\n# --- BEGIN BEADS INTEGRATION v0.57.0 ---\nbd hooks run pre-commit \"$@\"\n"
 	writeHookMigrationFile(t, preCommitPath, brokenContent)
 
-	plan, err := doctor.PlanHookMigration(repoDir)
+	plan, err := PlanHookMigration(repoDir)
 	if err != nil {
 		t.Fatalf("PlanHookMigration failed: %v", err)
 	}
@@ -202,7 +202,7 @@ func TestApplyHookMigrationExecution_Idempotent(t *testing.T) {
 	writeHookMigrationFile(t, preCommitPath, "#!/usr/bin/env sh\n# bd-shim v2\n# bd-hooks-version: 0.56.1\nexec bd hooks run pre-commit \"$@\"\n")
 	writeHookMigrationFile(t, preCommitPath+".old", "#!/usr/bin/env sh\necho old-custom\n")
 
-	plan, err := doctor.PlanHookMigration(repoDir)
+	plan, err := PlanHookMigration(repoDir)
 	if err != nil {
 		t.Fatalf("PlanHookMigration failed: %v", err)
 	}
@@ -211,7 +211,7 @@ func TestApplyHookMigrationExecution_Idempotent(t *testing.T) {
 		t.Fatalf("first apply failed: %v", err)
 	}
 
-	secondPlan, err := doctor.PlanHookMigration(repoDir)
+	secondPlan, err := PlanHookMigration(repoDir)
 	if err != nil {
 		t.Fatalf("second PlanHookMigration failed: %v", err)
 	}
@@ -238,7 +238,7 @@ func TestApplyHookMigrationExecution_RetireCollisionFailsBeforeWrites(t *testing
 	writeHookMigrationFile(t, preCommitPath+".old", "#!/usr/bin/env sh\necho old-custom\n")
 	writeHookMigrationFile(t, preCommitPath+".old.migrated", "#!/usr/bin/env sh\necho conflicting-content\n")
 
-	plan, err := doctor.PlanHookMigration(repoDir)
+	plan, err := PlanHookMigration(repoDir)
 	if err != nil {
 		t.Fatalf("PlanHookMigration failed: %v", err)
 	}
@@ -265,7 +265,7 @@ func TestBuildExecutionPlan_ModifiedLegacyHookBlocks(t *testing.T) {
 	writeHookMigrationFile(t, preCommitPath, modifiedLegacy)
 	writeHookMigrationFile(t, preCommitPath+".old", "#!/usr/bin/env sh\necho old-custom\n")
 
-	plan, err := doctor.PlanHookMigration(repoDir)
+	plan, err := PlanHookMigration(repoDir)
 	if err != nil {
 		t.Fatalf("PlanHookMigration failed: %v", err)
 	}
@@ -303,7 +303,7 @@ func TestBuildExecutionPlan_UnmodifiedLegacyHookProceeds(t *testing.T) {
 	writeHookMigrationFile(t, preCommitPath, cleanLegacy)
 	writeHookMigrationFile(t, preCommitPath+".old", "#!/usr/bin/env sh\necho old-custom\n")
 
-	plan, err := doctor.PlanHookMigration(repoDir)
+	plan, err := PlanHookMigration(repoDir)
 	if err != nil {
 		t.Fatalf("PlanHookMigration failed: %v", err)
 	}

@@ -4,11 +4,9 @@ package main
 
 import (
 	"context"
-	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/steveyegge/bd/internal/storage/dolt"
 	"github.com/steveyegge/bd/internal/types"
 )
 
@@ -42,13 +40,9 @@ func TestValidatePrefix(t *testing.T) {
 
 func TestRenamePrefixCommand(t *testing.T) {
 	tmpDir := t.TempDir()
-	dbPath := filepath.Join(tmpDir, "test.db")
+	dbPath := filepath.Join(tmpDir, ".bd", "test.db")
 
-	testStore, err := dolt.New(context.Background(), &dolt.Config{Path: dbPath})
-	if err != nil {
-		t.Skipf("skipping: Dolt server not available: %v", err)
-	}
-	defer testStore.Close()
+	testStore := newTestStoreWithPrefix(t, dbPath, "old")
 
 	ctx := context.Background()
 
@@ -58,10 +52,6 @@ func TestRenamePrefixCommand(t *testing.T) {
 		store = nil
 		actor = ""
 	}()
-
-	if err := testStore.SetConfig(ctx, "issue_prefix", "old"); err != nil {
-		t.Fatalf("Failed to set config: %v", err)
-	}
 
 	issue1 := &types.Issue{
 		ID:          "old-1",
@@ -170,24 +160,13 @@ func TestRenamePrefixCommand(t *testing.T) {
 
 func TestRenamePrefixInDB(t *testing.T) {
 	tmpDir := t.TempDir()
-	dbPath := filepath.Join(tmpDir, "test.db")
+	dbPath := filepath.Join(tmpDir, ".bd", "test.db")
 
-	testStore, err := dolt.New(context.Background(), &dolt.Config{Path: dbPath})
-	if err != nil {
-		t.Skipf("skipping: Dolt server not available: %v", err)
-	}
-	t.Cleanup(func() {
-		testStore.Close()
-		os.Remove(dbPath)
-	})
+	testStore := newTestStoreWithPrefix(t, dbPath, "old")
 
 	ctx := context.Background()
 	store = testStore
 	actor = "test-actor"
-
-	if err := testStore.SetConfig(ctx, "issue_prefix", "old"); err != nil {
-		t.Fatalf("Failed to set config: %v", err)
-	}
 
 	issue1 := &types.Issue{
 		ID:          "old-1",
@@ -203,7 +182,7 @@ func TestRenamePrefixInDB(t *testing.T) {
 	}
 
 	issues := []*types.Issue{issue1}
-	err = renamePrefixInDB(ctx, "old", "new", issues)
+	err := renamePrefixInDB(ctx, "old", "new", issues)
 	if err != nil {
 		t.Fatalf("renamePrefixInDB failed: %v", err)
 	}

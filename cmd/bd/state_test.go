@@ -9,12 +9,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/steveyegge/bd/internal/storage/dolt"
+	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
 	"github.com/steveyegge/bd/internal/types"
 )
 
 type stateTestHelper struct {
-	s   *dolt.DoltStore
+	s   *embeddeddolt.EmbeddedDoltStore
 	ctx context.Context
 	t   *testing.T
 }
