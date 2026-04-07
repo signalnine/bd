@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/steveyegge/bd/internal/types"
+	"github.com/signalnine/bd/internal/types"
 )
 
 // DetectCyclesInTx finds dependency cycles across both the dependencies and

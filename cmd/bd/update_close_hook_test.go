@@ -15,8 +15,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/steveyegge/bd/internal/hooks"
-	"github.com/steveyegge/bd/internal/types"
+	"github.com/signalnine/bd/internal/hooks"
+	"github.com/signalnine/bd/internal/types"
 )
 
 // TestUpdateCloseHookFiring verifies hook firing logic for status transitions.

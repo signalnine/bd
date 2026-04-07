@@ -10,8 +10,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/steveyegge/bd/internal/config"
-	"github.com/steveyegge/bd/internal/types"
+	"github.com/signalnine/bd/internal/config"
+	"github.com/signalnine/bd/internal/types"
 )
 
 var configCmd = &cobra.Command{

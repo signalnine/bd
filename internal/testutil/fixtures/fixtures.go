@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
-	"github.com/steveyegge/bd/internal/types"
+	"github.com/signalnine/bd/internal/storage/embeddeddolt"
+	"github.com/signalnine/bd/internal/types"
 )
 
 // labels used across all fixtures

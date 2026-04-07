@@ -12,9 +12,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/steveyegge/bd/internal/configfile"
-	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
-	"github.com/steveyegge/bd/internal/types"
+	"github.com/signalnine/bd/internal/configfile"
+	"github.com/signalnine/bd/internal/storage/embeddeddolt"
+	"github.com/signalnine/bd/internal/types"
 )
 
 // ===== Close-specific test helpers =====

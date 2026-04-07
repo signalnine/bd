@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/steveyegge/bd/internal/project"
+	"github.com/signalnine/bd/internal/project"
 )
 
 const (

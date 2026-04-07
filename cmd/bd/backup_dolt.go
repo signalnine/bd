@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/bd/internal/project"
-	"github.com/steveyegge/bd/internal/storage/versioncontrolops"
+	"github.com/signalnine/bd/internal/project"
+	"github.com/signalnine/bd/internal/storage/versioncontrolops"
 )
 
 // --- Dolt-native backup commands ---

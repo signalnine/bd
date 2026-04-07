@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
-	"github.com/steveyegge/bd/internal/types"
+	"github.com/signalnine/bd/internal/storage/embeddeddolt"
+	"github.com/signalnine/bd/internal/types"
 )
 
 // parseIssueID ensures an issue ID has the configured prefix.

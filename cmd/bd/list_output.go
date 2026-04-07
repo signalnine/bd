@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"text/template"
 
-	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
-	"github.com/steveyegge/bd/internal/types"
+	"github.com/signalnine/bd/internal/storage/embeddeddolt"
+	"github.com/signalnine/bd/internal/types"
 )
 
 // outputDotFormat outputs issues in Graphviz DOT format

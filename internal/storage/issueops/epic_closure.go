@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/steveyegge/bd/internal/types"
+	"github.com/signalnine/bd/internal/types"
 )
 
 // GetEpicsEligibleForClosureInTx returns epics whose children are all closed.

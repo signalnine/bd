@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/steveyegge/bd/internal/types"
+	"github.com/signalnine/bd/internal/types"
 )
 
 // buildIssueTree builds parent-child tree structure from issues

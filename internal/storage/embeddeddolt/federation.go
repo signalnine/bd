@@ -15,9 +15,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/steveyegge/bd/internal/storage"
-	"github.com/steveyegge/bd/internal/storage/issueops"
-	"github.com/steveyegge/bd/internal/storage/versioncontrolops"
+	"github.com/signalnine/bd/internal/storage"
+	"github.com/signalnine/bd/internal/storage/issueops"
+	"github.com/signalnine/bd/internal/storage/versioncontrolops"
 )
 
 // credentialKeyFile is the filename for the random encryption key.

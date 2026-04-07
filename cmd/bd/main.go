@@ -19,13 +19,13 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/subosito/gotenv"
 
-	"github.com/steveyegge/bd/internal/config"
-	"github.com/steveyegge/bd/internal/configfile"
-	"github.com/steveyegge/bd/internal/debug"
-	"github.com/steveyegge/bd/internal/hooks"
-	"github.com/steveyegge/bd/internal/project"
-	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
-	"github.com/steveyegge/bd/internal/utils"
+	"github.com/signalnine/bd/internal/config"
+	"github.com/signalnine/bd/internal/configfile"
+	"github.com/signalnine/bd/internal/debug"
+	"github.com/signalnine/bd/internal/hooks"
+	"github.com/signalnine/bd/internal/project"
+	"github.com/signalnine/bd/internal/storage/embeddeddolt"
+	"github.com/signalnine/bd/internal/utils"
 )
 
 var (

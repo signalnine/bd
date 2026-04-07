@@ -26,13 +26,13 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/steveyegge/beads.git",
+    "url": "https://github.com/signalnine/bd.git",
     "directory": "npm-package"
   },
   "bugs": {
-    "url": "https://github.com/steveyegge/beads/issues"
+    "url": "https://github.com/signalnine/bd/issues"
   },
-  "homepage": "https://github.com/steveyegge/beads#readme",
+  "homepage": "https://github.com/signalnine/bd#readme",
   "engines": {
     "node": ">=14.0.0"
   },

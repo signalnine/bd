@@ -5,8 +5,8 @@ package main
 import (
 	"testing"
 
-	"github.com/steveyegge/bd/internal/config"
-	"github.com/steveyegge/bd/internal/types"
+	"github.com/signalnine/bd/internal/config"
+	"github.com/signalnine/bd/internal/types"
 )
 
 const defaultTitleLength = 255

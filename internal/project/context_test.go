@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/steveyegge/bd/internal/git"
+	"github.com/signalnine/bd/internal/git"
 )
 
 // TestGetRepoContextForWorkspace_NormalRepo tests context resolution for a normal git repository

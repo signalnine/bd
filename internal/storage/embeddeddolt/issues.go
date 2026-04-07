@@ -8,9 +8,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/steveyegge/bd/internal/storage"
-	"github.com/steveyegge/bd/internal/storage/issueops"
-	"github.com/steveyegge/bd/internal/types"
+	"github.com/signalnine/bd/internal/storage"
+	"github.com/signalnine/bd/internal/storage/issueops"
+	"github.com/signalnine/bd/internal/types"
 )
 
 // ClaimIssue atomically claims an issue using compare-and-swap semantics.

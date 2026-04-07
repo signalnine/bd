@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/steveyegge/bd/internal/git"
+	"github.com/signalnine/bd/internal/git"
 )
 
 func TestDetectExistingHooks(t *testing.T) {

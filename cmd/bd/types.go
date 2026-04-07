@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/bd/internal/types"
+	"github.com/signalnine/bd/internal/types"
 )
 
 // coreWorkTypes are the built-in types that beads validates without configuration.

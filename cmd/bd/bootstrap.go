@@ -9,11 +9,11 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/bd/internal/config"
-	"github.com/steveyegge/bd/internal/configfile"
-	"github.com/steveyegge/bd/internal/project"
-	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
-	"github.com/steveyegge/bd/internal/storage/versioncontrolops"
+	"github.com/signalnine/bd/internal/config"
+	"github.com/signalnine/bd/internal/configfile"
+	"github.com/signalnine/bd/internal/project"
+	"github.com/signalnine/bd/internal/storage/embeddeddolt"
+	"github.com/signalnine/bd/internal/storage/versioncontrolops"
 	"golang.org/x/term"
 )
 

@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/steveyegge/bd/internal/types"
+	"github.com/signalnine/bd/internal/types"
 )
 
 func TestGetReadyWork_MetadataSuite(t *testing.T) {

@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/bd/internal/project"
+	"github.com/signalnine/bd/internal/project"
 )
 
 var (

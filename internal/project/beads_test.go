@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/steveyegge/bd/internal/configfile"
-	"github.com/steveyegge/bd/internal/git"
+	"github.com/signalnine/bd/internal/configfile"
+	"github.com/signalnine/bd/internal/git"
 )
 
 func TestFindDatabasePathEnvVar(t *testing.T) {

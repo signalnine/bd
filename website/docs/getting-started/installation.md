@@ -25,7 +25,7 @@ brew install beads
 ### Quick Install Script (All Platforms)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/signalnine/bd/main/scripts/install.sh | bash
 ```
 
 The installer will:
@@ -56,7 +56,7 @@ sudo dnf install -y libicu-devel libzstd-devel
 If you see `unicode/uregex.h` missing on macOS, `icu4c` is keg-only. Use:
 ```bash
 ICU_PREFIX="$(brew --prefix icu4c)"
-CGO_CFLAGS="-I${ICU_PREFIX}/include" CGO_CPPFLAGS="-I${ICU_PREFIX}/include" CGO_LDFLAGS="-L${ICU_PREFIX}/lib" go install github.com/steveyegge/beads/cmd/bd@latest
+CGO_CFLAGS="-I${ICU_PREFIX}/include" CGO_CPPFLAGS="-I${ICU_PREFIX}/include" CGO_LDFLAGS="-L${ICU_PREFIX}/lib" go install github.com/signalnine/bd/cmd/bd@latest
 ```
 
 ## Platform-Specific Installation
@@ -70,12 +70,12 @@ brew install beads
 
 **Via go install**:
 ```bash
-go install github.com/steveyegge/beads/cmd/bd@latest
+go install github.com/signalnine/bd/cmd/bd@latest
 ```
 
 **From source**:
 ```bash
-git clone https://github.com/steveyegge/beads
+git clone https://github.com/signalnine/bd
 cd beads
 go build -o bd ./cmd/bd
 sudo mv bd /usr/local/bin/
@@ -98,19 +98,19 @@ paru -S beads-git
 
 **Via go install**:
 ```bash
-go install github.com/steveyegge/beads/cmd/bd@latest
+go install github.com/signalnine/bd/cmd/bd@latest
 ```
 
 ### FreeBSD
 
 **Via quick install script**:
 ```bash
-curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/signalnine/bd/main/scripts/install.sh | bash
 ```
 
 **Via go install**:
 ```bash
-go install github.com/steveyegge/beads/cmd/bd@latest
+go install github.com/signalnine/bd/cmd/bd@latest
 ```
 
 ### Windows 11
@@ -123,14 +123,14 @@ Beads ships with native Windows support—no MSYS or MinGW required.
 
 **Via PowerShell script**:
 ```pwsh
-irm https://raw.githubusercontent.com/steveyegge/beads/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/signalnine/bd/main/install.ps1 | iex
 ```
 
 The script installs a prebuilt Windows release if available. Go is only required for `go install` or building from source.
 
 **Via go install**:
 ```pwsh
-go install github.com/steveyegge/beads/cmd/bd@latest
+go install github.com/signalnine/bd/cmd/bd@latest
 ```
 
 If you see `unicode/uregex.h` missing while building, use the PowerShell install script instead.
@@ -209,7 +209,7 @@ bd is not in your PATH:
 
 ```bash
 # Check if installed
-go list -f {{.Target}} github.com/steveyegge/beads/cmd/bd
+go list -f {{.Target}} github.com/signalnine/bd/cmd/bd
 
 # Add Go bin to PATH (add to ~/.bashrc or ~/.zshrc)
 export PATH="$PATH:$(go env GOPATH)/bin"
@@ -221,7 +221,7 @@ This is typically caused by CGO/SQLite compatibility issues:
 
 ```bash
 # Build with CGO enabled
-CGO_ENABLED=1 go install github.com/steveyegge/beads/cmd/bd@latest
+CGO_ENABLED=1 go install github.com/signalnine/bd/cmd/bd@latest
 ```
 
 ## Updating bd
@@ -229,13 +229,13 @@ CGO_ENABLED=1 go install github.com/steveyegge/beads/cmd/bd@latest
 ### Quick install script (macOS/Linux/FreeBSD)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/signalnine/bd/main/scripts/install.sh | bash
 ```
 
 ### PowerShell installer (Windows)
 
 ```pwsh
-irm https://raw.githubusercontent.com/steveyegge/beads/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/signalnine/bd/main/install.ps1 | iex
 ```
 
 ### Homebrew
@@ -247,7 +247,7 @@ brew upgrade beads
 ### go install
 
 ```bash
-go install github.com/steveyegge/beads/cmd/bd@latest
+go install github.com/signalnine/bd/cmd/bd@latest
 ```
 
 For post-upgrade steps (hooks, migrations), see [Upgrading](/getting-started/upgrading).

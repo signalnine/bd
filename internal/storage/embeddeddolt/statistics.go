@@ -7,8 +7,8 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/steveyegge/bd/internal/storage/issueops"
-	"github.com/steveyegge/bd/internal/types"
+	"github.com/signalnine/bd/internal/storage/issueops"
+	"github.com/signalnine/bd/internal/types"
 )
 
 func (s *EmbeddedDoltStore) GetStatistics(ctx context.Context) (*types.Statistics, error) {

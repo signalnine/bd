@@ -130,13 +130,13 @@ bd is not in your PATH. Either:
 
 ```bash
 # Check if installed
-go list -f {{.Target}} github.com/steveyegge/beads/cmd/bd
+go list -f {{.Target}} github.com/signalnine/bd/cmd/bd
 
 # Add Go bin to PATH (add to ~/.bashrc or ~/.zshrc)
 export PATH="$PATH:$(go env GOPATH)/bin"
 
 # Or reinstall
-go install github.com/steveyegge/beads/cmd/bd@latest
+go install github.com/signalnine/bd/cmd/bd@latest
 ```
 
 ### Wrong version of bd running / Multiple bd binaries in PATH
@@ -177,16 +177,16 @@ Some users report crashes when running `bd init` or other commands on macOS. Thi
 **Workaround:**
 ```bash
 # Build with CGO enabled
-CGO_ENABLED=1 go install github.com/steveyegge/beads/cmd/bd@latest
+CGO_ENABLED=1 go install github.com/signalnine/bd/cmd/bd@latest
 
 # Or if building from source
-git clone https://github.com/steveyegge/beads
+git clone https://github.com/signalnine/bd
 cd beads
 CGO_ENABLED=1 go build -o bd ./cmd/bd
 sudo mv bd /usr/local/bin/
 ```
 
-If you installed via Homebrew, this shouldn't be necessary as the formula already enables CGO. If you're still seeing crashes with the Homebrew version, please [file an issue](https://github.com/steveyegge/beads/issues).
+If you installed via Homebrew, this shouldn't be necessary as the formula already enables CGO. If you're still seeing crashes with the Homebrew version, please [file an issue](https://github.com/signalnine/bd/issues).
 
 ## Antivirus False Positives
 
@@ -210,7 +210,7 @@ If you installed via Homebrew, this shouldn't be necessary as the formula alread
    # macOS/Linux
    shasum -a 256 bd
    ```
-   Compare with checksums from the [GitHub release page](https://github.com/steveyegge/beads/releases)
+   Compare with checksums from the [GitHub release page](https://github.com/signalnine/bd/releases)
 
 2. **Add bd to antivirus exclusions only after verification**:
    - Add the bd installation directory to your antivirus exclusion list
@@ -433,9 +433,9 @@ bd init
 bd config set sync.branch ""  # Disable sync branch feature
 ```
 
-**Note:** The `--hard` and `--skip-init` flags mentioned in [GH#479](https://github.com/steveyegge/beads/issues/479) were never implemented. Use the workarounds above for a complete reset.
+**Note:** The `--hard` and `--skip-init` flags mentioned in [GH#479](https://github.com/signalnine/bd/issues/479) were never implemented. Use the workarounds above for a complete reset.
 
-**Related:** [GH#922](https://github.com/steveyegge/beads/issues/922)
+**Related:** [GH#922](https://github.com/signalnine/bd/issues/922)
 
 ### Database corruption
 
@@ -927,7 +927,7 @@ bd dolt push
 
 **Related:**
 - See [Claude Code sandboxing documentation](https://www.anthropic.com/engineering/claude-code-sandboxing) for more about sandbox restrictions
-- GitHub issue [#353](https://github.com/steveyegge/beads/issues/353) for background
+- GitHub issue [#353](https://github.com/signalnine/bd/issues/353) for background
 
 ## Platform-Specific Issues
 
@@ -1014,14 +1014,14 @@ export PATH="$HOME/.local/bin:$PATH"
 
 If none of these solutions work:
 
-1. **Check existing issues**: [GitHub Issues](https://github.com/steveyegge/beads/issues)
+1. **Check existing issues**: [GitHub Issues](https://github.com/signalnine/bd/issues)
 2. **Enable debug logging**: `bd --verbose <command>`
 3. **File a bug report**: Include:
    - bd version: `bd version`
    - OS and architecture: `uname -a`
    - Error message and full command
    - Steps to reproduce
-4. **Join discussions**: [GitHub Discussions](https://github.com/steveyegge/beads/discussions)
+4. **Join discussions**: [GitHub Discussions](https://github.com/signalnine/bd/discussions)
 
 ## Related Documentation
 

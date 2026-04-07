@@ -29,7 +29,7 @@ if echo "$COMMAND" | grep -qE 'gh pr create'; then
   fi
 
   # Allow if origin points to a fork (not the upstream repo)
-  if [ -n "$ORIGIN" ] && echo "$ORIGIN" | grep -qvE 'steveyegge/beads'; then
+  if [ -n "$ORIGIN" ] && echo "$ORIGIN" | grep -qvE 'signalnine/bd'; then
     exit 0
   fi
 

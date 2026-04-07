@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/steveyegge/bd/internal/config"
-	"github.com/steveyegge/bd/internal/debug"
-	"github.com/steveyegge/bd/internal/project"
+	"github.com/signalnine/bd/internal/config"
+	"github.com/signalnine/bd/internal/debug"
+	"github.com/signalnine/bd/internal/project"
 )
 
 // backupState tracks watermarks for backup change detection.

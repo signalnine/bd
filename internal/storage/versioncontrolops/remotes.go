@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/steveyegge/bd/internal/storage"
+	"github.com/signalnine/bd/internal/storage"
 )
 
 // ListRemotes returns all configured Dolt remotes (name and URL).

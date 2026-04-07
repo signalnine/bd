@@ -7,8 +7,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/steveyegge/bd/internal/storage"
-	"github.com/steveyegge/bd/internal/types"
+	"github.com/signalnine/bd/internal/storage"
+	"github.com/signalnine/bd/internal/types"
 )
 
 func TestMetadataFilterSuite(t *testing.T) {

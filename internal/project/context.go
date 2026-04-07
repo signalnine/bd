@@ -28,7 +28,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/steveyegge/bd/internal/git"
+	"github.com/signalnine/bd/internal/git"
 )
 
 // UserRole represents the user's relationship to a repository.

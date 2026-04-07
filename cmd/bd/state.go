@@ -9,9 +9,9 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/bd/internal/types"
-	"github.com/steveyegge/bd/internal/ui"
-	"github.com/steveyegge/bd/internal/utils"
+	"github.com/signalnine/bd/internal/types"
+	"github.com/signalnine/bd/internal/ui"
+	"github.com/signalnine/bd/internal/utils"
 )
 
 var stateCmd = &cobra.Command{

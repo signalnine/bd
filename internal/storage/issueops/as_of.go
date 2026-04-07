@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/steveyegge/bd/internal/storage"
-	"github.com/steveyegge/bd/internal/types"
+	"github.com/signalnine/bd/internal/storage"
+	"github.com/signalnine/bd/internal/types"
 )
 
 // validRefPattern matches valid Dolt commit hashes (32 hex chars) or branch names.

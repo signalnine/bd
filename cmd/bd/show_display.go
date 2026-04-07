@@ -9,8 +9,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/steveyegge/bd/internal/types"
-	"github.com/steveyegge/bd/internal/ui"
+	"github.com/signalnine/bd/internal/types"
+	"github.com/signalnine/bd/internal/ui"
 )
 
 // displayShowIssue displays a single issue (reusable for watch mode).

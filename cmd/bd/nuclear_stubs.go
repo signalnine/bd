@@ -13,12 +13,12 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/steveyegge/bd/internal/config"
-	"github.com/steveyegge/bd/internal/project"
-	"github.com/steveyegge/bd/internal/storage"
-	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
-	"github.com/steveyegge/bd/internal/types"
-	"github.com/steveyegge/bd/internal/utils"
+	"github.com/signalnine/bd/internal/config"
+	"github.com/signalnine/bd/internal/project"
+	"github.com/signalnine/bd/internal/storage"
+	"github.com/signalnine/bd/internal/storage/embeddeddolt"
+	"github.com/signalnine/bd/internal/types"
+	"github.com/signalnine/bd/internal/utils"
 )
 
 // ---------------------------------------------------------------------------

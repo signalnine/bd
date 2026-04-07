@@ -8,8 +8,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/steveyegge/bd/internal/hooks"
-	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
+	"github.com/signalnine/bd/internal/hooks"
+	"github.com/signalnine/bd/internal/storage/embeddeddolt"
 )
 
 // CommandContext holds all runtime state for command execution.

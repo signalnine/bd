@@ -81,7 +81,7 @@ get_previous_binary() {
     fi
 
     local asset="beads_${PREV_VER_BARE}_${OS}_${ARCH}.tar.gz"
-    local url="https://github.com/steveyegge/beads/releases/download/${PREV_VERSION}/${asset}"
+    local url="https://github.com/signalnine/bd/releases/download/${PREV_VERSION}/${asset}"
 
     echo -e "${YELLOW}Downloading ${PREV_VERSION} binary...${NC}" >&2
     local tmpdir

@@ -10,9 +10,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/steveyegge/bd/internal/config"
-	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
-	"github.com/steveyegge/bd/internal/types"
+	"github.com/signalnine/bd/internal/config"
+	"github.com/signalnine/bd/internal/storage/embeddeddolt"
+	"github.com/signalnine/bd/internal/types"
 )
 
 func TestConfigCommands(t *testing.T) {

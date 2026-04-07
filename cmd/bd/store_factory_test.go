@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/steveyegge/bd/internal/configfile"
+	"github.com/signalnine/bd/internal/configfile"
 )
 
 // TestNewDoltStoreFromConfig_NoMetadata verifies that newDoltStoreFromConfig

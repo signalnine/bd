@@ -7,9 +7,9 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/steveyegge/bd/internal/storage"
-	"github.com/steveyegge/bd/internal/storage/issueops"
-	"github.com/steveyegge/bd/internal/types"
+	"github.com/signalnine/bd/internal/storage"
+	"github.com/signalnine/bd/internal/storage/issueops"
+	"github.com/signalnine/bd/internal/types"
 )
 
 func (s *EmbeddedDoltStore) CreateIssue(ctx context.Context, issue *types.Issue, actor string) error {

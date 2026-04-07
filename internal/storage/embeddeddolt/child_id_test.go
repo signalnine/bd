@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/steveyegge/bd/internal/types"
+	"github.com/signalnine/bd/internal/types"
 )
 
 func TestGetNextChildID(t *testing.T) {

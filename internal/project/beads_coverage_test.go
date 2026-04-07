@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/steveyegge/bd/internal/git"
+	"github.com/signalnine/bd/internal/git"
 )
 
 // TestFindDatabaseInBeadsDir_DoltDir tests finding the dolt database directory

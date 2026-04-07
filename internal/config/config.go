@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/spf13/viper"
-	"github.com/steveyegge/bd/internal/debug"
+	"github.com/signalnine/bd/internal/debug"
 	"gopkg.in/yaml.v3"
 )
 

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/steveyegge/bd/internal/config"
+	"github.com/signalnine/bd/internal/config"
 )
 
 // beforeTestsHook is set by CGO-tagged test files to perform setup before tests run

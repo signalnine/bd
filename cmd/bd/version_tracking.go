@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/steveyegge/bd/internal/configfile"
-	"github.com/steveyegge/bd/internal/debug"
-	"github.com/steveyegge/bd/internal/project"
+	"github.com/signalnine/bd/internal/configfile"
+	"github.com/signalnine/bd/internal/debug"
+	"github.com/signalnine/bd/internal/project"
 )
 
 // localVersionFile is the gitignored file that stores the last bd version used locally.

@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/steveyegge/bd"
-	"github.com/steveyegge/bd/internal/testutil"
+	"github.com/signalnine/bd"
+	"github.com/signalnine/bd/internal/testutil"
 )
 
 // testServerPort is the port of the shared test Dolt server (0 = not running).

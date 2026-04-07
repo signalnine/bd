@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/steveyegge/bd/internal/storage"
-	"github.com/steveyegge/bd/internal/types"
+	"github.com/signalnine/bd/internal/storage"
+	"github.com/signalnine/bd/internal/types"
 )
 
 // DiffInTx returns changes between two commits or branches by querying

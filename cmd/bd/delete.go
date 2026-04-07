@@ -10,10 +10,10 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/bd/internal/storage"
-	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
-	"github.com/steveyegge/bd/internal/types"
-	"github.com/steveyegge/bd/internal/ui"
+	"github.com/signalnine/bd/internal/storage"
+	"github.com/signalnine/bd/internal/storage/embeddeddolt"
+	"github.com/signalnine/bd/internal/types"
+	"github.com/signalnine/bd/internal/ui"
 )
 
 var deleteCmd = &cobra.Command{

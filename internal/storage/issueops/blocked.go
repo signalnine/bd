@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/steveyegge/bd/internal/types"
+	"github.com/signalnine/bd/internal/types"
 )
 
 // ComputeBlockedIDsInTx returns the set of issue IDs that are blocked by active issues.

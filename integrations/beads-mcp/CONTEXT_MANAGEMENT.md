@@ -109,6 +109,6 @@ uv run pytest tests/test_mcp_server_integration.py -v
 
 ## Future Work
 
-See [bd-105](https://github.com/steveyegge/beads/issues/105) for full architectural analysis and roadmap.
+See [bd-105](https://github.com/signalnine/bd/issues/105) for full architectural analysis and roadmap.
 
 Priority: P0/P1 - Active data corruption risk in multi-repo setups.

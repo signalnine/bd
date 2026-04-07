@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/steveyegge/bd/internal/storage"
-	"github.com/steveyegge/bd/internal/storage/versioncontrolops"
+	"github.com/signalnine/bd/internal/storage"
+	"github.com/signalnine/bd/internal/storage/versioncontrolops"
 )
 
 // withDBConn opens a short-lived database connection configured for the

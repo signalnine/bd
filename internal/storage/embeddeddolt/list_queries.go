@@ -6,8 +6,8 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/steveyegge/bd/internal/storage/issueops"
-	"github.com/steveyegge/bd/internal/types"
+	"github.com/signalnine/bd/internal/storage/issueops"
+	"github.com/signalnine/bd/internal/types"
 )
 
 func (s *EmbeddedDoltStore) SearchIssues(ctx context.Context, query string, filter types.IssueFilter) ([]*types.Issue, error) {

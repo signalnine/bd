@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/bd/internal/ui"
+	"github.com/signalnine/bd/internal/ui"
 )
 
 var assignCmd = &cobra.Command{

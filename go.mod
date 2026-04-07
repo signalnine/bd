@@ -1,4 +1,4 @@
-module github.com/steveyegge/bd
+module github.com/signalnine/bd
 
 go 1.25.8
 

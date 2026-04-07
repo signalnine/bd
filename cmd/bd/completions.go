@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/bd/internal/project"
-	"github.com/steveyegge/bd/internal/types"
+	"github.com/signalnine/bd/internal/project"
+	"github.com/signalnine/bd/internal/types"
 )
 
 // issueIDCompletion provides shell completion for issue IDs by querying the storage

@@ -12,13 +12,13 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/bd/internal/config"
-	"github.com/steveyegge/bd/internal/configfile"
-	"github.com/steveyegge/bd/internal/git"
-	"github.com/steveyegge/bd/internal/project"
-	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
-	"github.com/steveyegge/bd/internal/ui"
-	"github.com/steveyegge/bd/internal/utils"
+	"github.com/signalnine/bd/internal/config"
+	"github.com/signalnine/bd/internal/configfile"
+	"github.com/signalnine/bd/internal/git"
+	"github.com/signalnine/bd/internal/project"
+	"github.com/signalnine/bd/internal/storage/embeddeddolt"
+	"github.com/signalnine/bd/internal/ui"
+	"github.com/signalnine/bd/internal/utils"
 	"golang.org/x/term"
 )
 
@@ -83,7 +83,7 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 			fmt.Fprintf(os.Stderr, "  bd init\n\n")
 			fmt.Fprintf(os.Stderr, "To import issues from an existing JSONL export:\n")
 			fmt.Fprintf(os.Stderr, "  bd init --from-jsonl\n\n")
-			fmt.Fprintf(os.Stderr, "See: https://github.com/steveyegge/bd/blob/main/docs/DOLT-BACKEND.md\n")
+			fmt.Fprintf(os.Stderr, "See: https://github.com/signalnine/bd/blob/main/docs/DOLT-BACKEND.md\n")
 			os.Exit(1)
 		} else if backendFlag != "" && backendFlag != "dolt" {
 			FatalError("unknown backend %q: only \"dolt\" is supported", backendFlag)

@@ -12,8 +12,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/steveyegge/bd/internal/routing"
-	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
+	"github.com/signalnine/bd/internal/routing"
+	"github.com/signalnine/bd/internal/storage/embeddeddolt"
 )
 
 func TestRoutingIntegration(t *testing.T) {

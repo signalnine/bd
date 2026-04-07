@@ -67,7 +67,7 @@ download_binary() {
     fi
 
     local asset="beads_${ver_bare}_${OS}_${ARCH}.tar.gz"
-    local url="https://github.com/steveyegge/beads/releases/download/${version}/${asset}"
+    local url="https://github.com/signalnine/bd/releases/download/${version}/${asset}"
 
     echo -e "  ${YELLOW}downloading ${version}...${NC}" >&2
     local tmpdir

@@ -7,10 +7,10 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/bd/internal/configfile"
-	"github.com/steveyegge/bd/internal/project"
-	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
-	"github.com/steveyegge/bd/internal/ui"
+	"github.com/signalnine/bd/internal/configfile"
+	"github.com/signalnine/bd/internal/project"
+	"github.com/signalnine/bd/internal/storage/embeddeddolt"
+	"github.com/signalnine/bd/internal/ui"
 )
 
 var backupRestoreCmd = &cobra.Command{

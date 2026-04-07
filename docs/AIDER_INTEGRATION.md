@@ -18,7 +18,7 @@ The beads integration for Aider:
 
 ```bash
 # Install beads CLI
-go install github.com/steveyegge/beads/cmd/bd@latest
+go install github.com/signalnine/bd/cmd/bd@latest
 
 # Initialize in your project
 cd your-project
@@ -372,6 +372,6 @@ Then sync:
 ## References
 
 - [Aider Documentation](https://aider.chat/docs/)
-- [Beads Documentation](https://github.com/steveyegge/beads)
+- [Beads Documentation](https://github.com/signalnine/bd)
 - [AGENTS.md](../AGENTS.md) - Complete bd workflow guide
 - [QUICKSTART.md](QUICKSTART.md) - Quick start guide

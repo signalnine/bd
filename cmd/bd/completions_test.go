@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/bd/internal/git"
-	"github.com/steveyegge/bd/internal/project"
-	"github.com/steveyegge/bd/internal/types"
+	"github.com/signalnine/bd/internal/git"
+	"github.com/signalnine/bd/internal/project"
+	"github.com/signalnine/bd/internal/types"
 )
 
 func TestIssueIDCompletion(t *testing.T) {

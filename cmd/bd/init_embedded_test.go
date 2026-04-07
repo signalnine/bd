@@ -14,8 +14,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/steveyegge/bd/internal/configfile"
-	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
+	"github.com/signalnine/bd/internal/configfile"
+	"github.com/signalnine/bd/internal/storage/embeddeddolt"
 )
 
 var (

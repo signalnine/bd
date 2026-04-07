@@ -10,7 +10,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/steveyegge/bd/internal/types"
+	"github.com/signalnine/bd/internal/types"
 )
 
 // ErrAlreadyClaimed is returned when attempting to claim an issue that is already

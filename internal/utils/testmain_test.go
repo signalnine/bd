@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/steveyegge/bd/internal/testutil"
+	"github.com/signalnine/bd/internal/testutil"
 )
 
 // testServerPort is the port of the isolated test Dolt server (0 = not running).

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/steveyegge/bd/internal/project"
+	"github.com/signalnine/bd/internal/project"
 )
 
 // isGitRepo checks if the current working directory is in a git repository.

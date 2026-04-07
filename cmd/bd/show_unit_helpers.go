@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 
-	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
-	"github.com/steveyegge/bd/internal/types"
-	"github.com/steveyegge/bd/internal/validation"
+	"github.com/signalnine/bd/internal/storage/embeddeddolt"
+	"github.com/signalnine/bd/internal/types"
+	"github.com/signalnine/bd/internal/validation"
 )
 
 // validateIssueUpdatable checks if an issue can be updated.

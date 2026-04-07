@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/steveyegge/bd/internal/testutil"
+	"github.com/signalnine/bd/internal/testutil"
 )
 
 func TestBackupRestoreMissingDir(t *testing.T) {

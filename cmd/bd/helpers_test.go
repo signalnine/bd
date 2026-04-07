@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	"github.com/steveyegge/bd/internal/utils"
+	"github.com/signalnine/bd/internal/utils"
 )
 
 func TestExtractPrefix(t *testing.T) {

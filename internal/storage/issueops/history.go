@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/steveyegge/bd/internal/storage"
-	"github.com/steveyegge/bd/internal/types"
+	"github.com/signalnine/bd/internal/storage"
+	"github.com/signalnine/bd/internal/types"
 )
 
 // HistoryInTx returns the complete version history for an issue by querying

@@ -5,8 +5,8 @@ package embeddeddolt
 import (
 	"context"
 
-	"github.com/steveyegge/bd/internal/storage"
-	"github.com/steveyegge/bd/internal/types"
+	"github.com/signalnine/bd/internal/storage"
+	"github.com/signalnine/bd/internal/types"
 )
 
 // MergeSlotCreate creates the merge slot bead for the current rig.

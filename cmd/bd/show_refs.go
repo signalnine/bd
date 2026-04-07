@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
-	"github.com/steveyegge/bd/internal/types"
-	"github.com/steveyegge/bd/internal/ui"
+	"github.com/signalnine/bd/internal/storage/embeddeddolt"
+	"github.com/signalnine/bd/internal/types"
+	"github.com/signalnine/bd/internal/ui"
 )
 
 // showIssueRefs displays issues that reference the given issue(s), grouped by relationship type

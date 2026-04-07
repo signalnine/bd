@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/steveyegge/bd/internal/ui"
+	"github.com/signalnine/bd/internal/ui"
 )
 
 // setupStealthMode configures git settings for stealth operation.

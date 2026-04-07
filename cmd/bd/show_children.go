@@ -6,9 +6,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
-	"github.com/steveyegge/bd/internal/types"
-	"github.com/steveyegge/bd/internal/ui"
+	"github.com/signalnine/bd/internal/storage/embeddeddolt"
+	"github.com/signalnine/bd/internal/types"
+	"github.com/signalnine/bd/internal/ui"
 )
 
 // showIssueChildren displays only the children of the specified issue(s)

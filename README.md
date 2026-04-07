@@ -8,7 +8,7 @@
 
 your agents need somewhere to track work that isn't a markdown file. bd is a dependency-aware task graph on top of [Dolt](https://github.com/dolthub/dolt) (version-controlled SQL). agents create issues, track blockers, close work, keep context across sessions.
 
-forked from [beads](https://github.com/steveyegge/beads). deleted 78% of it.
+forked from [beads](https://github.com/signalnine/bd). deleted 78% of it.
 
 ## install
 
@@ -102,7 +102,7 @@ bd dolt pull
 
 ## what we cut
 
-~165k lines from [beads](https://github.com/steveyegge/beads):
+~165k lines from [beads](https://github.com/signalnine/bd):
 
 - 6 tracker integrations (Jira, Linear, Notion, ADO, GitLab, GitHub)
 - formula DSL

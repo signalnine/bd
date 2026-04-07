@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
-	"github.com/steveyegge/bd/internal/types"
+	"github.com/signalnine/bd/internal/storage/embeddeddolt"
+	"github.com/signalnine/bd/internal/types"
 )
 
 func newTestStore(t *testing.T) *embeddeddolt.EmbeddedDoltStore {

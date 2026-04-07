@@ -105,7 +105,7 @@ A curated list of community-built UIs, extensions, and integrations for Beads. R
 
 ## Discussion
 
-See [GitHub Discussions #276](https://github.com/steveyegge/beads/discussions/276) for ongoing UI development conversations, design decisions, and community contributions.
+See [GitHub Discussions #276](https://github.com/signalnine/bd/discussions/276) for ongoing UI development conversations, design decisions, and community contributions.
 
 ## Contributing
 

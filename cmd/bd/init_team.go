@@ -7,9 +7,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/steveyegge/bd/internal/project"
-	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
-	"github.com/steveyegge/bd/internal/ui"
+	"github.com/signalnine/bd/internal/project"
+	"github.com/signalnine/bd/internal/storage/embeddeddolt"
+	"github.com/signalnine/bd/internal/ui"
 )
 
 // runTeamWizard guides the user through team workflow setup

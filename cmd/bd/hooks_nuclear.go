@@ -12,8 +12,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/steveyegge/bd/internal/git"
-	"github.com/steveyegge/bd/internal/project"
+	"github.com/signalnine/bd/internal/git"
+	"github.com/signalnine/bd/internal/project"
 )
 
 const hookVersionPrefix = "# bd-hooks-version: "

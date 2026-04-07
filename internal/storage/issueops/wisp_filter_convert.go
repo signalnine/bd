@@ -1,6 +1,6 @@
 package issueops
 
-import "github.com/steveyegge/bd/internal/types"
+import "github.com/signalnine/bd/internal/types"
 
 // WispFilterToIssueFilter converts a types.WispFilter into an IssueFilter
 // suitable for use with SearchIssuesInTx or searchTableInTx.

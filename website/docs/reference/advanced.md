@@ -89,7 +89,7 @@ storage.UnderlyingDB().Exec(`
 `)
 ```
 
-See [EXTENDING.md](https://github.com/steveyegge/beads/blob/main/docs/EXTENDING.md).
+See [EXTENDING.md](https://github.com/signalnine/bd/blob/main/docs/EXTENDING.md).
 
 ## Event System
 
@@ -140,7 +140,7 @@ bd list --label "sprint-1" --status open --json | \
 Use beads as a Go library:
 
 ```go
-import "github.com/steveyegge/beads/internal/storage/embeddeddolt"
+import "github.com/signalnine/bd/internal/storage/embeddeddolt"
 
 store, _ := embeddeddolt.New(ctx, ".beads", "beads", "main")
 defer store.Close()

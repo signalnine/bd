@@ -7,9 +7,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
-	"github.com/steveyegge/bd/internal/testutil"
-	"github.com/steveyegge/bd/internal/types"
+	"github.com/signalnine/bd/internal/storage/embeddeddolt"
+	"github.com/signalnine/bd/internal/testutil"
+	"github.com/signalnine/bd/internal/types"
 )
 
 func TestLargeDolt(t *testing.T) {

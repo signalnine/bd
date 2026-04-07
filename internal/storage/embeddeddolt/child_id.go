@@ -6,7 +6,7 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/steveyegge/bd/internal/storage/issueops"
+	"github.com/signalnine/bd/internal/storage/issueops"
 )
 
 func (s *EmbeddedDoltStore) GetNextChildID(ctx context.Context, parentID string) (string, error) {

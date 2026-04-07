@@ -6,10 +6,10 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/bd/internal/storage"
-	"github.com/steveyegge/bd/internal/types"
-	"github.com/steveyegge/bd/internal/utils"
-	"github.com/steveyegge/bd/internal/validation"
+	"github.com/signalnine/bd/internal/storage"
+	"github.com/signalnine/bd/internal/types"
+	"github.com/signalnine/bd/internal/utils"
+	"github.com/signalnine/bd/internal/validation"
 )
 
 var searchCmd = &cobra.Command{

@@ -7,8 +7,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/steveyegge/bd/internal/storage"
-	"github.com/steveyegge/bd/internal/types"
+	"github.com/signalnine/bd/internal/storage"
+	"github.com/signalnine/bd/internal/types"
 )
 
 // GetReadyWorkInTx returns issues that are ready to work on (not blocked).

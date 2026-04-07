@@ -25,10 +25,10 @@ Use the command that matches your install method.
 
 | Install method | Platforms | Command |
 |---|---|---|
-| Quick install script | macOS, Linux, FreeBSD | `curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh \| bash` |
-| PowerShell installer | Windows | `irm https://raw.githubusercontent.com/steveyegge/beads/main/install.ps1 \| iex` |
+| Quick install script | macOS, Linux, FreeBSD | `curl -fsSL https://raw.githubusercontent.com/signalnine/bd/main/scripts/install.sh \| bash` |
+| PowerShell installer | Windows | `irm https://raw.githubusercontent.com/signalnine/bd/main/install.ps1 \| iex` |
 | Homebrew | macOS, Linux | `brew upgrade beads` |
-| go install | macOS, Linux, FreeBSD, Windows | `go install github.com/steveyegge/beads/cmd/bd@latest` |
+| go install | macOS, Linux, FreeBSD, Windows | `go install github.com/signalnine/bd/cmd/bd@latest` |
 | npm | macOS, Linux, Windows | `npm update -g @beads/bd` |
 | bun | macOS, Linux, Windows | `bun install -g --trust @beads/bd` |
 | From source (Unix shell) | macOS, Linux, FreeBSD | `git pull && go build -o bd ./cmd/bd` |
@@ -36,13 +36,13 @@ Use the command that matches your install method.
 ### Quick install script (macOS/Linux/FreeBSD)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/signalnine/bd/main/scripts/install.sh | bash
 ```
 
 ### PowerShell installer (Windows)
 
 ```pwsh
-irm https://raw.githubusercontent.com/steveyegge/beads/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/signalnine/bd/main/install.ps1 | iex
 ```
 
 ### Homebrew
@@ -54,7 +54,7 @@ brew upgrade beads
 ### go install
 
 ```bash
-go install github.com/steveyegge/beads/cmd/bd@latest
+go install github.com/signalnine/bd/cmd/bd@latest
 ```
 
 ### From Source

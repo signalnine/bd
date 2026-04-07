@@ -165,7 +165,7 @@ If Go is available (it usually is in Claude Code web), use the `go install` fall
 
 ```bash
 # Install via go
-go install github.com/steveyegge/beads/cmd/bd@latest
+go install github.com/signalnine/bd/cmd/bd@latest
 
 # Add to PATH (required each session)
 export PATH="$PATH:$HOME/go/bin"
@@ -188,7 +188,7 @@ if ! command -v bd &> /dev/null; then
         echo "✓ Installed via npm"
     elif command -v go &> /dev/null; then
         echo "npm install failed, trying go install..."
-        go install github.com/steveyegge/beads/cmd/bd@latest
+        go install github.com/signalnine/bd/cmd/bd@latest
         export PATH="$PATH:$HOME/go/bin"
         echo "✓ Installed via go install"
     else
@@ -334,7 +334,7 @@ npx bd create "New issue"
 
 ## Resources
 
-- [beads GitHub repository](https://github.com/steveyegge/beads)
+- [beads GitHub repository](https://github.com/signalnine/bd)
 - [npm package page](https://www.npmjs.com/package/@beads/bd)
-- [Complete documentation](https://github.com/steveyegge/beads#readme)
+- [Complete documentation](https://github.com/signalnine/bd#readme)
 - [Claude Code hooks documentation](https://docs.claude.com/claude-code)

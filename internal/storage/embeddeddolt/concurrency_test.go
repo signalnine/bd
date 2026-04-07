@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
+	"github.com/signalnine/bd/internal/storage/embeddeddolt"
 	"golang.org/x/sync/errgroup"
 )
 

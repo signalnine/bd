@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/steveyegge/bd/internal/ui"
-	"github.com/steveyegge/bd/internal/validation"
+	"github.com/signalnine/bd/internal/ui"
+	"github.com/signalnine/bd/internal/validation"
 )
 
 var priorityCmd = &cobra.Command{

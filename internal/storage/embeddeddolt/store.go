@@ -13,11 +13,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/steveyegge/bd/internal/config"
-	"github.com/steveyegge/bd/internal/storage"
-	"github.com/steveyegge/bd/internal/storage/issueops"
-	"github.com/steveyegge/bd/internal/storage/versioncontrolops"
-	"github.com/steveyegge/bd/internal/types"
+	"github.com/signalnine/bd/internal/config"
+	"github.com/signalnine/bd/internal/storage"
+	"github.com/signalnine/bd/internal/storage/issueops"
+	"github.com/signalnine/bd/internal/storage/versioncontrolops"
+	"github.com/signalnine/bd/internal/types"
 )
 
 // EmbeddedDoltStore is the concrete storage backend backed by the embedded Dolt engine.

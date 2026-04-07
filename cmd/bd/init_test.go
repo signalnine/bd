@@ -14,10 +14,10 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/steveyegge/bd/internal/configfile"
-	"github.com/steveyegge/bd/internal/git"
-	"github.com/steveyegge/bd/internal/project"
-	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
+	"github.com/signalnine/bd/internal/configfile"
+	"github.com/signalnine/bd/internal/git"
+	"github.com/signalnine/bd/internal/project"
+	"github.com/signalnine/bd/internal/storage/embeddeddolt"
 )
 
 // skipIfNoDolt skips the test when no Dolt server is available.

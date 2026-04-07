@@ -10,7 +10,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
-	"github.com/steveyegge/bd/internal/ui"
+	"github.com/signalnine/bd/internal/ui"
 )
 
 // initGuardDBCheck holds the result of checking whether a database exists on a

@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/steveyegge/bd/internal/storage"
-	"github.com/steveyegge/bd/internal/types"
+	"github.com/signalnine/bd/internal/storage"
+	"github.com/signalnine/bd/internal/types"
 )
 
 // ClaimResult holds the result of a ClaimIssueInTx call.

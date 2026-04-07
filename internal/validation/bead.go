@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/steveyegge/bd/internal/types"
-	"github.com/steveyegge/bd/internal/utils"
+	"github.com/signalnine/bd/internal/types"
+	"github.com/signalnine/bd/internal/utils"
 )
 
 // ParsePriority extracts and validates a priority value from content.

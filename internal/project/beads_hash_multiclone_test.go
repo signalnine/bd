@@ -13,7 +13,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/steveyegge/bd/internal/testutil"
+	"github.com/signalnine/bd/internal/testutil"
 )
 
 var testBDBinary string

@@ -18,8 +18,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/steveyegge/bd/internal/config"
-	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
+	"github.com/signalnine/bd/internal/config"
+	"github.com/signalnine/bd/internal/storage/embeddeddolt"
 )
 
 // testDoltServerPort is the port of the shared test Dolt server (0 = not running).

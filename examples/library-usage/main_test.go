@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/steveyegge/bd"
+	"github.com/signalnine/bd"
 )
 
 // TestExampleCompiles ensures the example code compiles and basic API works

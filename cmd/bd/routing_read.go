@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/steveyegge/bd/internal/config"
-	"github.com/steveyegge/bd/internal/debug"
-	"github.com/steveyegge/bd/internal/routing"
-	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
+	"github.com/signalnine/bd/internal/config"
+	"github.com/signalnine/bd/internal/debug"
+	"github.com/signalnine/bd/internal/routing"
+	"github.com/signalnine/bd/internal/storage/embeddeddolt"
 )
 
 // getRoutingConfigValue resolves routing config from YAML/env first, then DB config.

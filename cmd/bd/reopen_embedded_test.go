@@ -10,7 +10,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/steveyegge/bd/internal/types"
+	"github.com/signalnine/bd/internal/types"
 )
 
 // bdReopen runs "bd reopen" with the given args and returns stdout.

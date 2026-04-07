@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/steveyegge/bd/internal/configfile"
+	"github.com/signalnine/bd/internal/configfile"
 )
 
 func TestDetectBootstrapAction_NoneWhenDatabaseExists(t *testing.T) {

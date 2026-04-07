@@ -4,8 +4,8 @@ import (
 	"context"
 	"path/filepath"
 
-	"github.com/steveyegge/bd/internal/configfile"
-	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
+	"github.com/signalnine/bd/internal/configfile"
+	"github.com/signalnine/bd/internal/storage/embeddeddolt"
 )
 
 // isEmbeddedMode returns true -- embedded Dolt is the only mode now.

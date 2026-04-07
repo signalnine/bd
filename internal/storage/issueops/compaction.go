@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/steveyegge/bd/internal/types"
+	"github.com/signalnine/bd/internal/types"
 )
 
 const (

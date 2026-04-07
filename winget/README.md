@@ -39,5 +39,5 @@ When releasing a new version:
 ### Getting the SHA256
 
 ```bash
-curl -sL https://github.com/steveyegge/beads/releases/download/v<VERSION>/checksums.txt | grep windows
+curl -sL https://github.com/signalnine/bd/releases/download/v<VERSION>/checksums.txt | grep windows
 ```

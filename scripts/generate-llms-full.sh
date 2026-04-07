@@ -65,7 +65,7 @@ cat >> "$OUTPUT_FILE" << 'EOF'
 
 # End of Documentation
 
-For updates and contributions, visit: https://github.com/steveyegge/beads
+For updates and contributions, visit: https://github.com/signalnine/bd
 EOF
 
 echo "Generated: $OUTPUT_FILE"

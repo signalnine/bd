@@ -15,13 +15,13 @@ Common issues and solutions.
 ```bash
 # Check if installed
 which bd
-go list -f {{.Target}} github.com/steveyegge/beads/cmd/bd
+go list -f {{.Target}} github.com/signalnine/bd/cmd/bd
 
 # Add Go bin to PATH
 export PATH="$PATH:$(go env GOPATH)/bin"
 
 # Or reinstall
-go install github.com/steveyegge/beads/cmd/bd@latest
+go install github.com/signalnine/bd/cmd/bd@latest
 ```
 
 ### `zsh: killed bd` on macOS
@@ -29,7 +29,7 @@ go install github.com/steveyegge/beads/cmd/bd@latest
 CGO/SQLite compatibility issue:
 
 ```bash
-CGO_ENABLED=1 go install github.com/steveyegge/beads/cmd/bd@latest
+CGO_ENABLED=1 go install github.com/signalnine/bd/cmd/bd@latest
 ```
 
 ### Permission denied
@@ -222,4 +222,4 @@ bd info --json
 uname -a
 ```
 
-Report at: https://github.com/steveyegge/beads/issues
+Report at: https://github.com/signalnine/bd/issues
