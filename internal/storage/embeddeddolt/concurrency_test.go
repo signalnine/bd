@@ -24,9 +24,9 @@ func TestConcurrencyMultiProcess(t *testing.T) {
 		t.Skip("set BD_TEST_EMBEDDED_DOLT=1 to run embedded dolt concurrency tests")
 	}
 
-	procs := envInt("BEADS_EMBEDDED_DOLT_PROCS", 10)
-	iters := envInt("BEADS_EMBEDDED_DOLT_ITERS", 5)
-	timeout := envDuration("BEADS_EMBEDDED_DOLT_TIMEOUT", 5*time.Minute)
+	procs := envInt("BD_EMBEDDED_DOLT_PROCS", 10)
+	iters := envInt("BD_EMBEDDED_DOLT_ITERS", 5)
+	timeout := envDuration("BD_EMBEDDED_DOLT_TIMEOUT", 5*time.Minute)
 
 	t.Logf("config: procs=%d iters=%d timeout=%s", procs, iters, timeout)
 
@@ -60,11 +60,11 @@ func TestConcurrencyMultiProcess(t *testing.T) {
 	t.Log("init complete")
 
 	// Build the test binary that subprocesses will exec.
-	// If BEADS_TEST_EMBEDDED_TEST_BINARY is set, skip the build.
-	testBin := os.Getenv("BEADS_TEST_EMBEDDED_TEST_BINARY")
+	// If BD_TEST_EMBEDDED_TEST_BINARY is set, skip the build.
+	testBin := os.Getenv("BD_TEST_EMBEDDED_TEST_BINARY")
 	if testBin != "" {
 		if _, err := os.Stat(testBin); err != nil {
-			t.Fatalf("BEADS_TEST_EMBEDDED_TEST_BINARY=%q not found: %v", testBin, err)
+			t.Fatalf("BD_TEST_EMBEDDED_TEST_BINARY=%q not found: %v", testBin, err)
 		}
 		t.Logf("using pre-built test binary: %s", testBin)
 	} else {
@@ -92,10 +92,10 @@ func TestConcurrencyMultiProcess(t *testing.T) {
 			t.Logf("proc %d: starting", procN)
 			cmd := exec.CommandContext(egCtx, testBin, "-test.run=^TestHelperProcess$", "-test.v")
 			cmd.Env = append(os.Environ(),
-				"BEADS_EMBEDDED_DOLT_HELPER=1",
-				"BEADS_EMBEDDED_DOLT_DIR="+sharedDir,
-				"BEADS_EMBEDDED_DOLT_ITERS="+strconv.Itoa(iters),
-				"BEADS_EMBEDDED_DOLT_PROC_ID="+strconv.Itoa(procN),
+				"BD_EMBEDDED_DOLT_HELPER=1",
+				"BD_EMBEDDED_DOLT_DIR="+sharedDir,
+				"BD_EMBEDDED_DOLT_ITERS="+strconv.Itoa(iters),
+				"BD_EMBEDDED_DOLT_PROC_ID="+strconv.Itoa(procN),
 				"CGO_ENABLED=1",
 			)
 			out, err := cmd.CombinedOutput()
@@ -119,21 +119,21 @@ func TestConcurrencyMultiProcess(t *testing.T) {
 
 // TestHelperProcess is the subprocess entry point used by the multi-process
 // concurrency test. It is not a real test — it exits early unless the
-// BEADS_EMBEDDED_DOLT_HELPER env var is set.
+// BD_EMBEDDED_DOLT_HELPER env var is set.
 func TestHelperProcess(t *testing.T) {
-	if os.Getenv("BEADS_EMBEDDED_DOLT_HELPER") != "1" {
+	if os.Getenv("BD_EMBEDDED_DOLT_HELPER") != "1" {
 		return
 	}
 
-	dir := os.Getenv("BEADS_EMBEDDED_DOLT_DIR")
+	dir := os.Getenv("BD_EMBEDDED_DOLT_DIR")
 	if dir == "" {
-		t.Fatal("BEADS_EMBEDDED_DOLT_DIR not set")
+		t.Fatal("BD_EMBEDDED_DOLT_DIR not set")
 	}
-	iters, _ := strconv.Atoi(os.Getenv("BEADS_EMBEDDED_DOLT_ITERS"))
+	iters, _ := strconv.Atoi(os.Getenv("BD_EMBEDDED_DOLT_ITERS"))
 	if iters < 1 {
 		iters = 5
 	}
-	procID := os.Getenv("BEADS_EMBEDDED_DOLT_PROC_ID")
+	procID := os.Getenv("BD_EMBEDDED_DOLT_PROC_ID")
 
 	ctx := t.Context()
 	database := "testdb"

@@ -183,6 +183,15 @@ func removeHookSection(content string) (string, bool) {
 		return content[:lineStart] + content[endOfSection:], true
 	}
 	// Broken markers -- remove what we can
+	if beginIdx != -1 && endIdx != -1 {
+		// Reversed: END before BEGIN -- remove both
+		cleaned := removeOrphanedBeginBlock(content, beginIdx)
+		// After removing BEGIN block, find END marker in the cleaned content
+		if newEndIdx := strings.Index(cleaned, hookSectionEndPrefix); newEndIdx != -1 {
+			cleaned = removeMarkerLine(cleaned, newEndIdx, hookSectionEndPrefix)
+		}
+		return cleaned, true
+	}
 	if beginIdx != -1 {
 		cleaned := removeOrphanedBeginBlock(content, beginIdx)
 		return cleaned, true

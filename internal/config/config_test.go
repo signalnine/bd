@@ -7,13 +7,13 @@ import (
 	"testing"
 )
 
-// envSnapshot saves and clears BD_/BEADS_ environment variables.
+// envSnapshot saves and clears BD_ environment variables.
 // Returns a restore function that should be deferred.
 func envSnapshot(t *testing.T) func() {
 	t.Helper()
 	saved := make(map[string]string)
 	for _, env := range os.Environ() {
-		if strings.HasPrefix(env, "BD_") || strings.HasPrefix(env, "BEADS_") {
+		if strings.HasPrefix(env, "BD_") {
 			parts := strings.SplitN(env, "=", 2)
 			key := parts[0]
 			saved[key] = os.Getenv(key)
@@ -23,7 +23,7 @@ func envSnapshot(t *testing.T) func() {
 	return func() {
 		// Clear any test-set variables first
 		for _, env := range os.Environ() {
-			if strings.HasPrefix(env, "BD_") || strings.HasPrefix(env, "BEADS_") {
+			if strings.HasPrefix(env, "BD_") {
 				parts := strings.SplitN(env, "=", 2)
 				os.Unsetenv(parts[0])
 			}
@@ -782,7 +782,7 @@ func TestGetValueSource(t *testing.T) {
 			expected: SourceEnvVar,
 		},
 		{
-			name: "BEADS_ prefixed env var returns SourceEnvVar",
+			name: "BD_ prefixed env var returns SourceEnvVar",
 			key:  "identity",
 			setup: func() {
 				os.Setenv("BD_IDENTITY", "test-identity")

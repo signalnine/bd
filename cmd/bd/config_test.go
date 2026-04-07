@@ -168,7 +168,7 @@ func TestYamlOnlyConfigWithoutDatabase(t *testing.T) {
 
 	bdDir := filepath.Join(tmpDir, ".bd")
 	if err := os.MkdirAll(bdDir, 0755); err != nil {
-		t.Fatalf("Failed to create .beads dir: %v", err)
+		t.Fatalf("Failed to create .bd dir: %v", err)
 	}
 
 	// Create config.yaml with a prefix but NO database
@@ -286,22 +286,18 @@ func TestIsValidRemoteURL(t *testing.T) {
 		url      string
 		expected bool
 	}{
-		// Valid URLs
-		{"dolthub scheme", "dolthub://org/repo", true},
-		{"gs scheme", "gs://bucket/path", true},
-		{"s3 scheme", "s3://bucket/path", true},
-		{"file scheme", "file:///path/to/repo", true},
+		// Valid URLs (http/https/git+ only after nuclear simplification)
 		{"https scheme", "https://github.com/user/repo", true},
 		{"http scheme", "http://github.com/user/repo", true},
-		{"ssh scheme", "ssh://git@github.com/user/repo", true},
-		{"git ssh format", "git@github.com:user/repo.git", true},
-		{"git ssh with underscore", "git@gitlab.example_host.com:user/repo.git", true},
+		{"git+ scheme", "git+https://example.com/repo", true},
 
 		// Invalid URLs
 		{"empty string", "", false},
 		{"no scheme", "github.com/user/repo", false},
 		{"invalid scheme", "ftp://server/path", false},
-		{"malformed git ssh", "git@:repo", false},
+		{"dolthub scheme no longer valid", "dolthub://org/repo", false},
+		{"ssh scheme no longer valid", "ssh://git@github.com/user/repo", false},
+		{"git ssh no longer valid", "git@github.com:user/repo.git", false},
 		{"just path", "/path/to/repo", false},
 	}
 
@@ -321,7 +317,7 @@ func TestValidateSyncConfig(t *testing.T) {
 	tmpDir := t.TempDir()
 	bdDir := filepath.Join(tmpDir, ".bd")
 	if err := os.MkdirAll(bdDir, 0755); err != nil {
-		t.Fatalf("Failed to create .beads dir: %v", err)
+		t.Fatalf("Failed to create .bd dir: %v", err)
 	}
 
 	t.Run("valid empty config", func(t *testing.T) {
@@ -434,7 +430,7 @@ func TestFindBeadsRepoRoot(t *testing.T) {
 	subDir := filepath.Join(tmpDir, "sub", "dir")
 
 	if err := os.MkdirAll(bdDir, 0755); err != nil {
-		t.Fatalf("Failed to create .beads dir: %v", err)
+		t.Fatalf("Failed to create .bd dir: %v", err)
 	}
 	if err := os.MkdirAll(subDir, 0755); err != nil {
 		t.Fatalf("Failed to create sub dir: %v", err)
@@ -519,11 +515,16 @@ func TestCustomStatusConfig(t *testing.T) {
 		if len(detailed) != 2 {
 			t.Fatalf("expected 2 statuses, got %d", len(detailed))
 		}
-		if detailed[0].Category != types.CategoryActive {
-			t.Errorf("review should be active, got %q", detailed[0].Category)
+		// Results are sorted alphabetically by name (ORDER BY name)
+		catByName := make(map[string]types.StatusCategory)
+		for _, s := range detailed {
+			catByName[s.Name] = s.Category
 		}
-		if detailed[1].Category != types.CategoryUnspecified {
-			t.Errorf("legacy should be unspecified, got %q", detailed[1].Category)
+		if catByName["review"] != types.CategoryActive {
+			t.Errorf("review should be active, got %q", catByName["review"])
+		}
+		if catByName["legacy"] != types.CategoryUnspecified {
+			t.Errorf("legacy should be unspecified, got %q", catByName["legacy"])
 		}
 	})
 
@@ -539,7 +540,8 @@ func TestCustomStatusConfig(t *testing.T) {
 		if len(names) != 3 {
 			t.Fatalf("expected 3 names, got %d", len(names))
 		}
-		want := []string{"review", "testing", "qa"}
+		// Results are sorted alphabetically (ORDER BY name in custom_statuses table)
+		want := []string{"qa", "review", "testing"}
 		for i, name := range names {
 			if name != want[i] {
 				t.Errorf("name[%d] = %q, want %q", i, name, want[i])

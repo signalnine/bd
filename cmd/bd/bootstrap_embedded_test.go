@@ -44,7 +44,7 @@ func TestEmbeddedBootstrap(t *testing.T) {
 		}
 	})
 
-	// ===== Dry Run (fresh .beads with no db) =====
+	// ===== Dry Run (fresh .bd with no db) =====
 
 	t.Run("bootstrap_dry_run_fresh", func(t *testing.T) {
 		dir := t.TempDir()
@@ -57,7 +57,7 @@ func TestEmbeddedBootstrap(t *testing.T) {
 		cmd = exec.Command("git", "config", "user.email", "test@test.com")
 		cmd.Dir = dir
 		cmd.CombinedOutput()
-		// Create .beads with metadata.json so FindBdDir detects it
+		// Create .bd with metadata.json so FindBdDir detects it
 		bdDir := filepath.Join(dir, ".bd")
 		os.MkdirAll(bdDir, 0o750)
 		os.WriteFile(filepath.Join(bdDir, "metadata.json"), []byte("{}"), 0o644)
@@ -98,20 +98,11 @@ func TestEmbeddedBootstrap(t *testing.T) {
 		}
 	})
 
-	// ===== JSONL Import =====
+	// ===== JSONL Import (removed) =====
 
-	t.Run("bootstrap_jsonl_import", func(t *testing.T) {
-		// First create a db and export
-		srcDir, _, _ := bdInit(t, bd, "--prefix", "bs")
-		bdCreate(t, bd, srcDir, "Export for bootstrap", "--type", "task")
-		cmd := exec.Command(bd, "export", "-o", filepath.Join(srcDir, ".bd", "issues.jsonl"))
-		cmd.Dir = srcDir
-		cmd.Env = bdEnv(srcDir)
-		if out, err := cmd.CombinedOutput(); err != nil {
-			t.Fatalf("export failed: %v\n%s", err, out)
-		}
-
-		// Create new dir with .beads + issues.jsonl but no database
+	t.Run("bootstrap_jsonl_import_removed", func(t *testing.T) {
+		// JSONL import was removed in nuclear simplification.
+		// Bootstrap with issues.jsonl should report that JSONL import is no longer supported.
 		dir := t.TempDir()
 		gitCmd := exec.Command("git", "init", "-q")
 		gitCmd.Dir = dir
@@ -122,25 +113,21 @@ func TestEmbeddedBootstrap(t *testing.T) {
 		gitCmd = exec.Command("git", "config", "user.email", "test@test.com")
 		gitCmd.Dir = dir
 		gitCmd.CombinedOutput()
-		destBeads := filepath.Join(dir, ".bd")
-		os.MkdirAll(destBeads, 0o750)
-		os.WriteFile(filepath.Join(destBeads, "metadata.json"), []byte("{}"), 0o644)
+		destBd := filepath.Join(dir, ".bd")
+		os.MkdirAll(destBd, 0o750)
+		os.WriteFile(filepath.Join(destBd, "metadata.json"), []byte("{}"), 0o644)
+		os.WriteFile(filepath.Join(dir, ".bd", "issues.jsonl"), []byte("{}\n"), 0o644)
 
-		// Copy the JSONL file
-		data, _ := os.ReadFile(filepath.Join(srcDir, ".bd", "issues.jsonl"))
-		os.WriteFile(filepath.Join(dir, ".bd", "issues.jsonl"), data, 0o644)
-
-		// Bootstrap should detect and import JSONL
 		bcmd := exec.Command(bd, "bootstrap")
 		bcmd.Dir = dir
 		bcmd.Env = bdEnv(dir)
 		bcmd.Stdin = strings.NewReader("y\n")
 		out, err := bcmd.CombinedOutput()
-		if err != nil {
-			t.Fatalf("bootstrap jsonl-import failed: %v\n%s", err, out)
+		if err == nil {
+			t.Fatal("bootstrap jsonl-import should fail (JSONL import removed)")
 		}
-		if !strings.Contains(string(out), "Imported") {
-			t.Errorf("expected 'Imported' in output: %s", out)
+		if !strings.Contains(string(out), "no longer supported") {
+			t.Errorf("expected 'no longer supported' error, got: %s", out)
 		}
 	})
 }

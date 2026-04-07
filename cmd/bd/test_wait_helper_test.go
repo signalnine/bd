@@ -26,7 +26,7 @@ func waitFor(t *testing.T, timeout, poll time.Duration, pred func() bool) {
 }
 
 // setupGitRepo creates a temporary git repository and returns its path and cleanup function.
-// The repo is initialized with git config, a .beads directory, and an initial commit.
+// The repo is initialized with git config, a .bd directory, and an initial commit.
 // The current directory is changed to the new repo.
 func setupGitRepo(t *testing.T) (repoPath string, cleanup func()) {
 	t.Helper()
@@ -58,11 +58,11 @@ func setupGitRepo(t *testing.T) (repoPath string, cleanup func()) {
 	git.ResetCaches()
 	project.ResetCaches()
 
-	// Create .beads directory with minimal issues.jsonl (required for RepoContext)
+	// Create .bd directory with minimal issues.jsonl (required for RepoContext)
 	bdDir := filepath.Join(tmpDir, ".bd")
 	if err := os.MkdirAll(bdDir, 0755); err != nil {
 		_ = os.Chdir(originalWd)
-		t.Fatalf("failed to create .beads directory: %v", err)
+		t.Fatalf("failed to create .bd directory: %v", err)
 	}
 	if err := os.WriteFile(filepath.Join(bdDir, "issues.jsonl"), []byte{}, 0600); err != nil {
 		_ = os.Chdir(originalWd)
@@ -128,11 +128,11 @@ func setupGitRepoWithBranch(t *testing.T, branch string) (repoPath string, clean
 	git.ResetCaches()
 	project.ResetCaches()
 
-	// Create .beads directory with minimal issues.jsonl (required for RepoContext)
+	// Create .bd directory with minimal issues.jsonl (required for RepoContext)
 	bdDir := filepath.Join(tmpDir, ".bd")
 	if err := os.MkdirAll(bdDir, 0755); err != nil {
 		_ = os.Chdir(originalWd)
-		t.Fatalf("failed to create .beads directory: %v", err)
+		t.Fatalf("failed to create .bd directory: %v", err)
 	}
 	if err := os.WriteFile(filepath.Join(bdDir, "issues.jsonl"), []byte{}, 0600); err != nil {
 		_ = os.Chdir(originalWd)

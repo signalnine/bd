@@ -4,7 +4,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -17,7 +16,6 @@ import (
 
 	"github.com/steveyegge/bd/internal/configfile"
 	"github.com/steveyegge/bd/internal/storage/embeddeddolt"
-	"github.com/steveyegge/bd/internal/types"
 )
 
 var (
@@ -80,7 +78,7 @@ func initGitRepoAt(t *testing.T, dir string) {
 func bdEnv(dir string) []string {
 	var env []string
 	for _, e := range os.Environ() {
-		if strings.HasPrefix(e, "BEADS_") {
+		if strings.HasPrefix(e, "BD_") && !strings.HasPrefix(e, "BD_TEST") {
 			continue
 		}
 		env = append(env, e)
@@ -417,27 +415,15 @@ func TestEmbeddedInit(t *testing.T) {
 			t.Fatalf("failed to read .git/info/exclude: %v", err)
 		}
 		if !strings.Contains(string(content), ".bd") {
-			t.Error("--setup-exclude should add .beads to .git/info/exclude")
+			t.Error("--setup-exclude should add .bd to .git/info/exclude")
 		}
 	})
 
-	t.Run("from_jsonl", func(t *testing.T) {
+	t.Run("from_jsonl_removed", func(t *testing.T) {
 		dir := t.TempDir()
 		initGitRepoAt(t, dir)
 		bdDir := filepath.Join(dir, ".bd")
 		if err := os.MkdirAll(bdDir, 0750); err != nil {
-			t.Fatal(err)
-		}
-		issues := []types.Issue{
-			{ID: "jl-abc123", Title: "One", Status: types.StatusOpen, Priority: 2, IssueType: types.TypeTask, CreatedAt: time.Now(), UpdatedAt: time.Now()},
-			{ID: "jl-def456", Title: "Two", Status: types.StatusOpen, Priority: 1, IssueType: types.TypeBug, CreatedAt: time.Now(), UpdatedAt: time.Now()},
-		}
-		var lines []string
-		for _, issue := range issues {
-			b, _ := json.Marshal(issue)
-			lines = append(lines, string(b))
-		}
-		if err := os.WriteFile(filepath.Join(bdDir, "issues.jsonl"), []byte(strings.Join(lines, "\n")+"\n"), 0644); err != nil {
 			t.Fatal(err)
 		}
 
@@ -445,8 +431,11 @@ func TestEmbeddedInit(t *testing.T) {
 		cmd.Dir = dir
 		cmd.Env = bdEnv(dir)
 		out, err := cmd.CombinedOutput()
-		if err != nil {
-			t.Fatalf("--from-jsonl should succeed now that CreateIssuesWithFullOptions is implemented: %v\n%s", err, out)
+		if err == nil {
+			t.Fatal("--from-jsonl should fail (removed in nuclear simplification)")
+		}
+		if !strings.Contains(string(out), "no longer supported") {
+			t.Errorf("expected 'no longer supported' error, got: %s", out)
 		}
 	})
 
@@ -534,21 +523,16 @@ func TestEmbeddedInit(t *testing.T) {
 		}
 	})
 
-	t.Run("agents_template", func(t *testing.T) {
+	t.Run("agents_template_flag_accepted", func(t *testing.T) {
+		// --agents-template flag is still accepted but ignored (feature removed)
 		dir := t.TempDir()
 		initGitRepoAt(t, dir)
 		templatePath := filepath.Join(dir, "custom-agents.md")
 		if err := os.WriteFile(templatePath, []byte("# Custom Agents\nThis is custom.\n"), 0644); err != nil {
 			t.Fatal(err)
 		}
+		// Should not error even though the flag is a no-op
 		runBDInit(t, bd, dir, "--prefix", "at", "--agents-template", templatePath, "--skip-hooks")
-		content, err := os.ReadFile(filepath.Join(dir, "AGENTS.md"))
-		if err != nil {
-			t.Fatalf("failed to read AGENTS.md: %v", err)
-		}
-		if !strings.Contains(string(content), "Custom Agents") {
-			t.Error("AGENTS.md should contain custom template content")
-		}
 	})
 
 	t.Run("no_git_repo", func(t *testing.T) {

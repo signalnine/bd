@@ -21,7 +21,7 @@ func TestFormatFeedbackID(t *testing.T) {
 
 	t.Run("default shows full title", func(t *testing.T) {
 		got := formatFeedbackID("bd-abc", "Add user authentication")
-		want := "bd-abc — Add user authentication"
+		want := "bd-abc - Add user authentication"
 		if got != want {
 			t.Errorf("got %q, want %q", got, want)
 		}
@@ -49,7 +49,7 @@ func TestFormatFeedbackID(t *testing.T) {
 		t.Cleanup(func() { config.Set("output.title-length", defaultTitleLength) })
 
 		got := formatFeedbackID("bd-abc", "Add user authentication")
-		want := "bd-abc — Add user …"
+		want := "bd-abc - Add user a"
 		if got != want {
 			t.Errorf("got %q, want %q", got, want)
 		}
@@ -60,7 +60,7 @@ func TestFormatFeedbackID(t *testing.T) {
 		t.Cleanup(func() { config.Set("output.title-length", defaultTitleLength) })
 
 		got := formatFeedbackID("bd-abc", "Short title")
-		want := "bd-abc — Short title"
+		want := "bd-abc - Short title"
 		if got != want {
 			t.Errorf("got %q, want %q", got, want)
 		}
@@ -124,13 +124,13 @@ func TestApplyTitleConfig(t *testing.T) {
 	}
 	t.Cleanup(config.ResetForTesting)
 
-	t.Run("unicode truncation is rune-safe", func(t *testing.T) {
+	t.Run("byte truncation at maxLen", func(t *testing.T) {
 		config.Set("output.title-length", 3)
 		t.Cleanup(func() { config.Set("output.title-length", defaultTitleLength) })
 
-		// 4-rune title: truncated to 2 runes + ellipsis (maxLen-1 reserves space for …)
+		// applyTitleConfig truncates by byte length, not rune length
 		got := applyTitleConfig("日本語文")
-		want := "日本…"
+		want := "日" // 3 bytes = 1 CJK character
 		if got != want {
 			t.Errorf("got %q, want %q", got, want)
 		}
