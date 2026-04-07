@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
 
@@ -84,128 +83,6 @@ func TestFindBeadsDir(t *testing.T) {
 	dir := bd.FindBdDir()
 	// Just verify it doesn't panic
 	_ = dir
-}
-
-func TestOpenFromConfig_Embedded(t *testing.T) {
-	// This test requires a running Dolt server (embedded mode is not yet implemented;
-	// New() always connects via MySQL protocol to dolt sql-server).
-	skipIfNoDoltServer(t)
-
-	// Create a .beads dir with metadata.json configured for embedded mode
-	tmpDir := t.TempDir()
-	bdDir := filepath.Join(tmpDir, ".bd")
-	if err := os.MkdirAll(bdDir, 0755); err != nil {
-		t.Fatalf("failed to create .beads dir: %v", err)
-	}
-
-	metadata := `{"backend":"dolt","database":"dolt","dolt_database":"testdb","dolt_mode":"embedded"}`
-	if err := os.WriteFile(filepath.Join(bdDir, "metadata.json"), []byte(metadata), 0644); err != nil {
-		t.Fatalf("failed to write metadata.json: %v", err)
-	}
-
-	ctx := context.Background()
-	store, err := bd.OpenFromConfig(ctx, bdDir)
-	if err != nil {
-		t.Fatalf("OpenFromConfig (embedded) failed: %v", err)
-	}
-	defer store.Close()
-
-	if store == nil {
-		t.Error("expected non-nil storage")
-	}
-}
-
-func TestOpenFromConfig_DefaultsToEmbedded(t *testing.T) {
-	// This test requires a running Dolt server (embedded mode is not yet implemented;
-	// New() always connects via MySQL protocol to dolt sql-server).
-	skipIfNoDoltServer(t)
-
-	// metadata.json without dolt_mode should default to embedded
-	tmpDir := t.TempDir()
-	bdDir := filepath.Join(tmpDir, ".bd")
-	if err := os.MkdirAll(bdDir, 0755); err != nil {
-		t.Fatalf("failed to create .beads dir: %v", err)
-	}
-
-	metadata := `{"backend":"dolt","database":"dolt"}`
-	if err := os.WriteFile(filepath.Join(bdDir, "metadata.json"), []byte(metadata), 0644); err != nil {
-		t.Fatalf("failed to write metadata.json: %v", err)
-	}
-
-	ctx := context.Background()
-	store, err := bd.OpenFromConfig(ctx, bdDir)
-	if err != nil {
-		t.Fatalf("OpenFromConfig (default) failed: %v", err)
-	}
-	defer store.Close()
-
-	if store == nil {
-		t.Error("expected non-nil storage")
-	}
-}
-
-func TestOpenFromConfig_ServerModeFailsWithoutServer(t *testing.T) {
-	// Server mode should fail-fast when no server is listening.
-	// Temporarily unset BD_DOLT_PORT/BD_TEST_MODE so the config port
-	// isn't overridden by applyConfigDefaults to the test server.
-	if prev := os.Getenv("BD_DOLT_PORT"); prev != "" {
-		os.Unsetenv("BD_DOLT_PORT")
-		t.Cleanup(func() { os.Setenv("BD_DOLT_PORT", prev) })
-	}
-	if prev := os.Getenv("BD_TEST_MODE"); prev != "" {
-		os.Unsetenv("BD_TEST_MODE")
-		t.Cleanup(func() { os.Setenv("BD_TEST_MODE", prev) })
-	}
-
-	tmpDir := t.TempDir()
-	bdDir := filepath.Join(tmpDir, ".bd")
-	if err := os.MkdirAll(bdDir, 0755); err != nil {
-		t.Fatalf("failed to create .beads dir: %v", err)
-	}
-
-	// Dynamically find an unused port by binding to :0 then closing
-	ln, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		t.Fatalf("failed to find free port: %v", err)
-	}
-	freePort := ln.Addr().(*net.TCPAddr).Port
-	ln.Close()
-
-	metadata := fmt.Sprintf(`{"backend":"dolt","database":"dolt","dolt_mode":"server","dolt_server_host":"127.0.0.1","dolt_server_port":%d}`, freePort)
-	if err := os.WriteFile(filepath.Join(bdDir, "metadata.json"), []byte(metadata), 0644); err != nil {
-		t.Fatalf("failed to write metadata.json: %v", err)
-	}
-
-	ctx := context.Background()
-	_, openErr := bd.OpenFromConfig(ctx, bdDir)
-	if openErr == nil {
-		t.Fatal("OpenFromConfig (server mode) should fail when no server is running")
-	}
-	// Should contain "unreachable" from the fail-fast TCP check
-	if !strings.Contains(openErr.Error(), "unreachable") {
-		t.Errorf("expected 'unreachable' in error, got: %v", openErr)
-	}
-}
-
-func TestOpenFromConfig_NoMetadata(t *testing.T) {
-	skipIfNoDoltServer(t)
-	// Missing metadata.json should use defaults (server mode)
-	tmpDir := t.TempDir()
-	bdDir := filepath.Join(tmpDir, ".bd")
-	if err := os.MkdirAll(bdDir, 0755); err != nil {
-		t.Fatalf("failed to create .beads dir: %v", err)
-	}
-
-	ctx := context.Background()
-	store, err := bd.OpenFromConfig(ctx, bdDir)
-	if err != nil {
-		t.Fatalf("OpenFromConfig (no metadata) failed: %v", err)
-	}
-	defer store.Close()
-
-	if store == nil {
-		t.Error("expected non-nil storage")
-	}
 }
 
 func TestFindAllDatabases(t *testing.T) {
@@ -287,7 +164,7 @@ func TestPublicAPITypeAssertions(t *testing.T) {
 			t.Error("expected non-empty branch name")
 		}
 
-		commit, err := vcr.GetCurrentCommit(ctx)
+		commit, err := store.GetCurrentCommit(ctx)
 		if err != nil {
 			t.Fatalf("GetCurrentCommit failed: %v", err)
 		}
@@ -295,7 +172,7 @@ func TestPublicAPITypeAssertions(t *testing.T) {
 			t.Error("expected non-empty commit hash")
 		}
 
-		exists, err := vcr.CommitExists(ctx, commit)
+		exists, err := store.CommitExists(ctx, commit)
 		if err != nil {
 			t.Fatalf("CommitExists failed: %v", err)
 		}
@@ -303,13 +180,13 @@ func TestPublicAPITypeAssertions(t *testing.T) {
 			t.Errorf("CommitExists(%s) = false, want true", commit)
 		}
 
-		status, err := vcr.Status(ctx)
+		status, err := store.Status(ctx)
 		if err != nil {
 			t.Fatalf("Status failed: %v", err)
 		}
 		_ = status
 
-		logs, err := vcr.Log(ctx, 5)
+		logs, err := store.Log(ctx, 5)
 		if err != nil {
 			t.Fatalf("Log failed: %v", err)
 		}
