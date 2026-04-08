@@ -1,7 +1,7 @@
-# Convert Plan to Beads Tasks
+# Convert Plan to bd Tasks
 
 ## description:
-Convert a Claude Code plan file into beads epic + tasks for cross-session tracking.
+Convert a Claude Code plan file into bd epic + tasks for cross-session tracking.
 
 ## Arguments
 $ARGUMENTS (optional - path to plan file, defaults to most recent in ~/.claude/plans/)
@@ -47,9 +47,9 @@ The agent should:
    Created from: [filename]
 
    Epic: [title] ([epic-id])
-     ├── [Phase 1] ([id]) - ready
-     ├── [Phase 2] ([id]) - blocked by [prev]
-     └── [Phase 3] ([id]) - blocked by [prev]
+     |- [Phase 1] ([id]) - ready
+     |- [Phase 2] ([id]) - blocked by [prev]
+     \- [Phase 3] ([id]) - blocked by [prev]
 
    Total: [N] tasks
    Run `bd ready` to start.

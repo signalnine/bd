@@ -1,11 +1,11 @@
-# Claude Code Integration for Beads
+# Claude Code Integration for bd
 
-Slash command for converting [Claude Code](https://docs.anthropic.com/en/docs/claude-code) plans to beads tasks.
+Slash command for converting [Claude Code](https://docs.anthropic.com/en/docs/claude-code) plans to bd tasks.
 
 ## Prerequisites
 
 ```bash
-# Install beads
+# Install bd
 curl -fsSL https://raw.githubusercontent.com/signalnine/bd/main/scripts/install.sh | bash
 
 # Install hooks (auto-injects workflow context on session start)
@@ -15,7 +15,7 @@ bd setup claude
 ## Installation
 
 ```bash
-cp commands/plan-to-beads.md ~/.claude/commands/
+cp commands/plan-to-bd.md ~/.claude/commands/
 ```
 
 Optionally add to `~/.claude/settings.json` under `permissions.allow`:
@@ -24,13 +24,13 @@ Optionally add to `~/.claude/settings.json` under `permissions.allow`:
 "Bash(bd:*)"
 ```
 
-## /plan-to-beads
+## /plan-to-bd
 
-Converts a Claude Code plan file into a beads epic with tasks.
+Converts a Claude Code plan file into a bd epic with tasks.
 
 ```
-/plan-to-beads                    # Convert most recent plan
-/plan-to-beads path/to/plan.md    # Convert specific plan
+/plan-to-bd                    # Convert most recent plan
+/plan-to-bd path/to/plan.md    # Convert specific plan
 ```
 
 **What it does:**
@@ -45,9 +45,9 @@ Converts a Claude Code plan file into a beads epic with tasks.
 Created from: peaceful-munching-spark.md
 
 Epic: Standardize ID Generation (bd-abc)
-  ├── Add dependency (bd-def) - ready
-  ├── Create ID utility (bd-ghi) - blocked by bd-def
-  └── Update schema (bd-jkl) - blocked by bd-ghi
+  |- Add dependency (bd-def) - ready
+  |- Create ID utility (bd-ghi) - blocked by bd-def
+  \- Update schema (bd-jkl) - blocked by bd-ghi
 
 Total: 4 tasks
 Run `bd ready` to start.
@@ -61,4 +61,4 @@ Run `bd ready` to start.
 
 ## License
 
-Same as beads (see repository root).
+Same as bd (see repository root).
