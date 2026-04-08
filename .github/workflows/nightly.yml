@@ -40,9 +40,9 @@ jobs:
 
       - name: Full Test Suite (including integration tests)
         env:
-          # Skip Docker-based Dolt testcontainer tests — they hang in
-          # GitHub Actions (known issue, see scripts/repro-dolt-hang/).
-          # Non-Docker integration tests still run via the installed dolt binary.
+          # Skip Docker-based Dolt testcontainer tests -- they hang in
+          # GitHub Actions. Non-Docker integration tests still run via
+          # the installed dolt binary.
           BEADS_TEST_SKIP: dolt
         run: go test -v -race -tags=integration -coverprofile=coverage.out -timeout=30m ./...
 

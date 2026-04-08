@@ -62,12 +62,6 @@ func initCommandContext() {
 	cmdCtx = &CommandContext{}
 }
 
-// GetCommandContext returns the current CommandContext.
-// Returns nil if called before initialization (e.g., during init() or help).
-func GetCommandContext() *CommandContext {
-	return cmdCtx
-}
-
 // resetCommandContext clears the CommandContext for testing.
 // This ensures tests that manipulate globals directly work correctly.
 // Only call this in tests, never in production code.

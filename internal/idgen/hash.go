@@ -11,9 +11,9 @@ import (
 // base36Alphabet is the character set for base36 encoding (0-9, a-z).
 const base36Alphabet = "0123456789abcdefghijklmnopqrstuvwxyz"
 
-// EncodeBase36 converts a byte slice to a base36 string of specified length.
+// encodeBase36 converts a byte slice to a base36 string of specified length.
 // Matches the algorithm used for bd hash IDs.
-func EncodeBase36(data []byte, length int) string {
+func encodeBase36(data []byte, length int) string {
 	// Convert bytes to big integer
 	num := new(big.Int).SetBytes(data)
 
@@ -79,7 +79,7 @@ func GenerateHashID(prefix, title, description, creator string, timestamp time.T
 		numBytes = 3 // default to 3 chars
 	}
 
-	shortHash := EncodeBase36(hash[:numBytes], length)
+	shortHash := encodeBase36(hash[:numBytes], length)
 
 	return fmt.Sprintf("%s-%s", prefix, shortHash)
 }

@@ -48,7 +48,7 @@ type Entry struct {
 	Extra map[string]any `json:"extra,omitempty"`
 }
 
-func Path() (string, error) {
+func path() (string, error) {
 	bdDir := project.FindBdDir()
 	if bdDir == "" {
 		return "", fmt.Errorf("no .bd directory found")
@@ -57,8 +57,8 @@ func Path() (string, error) {
 }
 
 // EnsureFile creates .bd/interactions.jsonl if it does not exist.
-func EnsureFile() (string, error) {
-	p, err := Path()
+func ensureFile() (string, error) {
+	p, err := path()
 	if err != nil {
 		return "", err
 	}
@@ -89,7 +89,7 @@ func Append(e *Entry) (string, error) {
 		return "", fmt.Errorf("kind is required")
 	}
 
-	p, err := EnsureFile()
+	p, err := ensureFile()
 	if err != nil {
 		return "", err
 	}

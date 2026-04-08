@@ -1076,19 +1076,6 @@ func IsExternalRef(ref string) bool {
 	return strings.HasPrefix(ref, "external:")
 }
 
-// ParseExternalRef parses an external reference into project and capability.
-// Returns empty strings if the format is invalid.
-func ParseExternalRef(ref string) (project, capability string) {
-	if !IsExternalRef(ref) {
-		return "", ""
-	}
-	parts := strings.SplitN(ref, ":", 3)
-	if len(parts) != 3 {
-		return "", ""
-	}
-	return parts[1], parts[2]
-}
-
 func init() {
 	// dep command shorthand flag
 	depCmd.Flags().StringP("blocks", "b", "", "Issue ID that this issue blocks (shorthand for: bd dep add <blocked> <blocker>)")
