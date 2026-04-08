@@ -5,11 +5,13 @@ package main
 
 import (
 	"context"
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"testing"
 
+	"github.com/signalnine/bd/internal/storage"
 	"github.com/signalnine/bd/internal/types"
 )
 
@@ -171,7 +173,10 @@ func TestBulkDeleteNoResurrection(t *testing.T) {
 	for _, id := range toDelete {
 		issue, err := s.GetIssue(ctx, id)
 		if err != nil {
-			t.Fatalf("GetIssue failed for %s: %v", id, err)
+			if !errors.Is(err, storage.ErrNotFound) {
+				t.Fatalf("GetIssue for %s returned unexpected error: %v", id, err)
+			}
+			continue // Expected: deleted issue not found
 		}
 		if issue != nil {
 			t.Errorf("Deleted issue %s was resurrected!", id)
@@ -233,9 +238,10 @@ func TestDeleteIssueWrapper(t *testing.T) {
 		// Verify issue is gone
 		deleted, err := s.GetIssue(ctx, issue.ID)
 		if err != nil {
-			t.Fatalf("GetIssue failed: %v", err)
-		}
-		if deleted != nil {
+			if !errors.Is(err, storage.ErrNotFound) {
+				t.Fatalf("GetIssue returned unexpected error: %v", err)
+			}
+		} else if deleted != nil {
 			t.Error("Issue should be completely deleted")
 		}
 	})

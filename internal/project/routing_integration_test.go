@@ -95,7 +95,7 @@ func TestRoutingIntegration(t *testing.T) {
 			}
 
 			// For contributor, verify it routes to planning repo
-			if role == routing.Contributor && !strings.Contains(targetRepo, "beads-planning") {
+			if role == routing.Contributor && !strings.Contains(targetRepo, "bd-planning") {
 				t.Errorf("contributor should route to planning repo, got %q", targetRepo)
 			}
 		})

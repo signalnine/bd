@@ -112,9 +112,12 @@ func TestFindAllDatabases_MultipleSymlinksToSameDB(t *testing.T) {
 	// tmpDir/
 	//   real/
 	//     .bd/test.db
+	//     workdir/        <- cwd is inside real, which has .bd
 	//   link1 -> real/
 	//   link2 -> real/
-	//   workdir/
+	//
+	// FindAllDatabases walks UP from cwd, so workdir must be
+	// inside a directory that contains .bd.
 
 	// Create real directory with database
 	realDir := filepath.Join(tmpDir, "real")
@@ -139,8 +142,8 @@ func TestFindAllDatabases_MultipleSymlinksToSameDB(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Create working directory
-	workdir := filepath.Join(tmpDir, "workdir")
+	// Create working directory inside real so FindAllDatabases can walk up to .bd
+	workdir := filepath.Join(realDir, "workdir")
 	if err := os.MkdirAll(workdir, 0750); err != nil {
 		t.Fatal(err)
 	}
