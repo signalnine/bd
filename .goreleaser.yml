@@ -1,4 +1,4 @@
-# GoReleaser configuration for beads
+# GoReleaser configuration for bd
 # See https://goreleaser.com for documentation
 
 version: 2
@@ -162,8 +162,8 @@ archives:
 brews:
   - name: bd
     repository:
-      owner: gastownhall
-      name: homebrew-beads
+      owner: signalnine
+      name: homebrew-bd
       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
     directory: Formula
     # Disabled: macOS archives are built by a separate CI job (goreleaser-macos),
@@ -204,13 +204,13 @@ changelog:
 
 release:
   github:
-    owner: gastownhall
-    name: beads
+    owner: signalnine
+    name: bd
   draft: false
   prerelease: auto
   name_template: "v{{.Version}}"
   header: |
-    ## beads v{{.Version}}
+    ## bd v{{.Version}}
 
     Pre-compiled binaries for Linux, macOS (Intel & Apple Silicon), Windows (AMD64 & ARM64), Android/Termux (ARM64), and FreeBSD.
 
@@ -218,7 +218,7 @@ release:
 
     **Homebrew (macOS/Linux):**
     ```bash
-    brew install beads
+    brew install bd
     ```
 
     **Quick Install (macOS/Linux/FreeBSD):**
