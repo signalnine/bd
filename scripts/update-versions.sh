@@ -5,7 +5,7 @@ set -e
 # Quick version bump utility (no git operations)
 # =============================================================================
 #
-# Updates version numbers across all beads components without any git
+# Updates version numbers across all bd components without any git
 # operations. Use this for local testing or when you want manual control
 # over commits.
 #
@@ -73,12 +73,7 @@ echo "  • .claude-plugin/*.json"
 update_file "claude-plugin/.claude-plugin/plugin.json" "\"version\": \"$CURRENT_VERSION\"" "\"version\": \"$NEW_VERSION\""
 update_file ".claude-plugin/marketplace.json" "\"version\": \"$CURRENT_VERSION\"" "\"version\": \"$NEW_VERSION\""
 
-# 3. MCP Python package
-echo "  • integrations/beads-mcp/*"
-update_file "integrations/beads-mcp/pyproject.toml" "version = \"$CURRENT_VERSION\"" "version = \"$NEW_VERSION\""
-update_file "integrations/beads-mcp/src/beads_mcp/__init__.py" "__version__ = \"$CURRENT_VERSION\"" "__version__ = \"$NEW_VERSION\""
-
-# 4. npm package
+# 3. npm package
 echo "  • npm-package/package.json"
 update_file "npm-package/package.json" "\"version\": \"$CURRENT_VERSION\"" "\"version\": \"$NEW_VERSION\""
 
