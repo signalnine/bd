@@ -13,6 +13,12 @@ forked from [beads](https://github.com/signalnine/bd). deleted 78% of it.
 ## install
 
 ```bash
+curl -fsSL https://raw.githubusercontent.com/signalnine/bd/main/scripts/install.sh | bash
+```
+
+or build from source:
+
+```bash
 git clone https://github.com/signalnine/bd
 cd bd
 make install    # builds and installs to ~/.local/bin/bd
