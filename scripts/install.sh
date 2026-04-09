@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Beads (bd) installation script
+# bd installation script
 # Usage: curl -fsSL https://raw.githubusercontent.com/signalnine/bd/main/scripts/install.sh | bash
 #
 # ⚠️ IMPORTANT: This script must be EXECUTED, never SOURCED
@@ -215,9 +215,9 @@ resign_for_macos() {
 
     # Keep re-signing opt-in so users can decide whether to preserve
     # the release signature/Gatekeeper behavior.
-    if [ "${BEADS_INSTALL_RESIGN_MACOS:-0}" != "1" ]; then
+    if [ "${BD_INSTALL_RESIGN_MACOS:-0}" != "1" ]; then
         log_info "Skipping macOS ad-hoc re-signing (default)"
-        log_info "Set BEADS_INSTALL_RESIGN_MACOS=1 to opt in"
+        log_info "Set BD_INSTALL_RESIGN_MACOS=1 to opt in"
         return 0
     fi
 
@@ -227,7 +227,7 @@ resign_for_macos() {
         return 0
     fi
 
-    log_warning "Opt-in macOS re-sign enabled: replacing release signature with local ad-hoc signature"
+    log_info "Opt-in macOS re-sign enabled: replacing release signature with local ad-hoc signature"
     codesign --remove-signature "$binary_path" 2>/dev/null || true
     if codesign --force --sign - "$binary_path"; then
         log_success "Binary re-signed for this machine"
@@ -309,20 +309,6 @@ detect_platform() {
     echo "${os}_${arch}"
 }
 
-# Create 'beads' symlink alias for bd
-create_beads_alias() {
-    local install_dir=$1
-
-    log_info "Creating 'beads' alias..."
-    rm -f "$install_dir/beads"
-    if [[ -w "$install_dir" ]]; then
-        ln -s bd "$install_dir/beads"
-    else
-        sudo ln -s bd "$install_dir/beads"
-    fi
-    log_success "Created 'beads' alias -> bd"
-}
-
 # Download and install from GitHub releases
 install_from_release() {
     log_info "Installing bd from GitHub releases..."
@@ -356,7 +342,7 @@ install_from_release() {
     log_info "Latest version: $version"
 
     # Download URL
-    local archive_name="beads_${version#v}_${platform}.tar.gz"
+    local archive_name="bd_${version#v}_${platform}.tar.gz"
     local download_url="https://github.com/signalnine/bd/releases/download/${version}/${archive_name}"
 
     if ! release_has_asset "$release_json" "$archive_name"; then
@@ -409,9 +395,6 @@ install_from_release() {
 
     # Optional local ad-hoc re-sign for macOS (off by default)
     resign_for_macos "$install_dir/bd"
-
-    # Create 'beads' alias symlink
-    create_beads_alias "$install_dir"
 
     log_success "bd installed to $install_dir/bd"
 
@@ -507,9 +490,6 @@ install_with_go() {
         # Optional local ad-hoc re-sign for macOS (off by default)
         resign_for_macos "$bin_dir/bd"
 
-        # Create 'beads' alias symlink
-        create_beads_alias "$bin_dir"
-
         # Check if GOPATH/bin (or GOBIN) is in PATH
         if [[ ":$PATH:" != *":$bin_dir:"* ]]; then
             log_warning "$bin_dir is not in your PATH"
@@ -539,7 +519,7 @@ build_from_source() {
     log_info "Cloning repository..."
 
     if git clone --depth 1 https://github.com/signalnine/bd.git; then
-        cd beads
+        cd bd
         log_info "Building binary..."
 
         if CGO_ENABLED=1 go build -o bd ./cmd/bd; then
@@ -567,9 +547,6 @@ build_from_source() {
 
             # Optional local ad-hoc re-sign for macOS (off by default)
             resign_for_macos "$install_dir/bd"
-
-            # Create 'beads' alias symlink
-            create_beads_alias "$install_dir"
 
             log_success "bd installed to $install_dir/bd"
 
@@ -612,8 +589,6 @@ verify_installation() {
         log_success "bd is installed and ready!"
         echo ""
         bd version 2>/dev/null || echo "bd (development build)"
-        echo ""
-        echo "You can use either 'bd' or 'beads' to run the command."
         echo ""
         echo "Get started:"
         echo "  cd your-project"
@@ -703,7 +678,7 @@ warn_if_multiple_bd() {
 # Main installation flow
 main() {
     echo ""
-    echo "🔗 Beads (bd) Installer"
+    echo "bd Installer"
     echo ""
 
     log_info "Detecting platform..."
