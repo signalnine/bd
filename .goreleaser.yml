@@ -199,11 +199,6 @@ release:
 
     ### Installation
 
-    **Homebrew (macOS/Linux):**
-    ```bash
-    brew install bd
-    ```
-
     **Quick Install (macOS/Linux/FreeBSD):**
     ```bash
     curl -sSL https://raw.githubusercontent.com/signalnine/bd/main/scripts/install.sh | bash

@@ -8,7 +8,7 @@
 
 your agents need somewhere to track work that isn't a markdown file. bd is a dependency-aware task graph on top of [Dolt](https://github.com/dolthub/dolt) (version-controlled SQL). agents create issues, track blockers, close work, keep context across sessions.
 
-forked from [beads](https://github.com/signalnine/bd). deleted 78% of it.
+forked from [beads](https://github.com/steveyegge/beads). deleted 84% of it.
 
 ## install
 
@@ -108,18 +108,13 @@ bd dolt pull
 
 ## what we cut
 
-~165k lines from [beads](https://github.com/signalnine/bd):
+214k lines deleted (84%) from [beads](https://github.com/steveyegge/beads). 523 files down to 218. 250 commands down to ~20.
 
 - 6 tracker integrations (Jira, Linear, Notion, ADO, GitLab, GitHub)
-- formula DSL
-- molecule system
-- gate system
-- swarm orchestration
-- doctor diagnostics (19 files)
-- server mode
-- OpenTelemetry (8 modules)
-- 151-method storage interface
-- 230+ commands
+- formula DSL, molecule system, wisps, gates, swarm orchestration
+- doctor diagnostics, graph viz, server mode, telemetry
+- 151-method storage interface replaced with concrete type
+- MCP server, npm package, homebrew tap
 
 what's left: create, track, query, close, sync.
 
