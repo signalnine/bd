@@ -89,7 +89,6 @@ func initGuardServerMessage(dbName, host string, port int, prefix, syncGitRemote
 	b.WriteString("The server is running but this database hasn't been created yet.\n")
 
 	b.WriteString("\nDiagnose with:\n")
-	b.WriteString("  bd doctor          # check project health\n")
 	b.WriteString("  bd dolt status     # inspect Dolt server state\n")
 
 	b.WriteString("\nIf this is an existing project, fresh clone, or shared-server recovery, run:\n")

@@ -1222,7 +1222,7 @@ func TestInitBEADS_DIR(t *testing.T) {
 		// cd into the worktree — without BD_DIR this would fail
 		t.Chdir(worktreeDir)
 
-		rootCmd.SetArgs([]string{"init", "--prefix", "wt-bypass", "--skip-hooks", "--quiet"})
+		rootCmd.SetArgs([]string{"init", "--prefix", "wt-bypass", "--quiet"})
 		err := rootCmd.Execute()
 		if err != nil {
 			t.Fatalf("Init with BD_DIR from worktree should succeed, got: %v", err)
@@ -1677,7 +1677,7 @@ func TestInitDatabaseFlag(t *testing.T) {
 		bareDir, worktreeDir := setupBareParentInitWorktree(t)
 		bareBeadsDir := filepath.Join(bareDir, ".bd")
 
-		cmd := exec.Command(bd, "init", "--prefix", "bare-fallback", "--skip-hooks", "--quiet")
+		cmd := exec.Command(bd, "init", "--prefix", "bare-fallback", "--quiet")
 		cmd.Dir = worktreeDir
 		cmd.Env = append(os.Environ(), "BD_DOLT_SHARED_SERVER=1")
 		out, err := cmd.CombinedOutput()
@@ -1692,7 +1692,7 @@ func TestInitDatabaseFlag(t *testing.T) {
 			t.Fatalf("worktree should not get a local .beads directory, stat err=%v", err)
 		}
 
-		retry := exec.Command(bd, "init", "--prefix", "bare-fallback", "--skip-hooks", "--quiet")
+		retry := exec.Command(bd, "init", "--prefix", "bare-fallback", "--quiet")
 		retry.Dir = worktreeDir
 		retry.Env = append(os.Environ(), "BD_DOLT_SHARED_SERVER=1")
 		retryOut, retryErr := retry.CombinedOutput()
@@ -1787,7 +1787,7 @@ func TestInitDatabaseFlag(t *testing.T) {
 	t.Run("shared_server_flag_selects_server_mode", func(t *testing.T) {
 		tmpDir := t.TempDir()
 
-		cmd := exec.Command(bd, "init", "--shared-server", "--prefix", "shared-mode-test", "--skip-hooks")
+		cmd := exec.Command(bd, "init", "--shared-server", "--prefix", "shared-mode-test")
 		cmd.Dir = tmpDir
 		cmd.Env = os.Environ()
 		out, err := cmd.CombinedOutput()
@@ -1900,7 +1900,7 @@ func TestBareParentWorktreeCoreCommandsWithoutRedirect(t *testing.T) {
 	bareBeadsDir := filepath.Join(bareDir, ".bd")
 	sharedEnv := append(os.Environ(), "BD_DOLT_SHARED_SERVER=1")
 
-	initCmd := exec.Command(bd, "init", "--prefix", "bare-core", "--skip-hooks", "--quiet")
+	initCmd := exec.Command(bd, "init", "--prefix", "bare-core", "--quiet")
 	initCmd.Dir = worktreeDir
 	initCmd.Env = sharedEnv
 	if out, err := initCmd.CombinedOutput(); err != nil {
@@ -2091,7 +2091,6 @@ func TestInitDatabaseAdoptsExistingProjectID(t *testing.T) {
 		"--database", database,
 		"--prefix", "second",
 		"--quiet",
-		"--skip-hooks",
 		"--skip-agents",
 	})
 

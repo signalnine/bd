@@ -74,8 +74,7 @@ func MergeSlotCheckImpl(ctx context.Context, s MergeSlotStore) (*MergeSlotStatus
 	slotID := MergeSlotID(ctx, s)
 	slot, err := s.GetIssue(ctx, slotID)
 	if err != nil || slot == nil {
-		return nil, fmt.Errorf("merge slot not found: %s (run 'bd merge-slot create' first): %w",
-			slotID, ErrNotFound)
+		return nil, fmt.Errorf("merge slot not found: %s: %w", slotID, ErrNotFound)
 	}
 	meta := parseSlotMeta(slot)
 	return &MergeSlotStatus{
@@ -103,7 +102,7 @@ func MergeSlotAcquireImpl(ctx context.Context, s MergeSlotStore, holder, actor s
 		func(tx Transaction) error {
 			slot, err := tx.GetIssue(ctx, slotID)
 			if err != nil || slot == nil {
-				return fmt.Errorf("merge slot not found: %s (run 'bd merge-slot create' first)", slotID)
+				return fmt.Errorf("merge slot not found: %s", slotID)
 			}
 
 			meta := parseSlotMeta(slot)

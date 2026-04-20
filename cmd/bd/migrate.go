@@ -677,11 +677,5 @@ func init() {
 	migrateSyncCmd.Flags().BoolVar(&jsonOutput, "json", false, "Output in JSON format")
 	migrateCmd.AddCommand(migrateSyncCmd)
 
-	migrateHooksCmd.Flags().Bool("dry-run", false, "Show what would be done without making changes")
-	migrateHooksCmd.Flags().Bool("apply", false, "Apply planned hook migration changes")
-	migrateHooksCmd.Flags().Bool("yes", false, "Skip confirmation prompt for --apply")
-	migrateHooksCmd.Flags().BoolVar(&jsonOutput, "json", false, "Output in JSON format")
-	migrateCmd.AddCommand(migrateHooksCmd)
-
 	rootCmd.AddCommand(migrateCmd)
 }

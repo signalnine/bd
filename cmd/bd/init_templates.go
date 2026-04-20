@@ -56,7 +56,6 @@ func createConfigYaml(bdDir string, noDbMode bool, prefix string) error {
 
 # Export events (audit trail) to .bd/events.jsonl on each flush/sync
 # When enabled, new events are appended incrementally using a high-water mark.
-# Use 'bd export --events' to trigger manually regardless of this setting.
 # events-export: false
 
 # Multi-repo configuration (experimental - bd-307)
@@ -176,7 +175,6 @@ bd create "Try out bd"
 ## Learn More
 
 - **Documentation**: [github.com/signalnine/bd/docs](https://github.com/signalnine/bd/tree/main/docs)
-- **Quick Start Guide**: Run ` + "`bd quickstart`" + `
 - **Examples**: [github.com/signalnine/bd/examples](https://github.com/signalnine/bd/tree/main/examples)
 
 ---

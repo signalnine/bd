@@ -98,7 +98,7 @@ git init >/dev/null 2>&1
 # Ensure a main branch exists (some git versions default to master)
 git checkout -b main 2>/dev/null || true
 
-bd init --backend dolt --prefix "$PREFIX" -q --skip-hooks --skip-merge-driver --force 2>/dev/null
+bd init --backend dolt --prefix "$PREFIX" -q --skip-merge-driver --force 2>/dev/null
 
 # Verify dolt database was created
 DOLT_DIR="$WORKSPACE_A/.beads/dolt/$DOLT_DB"
@@ -201,7 +201,7 @@ git init >/dev/null 2>&1
 git checkout -b main 2>/dev/null || true
 
 # Initialize bd in workspace-b
-bd init --backend dolt --prefix "$PREFIX" -q --skip-hooks --skip-merge-driver --force 2>/dev/null
+bd init --backend dolt --prefix "$PREFIX" -q --skip-merge-driver --force 2>/dev/null
 
 DOLT_DIR_B="$WORKSPACE_B/.beads/dolt/$DOLT_DB"
 

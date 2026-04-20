@@ -58,7 +58,6 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 		contributor, _ := cmd.Flags().GetBool("contributor")
 		team, _ := cmd.Flags().GetBool("team")
 		stealth, _ := cmd.Flags().GetBool("stealth")
-		skipHooks, _ := cmd.Flags().GetBool("skip-hooks")
 		force, _ := cmd.Flags().GetBool("force")
 		nonInteractiveFlag, _ := cmd.Flags().GetBool("non-interactive")
 		roleFlag, _ := cmd.Flags().GetString("role")
@@ -150,8 +149,8 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 				fmt.Fprintf(os.Stderr, "  This action CANNOT be undone. All issues, dependencies, and\n")
 				fmt.Fprintf(os.Stderr, "  Dolt commit history will be permanently lost.\n\n")
 				fmt.Fprintf(os.Stderr, "  Before proceeding, consider:\n")
-				fmt.Fprintf(os.Stderr, "    bd export > backup.jsonl    # Export issues to JSONL\n")
-				fmt.Fprintf(os.Stderr, "    bd dolt status              # Check if this is a server config issue\n\n")
+				fmt.Fprintf(os.Stderr, "    bd backup init <path> && bd backup sync   # Back up first\n")
+				fmt.Fprintf(os.Stderr, "    bd dolt status                            # Check if this is a server config issue\n\n")
 				if term.IsTerminal(int(os.Stdin.Fd())) {
 					fmt.Fprintf(os.Stderr, "Type 'destroy %d issues' to confirm: ", count)
 					scanner := bufio.NewScanner(os.Stdin)
@@ -169,7 +168,7 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 					} else {
 						fmt.Fprintf(os.Stderr, "Refusing to destroy %d issues in non-interactive mode.\n", count)
 						fmt.Fprintf(os.Stderr, "To proceed, use: bd init --force --destroy-token=%s\n", expectedToken)
-						fmt.Fprintf(os.Stderr, "Or export first: bd export > backup.jsonl\n")
+						fmt.Fprintf(os.Stderr, "Or back up first: bd backup init <path> && bd backup sync\n")
 						os.Exit(1)
 					}
 				}
@@ -181,10 +180,6 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 			if err := setupStealthMode(!quiet); err != nil {
 				FatalError("setting up stealth mode: %v", err)
 			}
-
-			// In stealth mode, skip git hooks installation
-			// since we handle it globally
-			skipHooks = true
 		}
 
 		// Check BD_DB environment variable if --db flag not set
@@ -756,39 +751,13 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 			}
 		}
 
-		// Check if we're in a git repo and hooks aren't installed
-		// Install by default unless --skip-hooks is passed
-		// Hooks are installed to .bd/hooks/ (uses git config core.hooksPath)
-		// For jujutsu colocated repos, use simplified hooks (no staging needed)
-		hooksExist := hooksInstalled()
-		if !skipHooks && (!hooksExist || hooksNeedUpdate()) {
-			if hooksExist && !quiet {
-				fmt.Printf("  Updating hooks to version %s...\n", Version)
-			}
-			isJJ := git.IsJujutsuRepo()
-			isColocated := git.IsColocatedJJGit()
-
-			if isJJ && !isColocated {
-				// Pure jujutsu repo (no git) - print alias instructions
-				if !quiet {
-					printJJAliasInstructions()
-				}
-			} else if isColocated {
-				// Colocated jj+git repo - use simplified hooks
-				if err := installJJHooks(); err != nil && !quiet {
-					fmt.Fprintf(os.Stderr, "\n%s Failed to install jj hooks: %v\n", ui.RenderWarn("⚠"), err)
-					fmt.Fprintf(os.Stderr, "You can try again with: %s\n\n", ui.RenderAccent("bd doctor --fix"))
-				} else if !quiet {
-					fmt.Printf("  Hooks installed (jujutsu mode - no staging)\n")
-				}
-			} else if isGitRepo() {
-				// Regular git repo - install hooks to .bd/hooks/
-				if err := installHooksWithOptions(managedHookNames, false, false, false, true); err != nil && !quiet {
-					fmt.Fprintf(os.Stderr, "\n%s Failed to install git hooks to .bd/hooks/: %v\n", ui.RenderWarn("⚠"), err)
-					fmt.Fprintf(os.Stderr, "You can try again with: %s\n\n", ui.RenderAccent("bd hooks install --bd"))
-				} else if !quiet {
-					fmt.Printf("  Hooks installed to: .bd/hooks/\n")
-				}
+		// Clean up legacy git hook shims installed by bd <= v1.0.2.
+		// Those shims invoke `bd hooks run`, a subcommand that no longer exists,
+		// which breaks every git commit in affected repos. Idempotent: no-op if
+		// no bd-managed hooks are present.
+		if isGitRepo() {
+			if err := uninstallLegacyGitHooks(); err != nil && !quiet {
+				fmt.Fprintf(os.Stderr, "Warning: failed to clean up legacy git hooks: %v\n", err)
 			}
 		}
 
@@ -874,7 +843,7 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 		fmt.Printf("  Database: %s\n", ui.RenderAccent(dbName))
 		fmt.Printf("  Issue prefix: %s\n", ui.RenderAccent(prefix))
 		fmt.Printf("  Issues will be named: %s\n\n", ui.RenderAccent(prefix+"-<hash> (e.g., "+prefix+"-a3f2dd)"))
-		fmt.Printf("Run %s to get started.\n\n", ui.RenderAccent("bd quickstart"))
+		fmt.Printf("Run %s to get started.\n\n", ui.RenderAccent("bd create \"My first issue\""))
 
 		// Detect backup files from a previous session (GH#2327).
 		// This catches the branch-switch scenario: user ran bd init on a new
@@ -895,7 +864,6 @@ func init() {
 	initCmd.Flags().Bool("team", false, "Run team workflow setup wizard")
 	initCmd.Flags().Bool("stealth", false, "Enable stealth mode: global gitattributes and gitignore, no local repo tracking")
 	initCmd.Flags().Bool("setup-exclude", false, "Configure .git/info/exclude to keep bd files local (for forks)")
-	initCmd.Flags().Bool("skip-hooks", false, "Skip git hooks installation")
 	initCmd.Flags().Bool("skip-agents", false, "Skip AGENTS.md and Claude settings generation")
 	initCmd.Flags().Bool("force", false, "Force re-initialization even if database already has issues (may cause data loss)")
 	initCmd.Flags().Bool("from-jsonl", false, "Import issues from .bd/issues.jsonl instead of git history")
@@ -1019,7 +987,7 @@ To use the existing database:
   Just run bd commands normally (e.g., %s)
 
 If the database is genuinely corrupt and unrecoverable:
-  bd export > backup.jsonl              # Back up first!
+  bd backup init <path> && bd backup sync  # Back up first!
   bd init --force --prefix %s           # Then reinitialize
 
 Aborting.`, ui.RenderWarn("⚠"), location, ui.RenderAccent("bd list"), prefix)
@@ -1042,7 +1010,7 @@ To use the existing database:
   Just run bd commands normally (e.g., %s)
 
 If the database is genuinely corrupt and unrecoverable:
-  bd export > backup.jsonl              # Back up first!
+  bd backup init <path> && bd backup sync  # Back up first!
   bd init --force --prefix %s           # Then reinitialize
 
 Aborting.`, ui.RenderWarn("⚠"), embeddedPath, ui.RenderAccent("bd list"), prefix)
@@ -1072,7 +1040,7 @@ To use the existing database:
   The redirect will route to the canonical database.
 
 If the database is genuinely corrupt and unrecoverable:
-  bd export > backup.jsonl              # Back up first!
+  bd backup init <path> && bd backup sync  # Back up first!
   bd init --force --prefix %s           # Then reinitialize
 
 Aborting.`, ui.RenderWarn("⚠"), redirectTarget, targetDBPath, ui.RenderAccent("bd list"), prefix)
@@ -1092,7 +1060,7 @@ To use the existing database:
   Just run bd commands normally (e.g., %s)
 
 If the database is genuinely corrupt and unrecoverable:
-  bd export > backup.jsonl              # Back up first!
+  bd backup init <path> && bd backup sync  # Back up first!
   bd init --force --prefix %s           # Then reinitialize
 
 Aborting.`, ui.RenderWarn("⚠"), dbPath, ui.RenderAccent("bd list"), prefix)
@@ -1281,9 +1249,6 @@ func promptContributorMode() (isContributor bool, err error) {
 func verifyMetadata(ctx context.Context, store *embeddeddolt.EmbeddedDoltStore, key, value string) bool {
 	if err := store.SetMetadata(ctx, key, value); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: failed to write %s metadata: %v\n", key, err)
-		if !isEmbeddedMode() {
-			fmt.Fprintf(os.Stderr, "  Run 'bd doctor --fix' to repair.\n")
-		}
 		return false
 	}
 	// Verify read-back

@@ -327,10 +327,6 @@ func TestEmbeddedLabel(t *testing.T) {
 		bdLabelFail(t, bd, dir, "add", issue.ID, "")
 	})
 
-	t.Run("label_add_reserved_provides", func(t *testing.T) {
-		issue := bdCreate(t, bd, dir, "Reserved label", "--type", "task")
-		bdLabelFail(t, bd, dir, "add", issue.ID, "provides:auth")
-	})
 }
 
 // TestEmbeddedLabelConcurrent exercises label operations concurrently.

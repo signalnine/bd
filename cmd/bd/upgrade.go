@@ -73,11 +73,8 @@ var upgradeReviewCmd = &cobra.Command{
 	Short: "Review changes since last bd version",
 	Long: `Show what's new in bd since the last version you used.
 
-Unlike 'bd info --whats-new' which shows the last 3 versions,
-this command shows ALL changes since your specific last version.
-
-If you're upgrading from an old version, you'll see the complete
-changelog of everything that changed since then.
+Shows the complete changelog of everything that changed since your
+last version.
 
 Examples:
   bd upgrade review
@@ -88,13 +85,11 @@ Examples:
 
 		if lastVersion == "" {
 			fmt.Println("No previous version recorded")
-			fmt.Println("Run 'bd info --whats-new' to see recent changes")
 			return
 		}
 
 		if !versionUpgradeDetected {
 			fmt.Printf("You're already on v%s (no upgrade detected)\n", Version)
-			fmt.Println("Run 'bd info --whats-new' to see recent changes")
 			return
 		}
 
@@ -116,7 +111,6 @@ Examples:
 
 		if len(newVersions) == 0 {
 			fmt.Printf("v%s is newer than v%s but not in changelog\n", Version, lastVersion)
-			fmt.Println("Run 'bd info --whats-new' to see recent documented changes")
 			return
 		}
 

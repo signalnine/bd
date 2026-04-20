@@ -349,7 +349,7 @@ func TestEmbeddedInit(t *testing.T) {
 	})
 
 	t.Run("skip_hooks", func(t *testing.T) {
-		_, bdDir, _ := bdInit(t, bd, "--prefix", "sh", "--skip-hooks")
+		_, bdDir, _ := bdInit(t, bd, "--prefix", "sh")
 		requireNoFile(t, filepath.Join(bdDir, "hooks"))
 	})
 
@@ -507,7 +507,7 @@ func TestEmbeddedInit(t *testing.T) {
 	})
 
 	t.Run("files_created", func(t *testing.T) {
-		_, bdDir, _ := bdInit(t, bd, "--prefix", "fc", "--skip-hooks")
+		_, bdDir, _ := bdInit(t, bd, "--prefix", "fc")
 		requireFile(t, filepath.Join(bdDir, "config.yaml"))
 		requireFile(t, filepath.Join(bdDir, "interactions.jsonl"))
 
@@ -531,7 +531,7 @@ func TestEmbeddedInit(t *testing.T) {
 			t.Fatal(err)
 		}
 		// Should not error even though the flag is a no-op
-		runBDInit(t, bd, dir, "--prefix", "at", "--agents-template", templatePath, "--skip-hooks")
+		runBDInit(t, bd, dir, "--prefix", "at", "--agents-template", templatePath)
 	})
 
 	t.Run("no_git_repo", func(t *testing.T) {

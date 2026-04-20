@@ -16,11 +16,8 @@ var vcCmd = &cobra.Command{
 	Short:   "Version control operations",
 	Long: `Version control operations for the bd database.
 
-These commands provide git-like version control for your issue data, including branching, merging, and
-viewing history.
-
-Note: 'bd history', 'bd diff', and 'bd branch' also work for quick access.
-This subcommand provides additional operations like merge and commit.`,
+These commands provide git-like version control for your issue data,
+including merging and committing across branches.`,
 }
 
 var vcMergeStrategy string

@@ -28,7 +28,6 @@ func TestInitGuardServerMessage(t *testing.T) {
 				`"acf_beads"`,
 				"127.0.0.1:3309",
 				"not found on server",
-				"bd doctor",
 				"bd dolt status",
 				"bd bootstrap",
 				"set sync.git-remote",
@@ -52,7 +51,6 @@ func TestInitGuardServerMessage(t *testing.T) {
 				`"beads_kc"`,
 				"192.168.1.50:3307",
 				"not found on server",
-				"bd doctor",
 				"bd dolt status",
 				"bd bootstrap",
 				"sync.git-remote is configured",
@@ -258,17 +256,17 @@ func TestInitGuardServerMessage_DiagnosticsBeforeForce(t *testing.T) {
 	err := initGuardServerMessage("test_beads", "127.0.0.1", 3307, "test", "")
 	msg := err.Error()
 
-	doctorIdx := strings.Index(msg, "bd doctor")
+	diagIdx := strings.Index(msg, "bd dolt status")
 	forceIdx := strings.Index(msg, "--force")
 
-	if doctorIdx == -1 {
-		t.Fatal("message must contain 'bd doctor'")
+	if diagIdx == -1 {
+		t.Fatal("message must contain 'bd dolt status'")
 	}
 	if forceIdx == -1 {
 		t.Fatal("message must contain '--force' (in caution section)")
 	}
-	if doctorIdx > forceIdx {
-		t.Errorf("'bd doctor' (at %d) must appear before '--force' (at %d) in message:\n%s",
-			doctorIdx, forceIdx, msg)
+	if diagIdx > forceIdx {
+		t.Errorf("'bd dolt status' (at %d) must appear before '--force' (at %d) in message:\n%s",
+			diagIdx, forceIdx, msg)
 	}
 }

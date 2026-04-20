@@ -41,7 +41,7 @@ func NotTemplate() IssueValidator {
 			return nil // Let Exists() handle nil check if needed
 		}
 		if issue.IsTemplate {
-			return fmt.Errorf("cannot modify template %s: templates are read-only; use 'bd mol pour' to create a work item", id)
+			return fmt.Errorf("cannot modify template %s: templates are read-only", id)
 		}
 		return nil
 	}
