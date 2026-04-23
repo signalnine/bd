@@ -19,8 +19,8 @@ Every release candidate must pass upgrade smoke tests from these starting points
 
 1. **Data preservation**: issues created before upgrade are visible after upgrade
 2. **Mode preservation**: `embedded` stays `embedded`, `shared-server` stays `shared-server`
-3. **Role preservation**: `beads.role` git config is not cleared or changed
-4. **Config continuity**: `bd doctor quick` passes after upgrade
+3. **Role preservation**: `bd.role` git config is not cleared or changed
+4. **Config continuity**: `bd config validate` passes after upgrade
 5. **No silent errors**: upgrade path produces no unexpected warnings or errors
 
 ## Running the Gate
@@ -64,4 +64,4 @@ document the breaking change with explicit migration steps before shipping.
 - [#2764](https://github.com/signalnine/bd/issues/2764) — Test gap: upgrade paths
 - [#2765](https://github.com/signalnine/bd/issues/2765) — Test gap: mode preservation
 - [#2949](https://github.com/signalnine/bd/issues/2949) — v0.63.3 silent mode switch
-- [#2950](https://github.com/signalnine/bd/issues/2950) — beads.role left unset
+- [#2950](https://github.com/signalnine/bd/issues/2950) — bd.role left unset

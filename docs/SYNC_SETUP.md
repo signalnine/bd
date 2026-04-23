@@ -27,7 +27,7 @@ cd your-project
 bd init
 ```
 
-This creates the `.beads/` directory with a Dolt database and starts a background `dolt sql-server`.
+This creates the `.bd/` directory with a Dolt database and starts a background `dolt sql-server`.
 
 ### 2. Create some issues
 
@@ -107,7 +107,7 @@ git ls-remote origin | grep dolt
 bd init
 ```
 
-This creates `.beads/` with an empty database. Ignore any warnings about `bd bootstrap` — we'll replace the empty database manually.
+This creates `.bd/` with an empty database. Ignore any warnings about `bd bootstrap` — we'll replace the empty database manually.
 
 **Step 3: Stop the Dolt server**
 
@@ -119,20 +119,20 @@ bd dolt stop
 
 ```bash
 # Check your database name
-cat .beads/metadata.json    # look for "dolt_database"
+cat .bd/metadata.json    # look for "dolt_database"
 ```
 
 The `dolt_database` field is your `<dbname>` (typically the repo name).
 
 ```bash
 # Remove the empty database
-rm -rf .beads/dolt/<dbname>/
+rm -rf .bd/dolt/<dbname>/
 ```
 
 **Step 5: Clone the Dolt data from the remote**
 
 ```bash
-cd .beads/dolt
+cd .bd/dolt
 dolt clone git@github.com:org/repo.git <dbname>
 cd ../..
 ```
@@ -227,13 +227,7 @@ The Dolt database wasn't bootstrapped. Either run `bd bootstrap` or follow the [
 
 ### Stale lock files after crash
 
-```bash
-bd doctor --fix --yes
-```
-
-**WARNING**: Do NOT manually remove files inside `.dolt/` directories (including
-`noms/LOCK`). These are Dolt-internal files and removing them **will cause
-unrecoverable data corruption**. Dolt manages these files itself.
+If bd reports `database is locked`, check for hung processes with `ps aux | grep 'bd '` and kill them. Do NOT manually remove files inside `.bd/embeddeddolt/` or `.dolt/` directories — removing them will cause unrecoverable data corruption. Dolt manages those files itself.
 
 ### "fatal: Unable to read current working directory"
 

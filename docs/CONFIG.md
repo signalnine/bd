@@ -14,15 +14,15 @@ Tool preferences control how `bd` behaves globally or per-user. These are stored
 **Configuration precedence** (highest to lowest):
 1. Command-line flags (`--json`, `--dolt-auto-commit`, etc.)
 2. Environment variables (`BD_JSON`, `BD_DOLT_AUTO_COMMIT`, etc.)
-3. Config file (`~/.config/bd/config.yaml` or `.beads/config.yaml`)
+3. Config file (`~/.config/bd/config.yaml` or `.bd/config.yaml`)
 4. Defaults
 
 ### Config File Locations
 
 Viper searches for `config.yaml` in these locations (in order):
-1. `.beads/config.yaml` - Project-specific tool settings (version-controlled)
+1. `.bd/config.yaml` - Project-specific tool settings (version-controlled)
 2. `~/.config/bd/config.yaml` - User-specific tool settings
-3. `~/.beads/config.yaml` - Legacy user settings
+3. `~/.bd/config.yaml` - Legacy user settings
 
 ### Supported Settings
 
@@ -42,11 +42,11 @@ Tool-level settings you can configure:
 | `git.no-gpg-sign` | - | `BD_GIT_NO_GPG_SIGN` | `false` | Disable GPG signing for beads commits |
 | `directory.labels` | - | - | (none) | Map directories to labels for automatic filtering |
 | `external_projects` | - | - | (none) | Map project names to paths for cross-project deps |
-| `backup.enabled` | - | `BD_BACKUP_ENABLED` | `false` | Enable periodic Dolt-native backup to `.beads/backup/` |
+| `backup.enabled` | - | `BD_BACKUP_ENABLED` | `false` | Enable periodic Dolt-native backup to `.bd/backup/` |
 | `backup.interval` | - | `BD_BACKUP_INTERVAL` | `15m` | Minimum time between auto-backups |
 | `dolt.auto-push` | - | `BD_DOLT_AUTO_PUSH` | (auto) | Auto-push to Dolt remote after writes (auto-enabled when origin exists) |
 | `dolt.auto-push-interval` | - | `BD_DOLT_AUTO_PUSH_INTERVAL` | `5m` | Minimum time between auto-pushes |
-| `dolt.shared-server` | `--shared-server` | `BEADS_DOLT_SHARED_SERVER` | `false` | Share a single Dolt server across all projects at `~/.beads/shared-server/` |
+| `dolt.shared-server` | `--shared-server` | `BEADS_DOLT_SHARED_SERVER` | `false` | Share a single Dolt server across all projects at `~/.bd/shared-server/` |
 | `dolt.idle-timeout` | - | - | `30m` | Idle auto-stop timeout (`"0"` disables) |
 | `db` | `--db` | `BD_DB` | (auto-discover) | Database path |
 | `actor` | `--actor` | `BEADS_ACTOR` | `git config user.name` | Actor name for audit trail (see below) |
@@ -69,7 +69,7 @@ By default, `bd` is configured to **auto-commit Dolt history after each successf
 bd --dolt-auto-commit off create "No commit for this one"
 ```
 
-- **Disable in config** (`.beads/config.yaml` or `~/.config/bd/config.yaml`):
+- **Disable in config** (`.bd/config.yaml` or `~/.config/bd/config.yaml`):
 
 ```yaml
 dolt:
@@ -80,7 +80,7 @@ dolt:
 
 ### Auto-Backup
 
-Periodic Dolt-native backup to `.beads/backup/` provides an off-machine recovery path. Local Dolt snapshots (via `dolt.auto-commit`) remain the primary safety net; backup is a secondary layer.
+Periodic Dolt-native backup to `.bd/backup/` provides an off-machine recovery path. Local Dolt snapshots (via `dolt.auto-commit`) remain the primary safety net; backup is a secondary layer.
 
 ```yaml
 backup:
@@ -90,9 +90,9 @@ backup:
 
 **How it works:**
 - After each write command (in PersistentPostRun), `bd` checks the Dolt HEAD commit hash against the last backup state
-- If data changed and the throttle interval has passed, a Dolt-native backup is synced to `.beads/backup/`
+- If data changed and the throttle interval has passed, a Dolt-native backup is synced to `.bd/backup/`
 - Full commit history is preserved in the backup
-- State is tracked in `.beads/backup/backup_state.json`
+- State is tracked in `.bd/backup/backup_state.json`
 
 **Manual commands:**
 - `bd backup init <path>` — register a backup destination (filesystem or DoltHub URL)
@@ -148,7 +148,7 @@ The sync mode controls how beads synchronizes data with git and/or Dolt remotes.
 
 #### Sync Mode
 
-Beads uses `dolt-native` sync mode exclusively. Dolt remotes handle sync directly with cell-level merge. Use `bd export` for issue portability, and `bd backup init` / `bd backup sync` / `bd backup restore` for Dolt-native backups.
+bd uses `dolt-native` sync mode exclusively. Dolt remotes handle sync directly with cell-level merge. Use `bd backup init` / `bd backup sync` / `bd backup restore` for Dolt-native backups.
 
 #### Sync Triggers
 
@@ -169,7 +169,7 @@ Control when sync operations occur:
 #### Example Sync Configuration
 
 ```yaml
-# .beads/config.yaml
+# .bd/config.yaml
 sync:
   export_on: push       # push | change
   import_on: pull       # pull | change
@@ -192,7 +192,7 @@ dolt:
   auto-commit: on
 ```
 
-`.beads/config.yaml` (project-specific):
+`.bd/config.yaml` (project-specific):
 ```yaml
 # Require descriptions on all issues (enforces context for future work)
 create:
@@ -254,7 +254,7 @@ Agents benefit from `bd config`'s structured CLI interface over manual YAML edit
 ### Overview
 
 Project configuration is:
-- **Per-project**: Isolated to each `.beads/` database
+- **Per-project**: Isolated to each `.bd/` database
 - **Version-control-friendly**: Stored in the database, queryable and scriptable
 - **Machine-readable**: JSON output for automation
 - **Namespace-based**: Organized by integration or purpose
@@ -948,7 +948,7 @@ jira_project = get_config("jira.project")
 1. **Use namespaces**: Prefix keys with integration name (e.g., `jira.*`, `linear.*`)
 2. **Hierarchical keys**: Use dots for structure (e.g., `jira.status_map.open`)
 3. **Document your keys**: Add comments in integration scripts
-4. **Security**: Store tokens in config, but ensure `.beads/dolt/` and `.beads/*.db` are in `.gitignore` (bd does this automatically)
+4. **Security**: Store tokens in config, but ensure `.bd/dolt/` and `.bd/*.db` are in `.gitignore` (bd does this automatically)
 5. **Per-project**: Configuration is project-specific, so each repo can have different settings
 
 ## Integration with bd Commands

@@ -767,13 +767,9 @@ bd label list-all
 ```
 
 ### Syncing Labels
-Labels are stored in the Dolt database. If labels seem out of sync:
+Labels are stored in the Dolt database. If labels seem out of sync, pull from the Dolt remote:
 ```bash
-# Pull from Dolt remote
 bd dolt pull
-
-# Or run doctor to diagnose
-bd doctor
 ```
 
 ## See Also

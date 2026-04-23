@@ -47,8 +47,7 @@ This document covers **what to test** and **what not to test**. For how to run t
 
 **When**: PR merge, pre-deploy, nightly
 
-- Full `bd init` → `bd doctor` → `bd doctor --fix` workflow
-- Real API calls (to staging)
+- Full `bd init` → create → sync workflow against a real Dolt remote
 - Cross-platform verification
 
 ---
@@ -133,7 +132,7 @@ func TestValidateBeadsWorkspace(t *testing.T) {
         setup   func(t *testing.T) string
         wantErr string
     }{
-        {"missing .beads dir", setupNoBeadsDir, "not a beads workspace"},
+        {"missing .bd dir", setupNoBeadsDir, "not a beads workspace"},
         {"corrupted db", setupCorruptDB, "database is corrupted"},
         {"permission denied", setupNoReadAccess, "permission denied"},
     }

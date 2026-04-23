@@ -232,11 +232,10 @@ if err := installGitHooks(); err != nil {
 ```
 
 ```go
-// GOOD: Warn and suggest fix
-if err := installGitHooks(); err != nil {
+// GOOD: Warn and return, letting the caller decide
+if err := seedConfig(); err != nil {
     yellow := color.New(color.FgYellow).SprintFunc()
-    fmt.Fprintf(os.Stderr, "\n%s Failed to install git hooks: %v\n", yellow("⚠"), err)
-    fmt.Fprintf(os.Stderr, "You can try again with: %s\n\n", cyan("bd doctor --fix"))
+    fmt.Fprintf(os.Stderr, "\n%s Failed to seed config: %v\n", yellow("⚠"), err)
 }
 ```
 

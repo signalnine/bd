@@ -8,7 +8,7 @@ The beads performance testing framework provides:
 
 - **Benchmarks**: Measure operation speed on 10K-20K issue databases
 - **CPU Profiling**: Automatic profiling during benchmarks with flamegraph support
-- **User Diagnostics**: `bd doctor --perf` for end-user performance analysis
+- **Ad-hoc profiling**: `--profile` flag on any bd command
 - **Database Caching**: One-time generation of test databases, reused across runs
 
 Performance issues typically only manifest at scale (10K+ issues), so benchmarks focus on large databases.
@@ -121,48 +121,16 @@ Look for:
 - Frequent small allocations
 - Retained memory that should be freed
 
-## User Diagnostics
+## Ad-hoc profiling
 
-### Using `bd doctor --perf`
-
-End users can run performance diagnostics:
+Every bd command accepts `--profile`, which writes a CPU profile for that single invocation:
 
 ```bash
-bd doctor --perf
+bd --profile list          # profile a real command
+go tool pprof cpu.pprof    # analyze
 ```
 
-This:
-1. Measures time for common operations
-2. Generates a CPU profile
-3. Reports any performance issues
-4. Provides the profile file path for sharing
-
-### Sharing Profiles with Bug Reports
-
-When reporting performance issues:
-
-1. Run `bd doctor --perf`
-2. Note the profile file path from output
-3. Attach the `.prof` file to the bug report
-4. Include the diagnostic output
-
-### Understanding the Report
-
-```
-Performance Diagnostics
-=======================
-Database size: 15,234 issues
-GetReadyWork:  45ms  [OK]
-SearchIssues:  78ms  [OK]
-CreateIssue:   8ms   [OK]
-
-CPU profile saved: beads-perf-2024-01-15-143022.prof
-```
-
-Status indicators:
-- `[OK]` - Within acceptable range
-- `[SLOW]` - Slower than expected, may need investigation
-- `[CRITICAL]` - Significantly degraded, likely a bug
+Attach the `.pprof` file when filing a performance bug.
 
 ## Comparing Performance
 
@@ -214,7 +182,7 @@ A change is significant if:
 | "Is this fast enough?" | Benchmark |
 | "Why is this slow?" | Profile |
 | "Did my change help?" | benchstat |
-| "User reports slowness" | `bd doctor --perf` |
+| "User reports slowness" | `bd --profile <cmd>` |
 
 ### Common Optimization Patterns
 

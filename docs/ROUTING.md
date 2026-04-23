@@ -14,9 +14,9 @@ The routing system detects user role via:
 
 1. **Explicit git config** (highest priority):
    ```bash
-   git config beads.role maintainer
+   git config bd.role maintainer
    # or
-   git config beads.role contributor
+   git config bd.role contributor
    ```
 
 2. **Push URL inspection** (automatic):
@@ -37,7 +37,7 @@ bd create "Fix bug" -p 1
 git remote add origin https://github.com/fork/repo.git
 git remote add upstream https://github.com/owner/repo.git
 bd create "Fix bug" -p 1
-# → Creates in planning repo (~/.beads-planning by default)
+# → Creates in planning repo (~/.bd-planning by default)
 ```
 
 ## Configuration
@@ -52,13 +52,13 @@ bd init --contributor
 bd config set routing.mode auto
 
 # Set default planning repo
-bd config set routing.default "~/.beads-planning"
+bd config set routing.default "~/.bd-planning"
 
 # Set repo for maintainers (in auto mode)
 bd config set routing.maintainer "."
 
 # Set repo for contributors (in auto mode)
-bd config set routing.contributor "~/.beads-planning"
+bd config set routing.contributor "~/.bd-planning"
 ```
 
 ## CLI Usage
@@ -70,7 +70,7 @@ bd config set routing.contributor "~/.beads-planning"
 bd create "Fix authentication bug" -p 1
 
 # Maintainer: creates in current repo (.)
-# Contributor: creates in ~/.beads-planning
+# Contributor: creates in ~/.bd-planning
 ```
 
 ### Explicit Override
@@ -103,7 +103,7 @@ This ensures discovered work stays in the same repository as the parent task.
 
 ### The Problem
 
-Auto-routing writes issues to a separate repository (e.g., `~/.beads-planning`), but by default, `bd list` only shows issues from the current repository's database. Without hydration, routed issues are "invisible" even though they exist.
+Auto-routing writes issues to a separate repository (e.g., `~/.bd-planning`), but by default, `bd list` only shows issues from the current repository's database. Without hydration, routed issues are "invisible" even though they exist.
 
 ### The Solution
 
@@ -112,11 +112,11 @@ Add routing targets to `repos.additional` in `config.yaml`:
 ```yaml
 routing:
   mode: auto
-  contributor: ~/.beads-planning
+  contributor: ~/.bd-planning
 repos:
   primary: "."
   additional:
-    - ~/.beads-planning
+    - ~/.bd-planning
 ```
 
 ### Automatic Setup
@@ -129,8 +129,8 @@ bd init --contributor
 
 # This sets up:
 # 1. routing.mode=auto
-# 2. routing.contributor=~/.beads-planning
-# 3. repos.additional=[~/.beads-planning]
+# 2. routing.contributor=~/.bd-planning
+# 3. repos.additional=[~/.bd-planning]
 ```
 
 ### Manual Setup (Advanced)
@@ -139,7 +139,7 @@ If you configured routing before this feature, add hydration manually:
 
 ```bash
 # Add planning repo to hydration list
-bd repo add ~/.beads-planning
+bd repo add ~/.bd-planning
 
 # Verify configuration
 bd repo list
@@ -163,7 +163,7 @@ Multi-repo hydration imports issues from all configured repos into the current d
 bd dolt start
 
 # In planning repo
-cd ~/.beads-planning
+cd ~/.bd-planning
 bd dolt start
 ```
 
@@ -171,15 +171,10 @@ Without running servers, hydration only sees old data.
 
 ### Troubleshooting
 
-Run `bd doctor` to check for configuration issues:
-
 ```bash
-bd doctor
-
-# Checks:
-# - routing.mode=auto with routing targets but repos.additional not configured
-# - Routing targets not in repos.additional list
-# - Dolt servers not running in hydrated repos
+bd config validate   # check sync/federation config
+bd config list       # inspect resolved routing config
+bd where             # confirm which .bd database is active
 ```
 
 **Common Issues:**

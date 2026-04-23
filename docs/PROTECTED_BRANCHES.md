@@ -38,7 +38,7 @@ cd your-project
 bd init
 ```
 
-This creates a `.beads/` directory with a Dolt database. Sync is handled via `bd dolt push` / `bd dolt pull`.
+This creates a `.bd/` directory with a Dolt database. Sync is handled via `bd dolt push` / `bd dolt pull`.
 
 **Important:** After initialization, you'll see some untracked files that should be committed to your protected branch:
 
@@ -47,7 +47,7 @@ This creates a `.beads/` directory with a Dolt database. Sync is handled via `bd
 git status
 
 # Commit the beads configuration to your protected branch
-git add .beads/.gitignore .gitattributes
+git add .bd/.gitignore .gitattributes
 git commit -m "Initialize beads issue tracker"
 git push origin main  # Or create a PR if required
 ```
@@ -55,16 +55,16 @@ git push origin main  # Or create a PR if required
 **Files created by `bd init`:**
 
 Files that should be committed to your protected branch (main):
-- `.beads/.gitignore` - Tells git what to ignore in .beads/ directory
+- `.bd/.gitignore` - Tells git what to ignore in .bd/ directory
 - `.gitattributes` - Configures merge driver for beads data
 
 Files that are automatically gitignored (do NOT commit):
-- `.beads/dolt/` - Dolt database directory (local only)
-- `.beads/dolt/sql-server.pid`, `sql-server.log` - Dolt server runtime files
+- `.bd/dolt/` - Dolt database directory (local only)
+- `.bd/dolt/sql-server.pid`, `sql-server.log` - Dolt server runtime files
 
 The sync branch (beads-sync) will contain:
-- `.beads/metadata.json` - Metadata about the beads installation
-- `.beads/config.yaml` - Configuration template (optional)
+- `.bd/metadata.json` - Metadata about the beads installation
+- `.bd/config.yaml` - Configuration template (optional)
 
 **2. Start the Dolt server:**
 
@@ -72,7 +72,7 @@ The sync branch (beads-sync) will contain:
 dolt sql-server
 ```
 
-With git hooks installed (`bd hooks install`), issue changes are automatically committed to the `beads-sync` branch.
+bd writes issue changes to the embedded Dolt database; commit and push with `bd dolt commit && bd dolt push`.
 
 **3. When ready, merge to main:**
 
@@ -98,10 +98,10 @@ Beads uses [git worktrees](https://git-scm.com/docs/git-worktree) to maintain a 
 your-project/
 ├── .git/                    # Main git directory
 │   └── beads-worktrees/
-│       └── beads-sync/  # Worktree (only .beads/ checked out)
-│           └── .beads/
+│       └── beads-sync/  # Worktree (only .bd/ checked out)
+│           └── .bd/
 │               └── dolt/
-├── .beads/                  # Your main copy
+├── .bd/                  # Your main copy
 │   ├── dolt/
 │   └── .gitignore
 ├── .gitattributes           # Merge driver config (in main branch)
@@ -111,20 +111,20 @@ your-project/
 **What lives in each branch:**
 
 Main branch (protected):
-- `.beads/.gitignore` - Tells git what to ignore
+- `.bd/.gitignore` - Tells git what to ignore
 - `.gitattributes` - Merge driver configuration
 
 Sync branch (beads-sync):
-- `.beads/metadata.json` - Repository metadata
-- `.beads/config.yaml` - Configuration template
+- `.bd/metadata.json` - Repository metadata
+- `.bd/config.yaml` - Configuration template
 
 Not tracked (gitignored):
-- `.beads/dolt/` - Dolt database directory (local only)
-- `.beads/dolt/sql-server.*` - Dolt server runtime files
+- `.bd/dolt/` - Dolt database directory (local only)
+- `.bd/dolt/sql-server.*` - Dolt server runtime files
 
 **Key points:**
 - The worktree is in `.git/beads-worktrees/` (hidden from your workspace)
-- Only `.beads/` is checked out in the worktree (sparse checkout)
+- Only `.bd/` is checked out in the worktree (sparse checkout)
 - Changes to issues are committed in the worktree
 - Your main working directory is never affected
 - Disk overhead is minimal (~few MB for the worktree)
@@ -133,7 +133,7 @@ Not tracked (gitignored):
 
 When you update an issue:
 
-1. Issue is updated in the Dolt database (`.beads/dolt/`)
+1. Issue is updated in the Dolt database (`.bd/dolt/`)
 2. Dolt automatically commits the change to its version history
 3. Changes are synced to remotes via `bd dolt push`
 4. Main branch stays untouched (no commits on `main`)
@@ -148,7 +148,7 @@ bd init
 ```
 
 This will:
-- Create `.beads/` directory with Dolt database
+- Create `.bd/` directory with Dolt database
 - Prompt to install git hooks (recommended: say yes)
 
 ### Option 2: Migrate Existing Project
@@ -156,23 +156,12 @@ This will:
 If you already have beads set up and want to switch to a separate branch:
 
 ```bash
-# Set the sync branch
 bd config set sync.branch beads-sync
-
-# Start the Dolt server and install git hooks
-bd dolt start
-bd hooks install
 ```
 
 ### Sync Configuration
 
-For automatic commits to the sync branch, install git hooks:
-
-```bash
-bd hooks install
-```
-
-Git hooks help maintain sync consistency. Use `bd dolt push` for manual sync when needed.
+Use `bd dolt commit && bd dolt push` to push changes up to the configured sync branch on the remote.
 
 ### Environment Variables
 
@@ -271,8 +260,8 @@ If you encounter conflicts during merge:
 
 ```bash
 # git merge may detect conflicts and show:
-Auto-merging .beads/...
-CONFLICT (content): Merge conflict in .beads/...
+Auto-merging .bd/...
+CONFLICT (content): Merge conflict in .bd/...
 
 To resolve:
 1. Use bd vc conflicts to view conflicts
@@ -343,7 +332,7 @@ Check server status and logs:
 bd dolt status
 
 # View logs
-tail -f .beads/dolt/sql-server.log
+tail -f .bd/dolt/sql-server.log
 
 # Restart server
 bd dolt stop && bd dolt start
@@ -351,7 +340,7 @@ bd dolt stop && bd dolt start
 
 Common issues:
 - Port already in use: Another Dolt server is running
-- Permission denied: Check `.beads/` directory permissions
+- Permission denied: Check `.bd/` directory permissions
 - Git errors: Ensure git is installed and repository is initialized
 
 ### Changes not syncing between clones
@@ -432,7 +421,7 @@ There's no "right" answer - choose what fits your team.
 Yes! Use `bd dolt show` to check current status, or use git to compare branches:
 
 ```bash
-git log main..beads-sync --oneline
+git log main..bd-sync --oneline
 # Shows commits on beads-sync not yet in main
 ```
 
@@ -441,7 +430,7 @@ Or create a pull request and review on GitHub/GitLab.
 ### What about disk space?
 
 Worktrees are very lightweight:
-- Sparse checkout means only `.beads/` is checked out
+- Sparse checkout means only `.bd/` is checked out
 - Typically < 1 MB for the worktree
 - Shared git history (no duplication)
 
@@ -521,7 +510,7 @@ jobs:
 
       - name: Merge to main (if changes)
         run: |
-          if git log main..beads-sync --oneline | grep -q '.'; then
+          if git log main..bd-sync --oneline | grep -q '.'; then
             git merge beads-sync --no-ff -m "Merge beads-sync metadata"
             git push origin main
           fi

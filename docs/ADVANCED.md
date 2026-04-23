@@ -160,7 +160,7 @@ When agents discover duplicate issues, they should:
 
 ## Git Worktrees
 
-Git worktrees work with bd. Each worktree can have its own `.beads` directory, or worktrees can share a database via redirects (see [Database Redirects](#database-redirects)).
+Git worktrees work with bd. Each worktree can have its own `.bd` directory, or worktrees can share a database via redirects (see [Database Redirects](#database-redirects)).
 
 **With Dolt backend:** Each worktree operates directly on the database — no special coordination needed. Use `bd dolt push` to sync with Dolt remotes when ready.
 
@@ -175,31 +175,31 @@ Multiple git clones can share a single beads database using redirect files. This
 
 ### Setting Up a Redirect
 
-Create a `.beads/redirect` file pointing to the shared database location:
+Create a `.bd/redirect` file pointing to the shared database location:
 
 ```bash
 # In your secondary clone
-mkdir -p .beads
-echo "../main-clone/.beads" > .beads/redirect
+mkdir -p .bd
+echo "../main-clone/.bd" > .bd/redirect
 
 # Or use an absolute path
-echo "/path/to/shared/.beads" > .beads/redirect
+echo "/path/to/shared/.bd" > .bd/redirect
 ```
 
-The redirect file should contain a single path (relative or absolute) to the target `.beads` directory.
+The redirect file should contain a single path (relative or absolute) to the target `.bd` directory.
 
 **Example setup:**
 ```
 repo/
 ├── main-clone/
-│   └── .beads/
+│   └── .bd/
 │       └── beads.db      ← Actual database
 ├── agent-1/
-│   └── .beads/
-│       └── redirect      ← Points to ../main-clone/.beads
+│   └── .bd/
+│       └── redirect      ← Points to ../main-clone/.bd
 └── agent-2/
-    └── .beads/
-        └── redirect      ← Points to ../main-clone/.beads
+    └── .bd/
+        └── redirect      ← Points to ../main-clone/.bd
 ```
 
 ### Checking Active Location
@@ -208,10 +208,10 @@ Use `bd where` to see which database is actually being used:
 
 ```bash
 bd where
-# /path/to/main-clone/.beads
-#   (via redirect from /path/to/agent-1/.beads)
+# /path/to/main-clone/.bd
+#   (via redirect from /path/to/agent-1/.bd)
 #   prefix: bd
-#   database: /path/to/main-clone/.beads/beads.db
+#   database: /path/to/main-clone/.bd/beads.db
 
 bd where --json
 # {"path": "...", "redirected_from": "...", "prefix": "bd", "database_path": "..."}
@@ -232,7 +232,7 @@ bd where --json
 **Not recommended for:**
 - Separate projects (use separate databases)
 - Long-lived forks (they should have their own issues)
-- Git worktrees (each should have its own `.beads` directory)
+- Git worktrees (each should have its own `.bd` directory)
 
 ## Handling Merge Conflicts
 
@@ -261,28 +261,12 @@ When you encounter the same ID during a Dolt pull or database bootstrap, it's an
 - Same ID + different fields = normal update to existing issue
 - Dolt's cell-level merge resolves updates automatically
 
-**Bootstrapping from an export:**
+**Bootstrapping from a legacy JSONL export:**
 ```bash
-# Export from one database
-bd export -o data.jsonl
-
-# Bootstrap a new database from the export
-bd init --from-jsonl
+bd init --from-jsonl   # reads .bd/issues.jsonl if present
 ```
 
-## Custom Git Hooks
-
-Git hooks can be used to integrate beads with your git workflow:
-
-### Using the Installer (Recommended)
-
-```bash
-bd hooks install
-```
-
-This installs hooks for beads data consistency checks during git operations.
-
-See [DOLT.md](DOLT.md) for details on how the Dolt backend handles sync natively.
+See [DOLT.md](DOLT.md) for how the Dolt backend handles sync natively.
 
 ## Extensible Database
 
@@ -317,7 +301,7 @@ Understanding the role of each component:
 
 ### MCP Server (Optional)
 - **Protocol adapter** — Translates MCP calls to direct CLI invocations
-- **Workspace routing** — Finds correct `.beads` directory based on working directory
+- **Workspace routing** — Finds correct `.bd` directory based on working directory
 - **Stateless** — Doesn't cache or store any issue data itself
 - **Editor integration** — Makes bd available to Claude, Cursor, and other MCP clients
 

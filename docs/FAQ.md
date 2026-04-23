@@ -58,28 +58,9 @@ Absolutely! bd is a great CLI issue tracker for humans too. The `bd ready` comma
 
 ### Is this production-ready?
 
-**Current status: Alpha (v0.9.11)**
+**Current status: 1.x**
 
-bd is in active development and being dogfooded on real projects. The core functionality (create, update, dependencies, ready work, collision resolution) is stable and well-tested. However:
-
-- ⚠️ **Alpha software** - No 1.0 release yet
-- ⚠️ **API may change** - Command flags and data format may evolve before 1.0
-- ✅ **Safe for development** - Use for development/internal projects
-- ✅ **Data is portable** - `bd export` produces human-readable JSONL for easy migration
-- 📈 **Rapid iteration** - Expect frequent updates and improvements
-
-**When to use bd:**
-- ✅ AI-assisted development workflows
-- ✅ Internal team projects
-- ✅ Personal productivity with dependency tracking
-- ✅ Experimenting with agent-first tools
-
-**When to wait:**
-- ❌ Mission-critical production systems (wait for 1.0)
-- ❌ Large enterprise deployments (wait for stability guarantees)
-- ❌ Long-term archival (though `bd export` makes migration easy)
-
-Follow the repo for updates and the path to 1.0!
+bd is a fork of [beads](https://github.com/steveyegge/beads) that's been aggressively simplified. The core surface (create, update, dependencies, ready work, sync) is stable. Backup/restore use `bd backup` (Dolt-native); raw export to JSON isn't a first-class feature.
 
 ## Usage Questions
 
@@ -174,8 +155,8 @@ bd init  # Creates Dolt database, pulls from remote if configured
 
 # Or initialize new project:
 cd ~/my-project
-bd init  # Creates .beads/, sets up Dolt database
-git add .beads/
+bd init  # Creates .bd/, sets up Dolt database
+git add .bd/
 git commit -m "Initialize beads"
 ```
 
@@ -198,7 +179,7 @@ bd dolt push    # Push changes to Dolt remote
 bd dolt pull    # Pull changes from Dolt remote
 ```
 
-The `bd export` command exists for issue portability and interchange. For backup and restore, use `bd backup init <path>` / `bd backup sync` to push Dolt-native backups, and `bd backup restore <path>` to restore from them. None of these are needed for day-to-day Dolt sync.
+For backup and restore, use `bd backup init <path>` / `bd backup sync` to push Dolt-native backups, and `bd backup restore <path>` to restore from them. These are not needed for day-to-day Dolt sync.
 
 ### What if my database feels stale after a colleague pushes changes?
 
@@ -223,11 +204,11 @@ cd ~/project1 && bd init --prefix proj1
 cd ~/project2 && bd init --prefix proj2
 ```
 
-Each project gets its own `.beads/` directory with its own Dolt database. bd auto-discovers the correct database based on your current directory (walks up like git).
+Each project gets its own `.bd/` directory with its own Dolt database. bd auto-discovers the correct database based on your current directory (walks up like git).
 
 **Multi-project scenarios work seamlessly:**
 - Multiple agents working on different projects simultaneously - no conflicts
-- Same machine, different repos - each finds its own `.beads/` automatically
+- Same machine, different repos - each finds its own `.bd/` automatically
 - Agents in subdirectories - bd walks up to find the project root (like git)
 - **Per-project Dolt servers** (default) - each project gets its own Dolt server
 - **Shared Dolt server** (opt-in) - all projects share a single server for reduced resource usage
@@ -237,10 +218,10 @@ Each project gets its own `.beads/` directory with its own Dolt database. bd aut
 **Example:** Multiple agents, multiple projects, same machine:
 ```bash
 # Agent 1 working on web app
-cd ~/work/webapp && bd ready --json    # Uses ~/work/webapp/.beads/ database "webapp"
+cd ~/work/webapp && bd ready --json    # Uses ~/work/webapp/.bd/ database "webapp"
 
 # Agent 2 working on API
-cd ~/work/api && bd ready --json       # Uses ~/work/api/.beads/ database "api"
+cd ~/work/api && bd ready --json       # Uses ~/work/api/.bd/ database "api"
 
 # No conflicts! Completely isolated databases.
 ```
@@ -252,7 +233,7 @@ export BEADS_DOLT_SHARED_SERVER=1   # add to shell profile for machine-wide
 # Or per-project: bd dolt set shared-server true
 ```
 
-**Architecture:** By default, bd uses per-project Dolt servers (like LSP/language servers). With shared server mode enabled, a single server at `~/.beads/shared-server/` handles all projects, each using its own database. See [DOLT.md](DOLT.md) for details.
+**Architecture:** By default, bd uses per-project Dolt servers (like LSP/language servers). With shared server mode enabled, a single server at `~/.bd/shared-server/` handles all projects, each using its own database. See [DOLT.md](DOLT.md) for details.
 
 ### What happens if two agents work on the same issue?
 
@@ -262,17 +243,14 @@ With Dolt server mode, concurrent writes are handled natively. For distributed s
 - Query by assignee: `bd ready --assignee agent-name`
 - Review git diffs before merging
 
-For true multi-agent coordination, use Dolt server mode (`bd dolt start`) which supports concurrent writes natively. For distributed setups, use Dolt federation for peer-to-peer sync.
-
 ### Why Dolt instead of plain files?
 
 - ✅ **Version-controlled SQL**: Full SQL queries with native version control
 - ✅ **Cell-level merge**: Concurrent changes merge automatically at the field level
-- ✅ **Multi-writer**: Server mode supports concurrent agents
 - ✅ **Native branching**: Dolt branches independent of git branches
-- ✅ **Portable**: `bd export` produces JSONL for migration and interoperability
+- ✅ **Distributed sync**: `bd dolt push` / `bd dolt pull` to any Dolt remote
 
-See [DOLT.md](DOLT.md) for detailed analysis.
+See [DOLT.md](DOLT.md) for details.
 
 ### How do I handle merge conflicts?
 
@@ -301,19 +279,13 @@ We don't have automated migration tools yet, but you can:
 
 1. Export issues from your current tracker (usually CSV or JSON)
 2. Write a simple script to convert to bd's JSONL format
-3. Place the JSONL file at `.beads/issues.jsonl` and run `bd init --from-jsonl`
+3. Place the JSONL file at `.bd/issues.jsonl` and run `bd init --from-jsonl`
 
 See [examples/](../examples/) for scripting patterns. Contributions welcome!
 
-### Can I export back to GitHub Issues / Jira?
+### Can I export to GitHub Issues / Jira?
 
-Not yet built-in, but you can:
-
-1. Export from bd: `bd export -o issues.jsonl --json`
-2. Write a script to convert JSONL to your target format
-3. Use the target system's API to import
-
-The [CONFIG.md](CONFIG.md) guide shows how to store integration settings. Contributions for standard exporters welcome!
+Not built-in. `bd list --json` dumps every open issue as JSON; feed that to the target API with a small script.
 
 ## Performance Questions
 
@@ -340,7 +312,7 @@ bd admin compact --dry-run --all
 bd admin compact --days 90
 
 # Run Dolt garbage collection
-cd .beads/dolt && dolt gc
+cd .bd/dolt && dolt gc
 ```
 
 Or split your project into multiple databases:
@@ -473,7 +445,7 @@ Database corruption can occur from:
 
 **Solution**: Rebuild from Dolt remote or a backup export:
 ```bash
-rm -rf .beads/dolt
+rm -rf .bd/dolt
 bd init
 bd dolt pull    # Pull from Dolt remote if configured
 ```

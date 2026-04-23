@@ -12,7 +12,7 @@ The exclusive lock protocol allows external tools to claim exclusive management 
 
 ### Lock File Format
 
-The lock file is located at `.beads/.exclusive-lock` and contains JSON:
+The lock file is located at `.bd/.exclusive-lock` and contains JSON:
 
 ```json
 {
@@ -93,8 +93,8 @@ func releaseLock(beadsDir string) error {
 
 ```bash
 #!/bin/bash
-BEADS_DIR=".beads"
-LOCK_FILE="$BEADS_DIR/.exclusive-lock"
+BD_DIR=".bd"
+LOCK_FILE="$BD_DIR/.exclusive-lock"
 
 # Create lock
 cat > "$LOCK_FILE" <<EOF
@@ -121,7 +121,7 @@ Always use cleanup handlers to ensure locks are released:
 
 ```go
 func main() {
-    beadsDir := ".beads"
+    beadsDir := ".bd"
     
     // Acquire lock
     if err := acquireLock(beadsDir, "my-tool", "1.0.0"); err != nil {
@@ -174,16 +174,16 @@ Removed stale lock (vc-executor), proceeding with sync
 Skipping database (lock check failed: malformed lock file: unexpected EOF)
 ```
 
-Check server logs (`.beads/dolt/sql-server.log`) to troubleshoot lock issues.
+Check server logs (`.bd/dolt/sql-server.log`) to troubleshoot lock issues.
 
 **Note:** The server checks for locks at the start of each sync cycle. If a lock is created during a sync cycle, that cycle will complete, but subsequent cycles will skip the database.
 
 ## Testing Your Integration
 
 1. **Start the Dolt server**: `bd dolt start`
-2. **Create a lock**: Use your tool to create `.beads/.exclusive-lock`
+2. **Create a lock**: Use your tool to create `.bd/.exclusive-lock`
 3. **Verify server skips**: Check server logs for "Skipping database" message
-4. **Release lock**: Remove `.beads/.exclusive-lock`
+4. **Release lock**: Remove `.bd/.exclusive-lock`
 5. **Verify server resumes**: Check server logs for normal sync cycle
 
 ## Security Considerations

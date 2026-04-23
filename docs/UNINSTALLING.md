@@ -1,186 +1,50 @@
-# Uninstalling Beads
+# Uninstalling bd
 
-This guide explains how to completely remove Beads from a repository.
+## Remove the binary
 
-## Quick Uninstall
+Whichever install method you used:
 
-Run these commands from your repository root:
+- Install script / `make install`: `rm "$(command -v bd)"`
+- Mise: `mise uninstall github:signalnine/bd`
 
-```bash
-# 1. Stop any running Dolt server (optional)
-bd dolt stop 2>/dev/null || true
+## Remove issue data
 
-# 2. Remove git hooks installed by Beads
-rm -f .git/hooks/pre-commit .git/hooks/prepare-commit-msg .git/hooks/post-merge .git/hooks/pre-push .git/hooks/post-checkout
-
-# 3. Remove git config entries
-git config --unset beads.role
-git config --unset merge.beads.driver
-git config --unset merge.beads.name
-
-# 4. Remove .gitattributes entry (if only contains beads config)
-# Or manually edit to remove the beads line
-rm -f .gitattributes
-
-# 5. Remove .beads directory
-rm -rf .beads
-
-# 6. Remove sync worktree (if exists)
-rm -rf .git/beads-worktrees
-```
-
-## Detailed Steps
-
-### 1. Stop the Dolt Server (Optional)
-
-If a Dolt server is running, stop it before cleanup:
+Per project:
 
 ```bash
-bd dolt stop 2>/dev/null || true
+rm -rf .bd
 ```
 
-### 2. Remove Git Hooks
-
-Beads installs these hooks in `.git/hooks/`:
-
-| Hook | Purpose |
-|------|---------|
-| `pre-commit` | Runs beads pre-commit checks |
-| `prepare-commit-msg` | Adds beads metadata to commit messages |
-| `post-merge` | Imports changes after merges |
-| `pre-push` | Syncs before pushing |
-| `post-checkout` | Imports after branch switches |
-
-To remove them:
+This deletes the embedded Dolt database and all issue history. Back up first if you care:
 
 ```bash
-rm -f .git/hooks/pre-commit
-rm -f .git/hooks/prepare-commit-msg
-rm -f .git/hooks/post-merge
-rm -f .git/hooks/pre-push
-rm -f .git/hooks/post-checkout
+bd backup init /some/path
+bd backup sync
 ```
 
-**Note:** If you had custom hooks before installing Beads, check for `.backup` files:
-```bash
-ls .git/hooks/*.backup
-```
-
-Restore any backups if needed:
-```bash
-mv .git/hooks/pre-commit.backup .git/hooks/pre-commit
-```
-
-### 3. Remove Git Config Entries
-
-Beads adds these entries to your git config:
+Or keep the raw Dolt database elsewhere:
 
 ```bash
-git config --unset beads.role
-git config --unset merge.beads.driver
-git config --unset merge.beads.name
+cp -r .bd/embeddeddolt /some/safe/place
 ```
 
-### 4. Remove .gitattributes Entry
+## Remove git hook residue (legacy installs only)
 
-Beads may have added a line to `.gitattributes` for merge handling. Check and remove if present:
+bd <= v1.0.2 installed git hook shims that break commits after the binary is gone. If you were on that version, check:
 
 ```bash
-# Check if .gitattributes contains beads config
-cat .gitattributes
-
-# Remove the entire file if it only contains beads config
-rm -f .gitattributes
-
-# Or edit to remove just the beads line
+git config --get core.hooksPath   # should be unset, or pointing at .git/hooks
 ```
 
-### 5. Remove .beads Directory
-
-The `.beads/` directory contains:
-
-| File/Dir | Description |
-|----------|-------------|
-| `dolt/` | Dolt database directory |
-| `dolt/sql-server.pid` | Running Dolt server PID (if server mode) |
-| `dolt/sql-server.log` | Dolt server logs (if server mode) |
-| `issues.jsonl` | Legacy issue data (if present) |
-| `config.yaml` | Project configuration |
-| `metadata.json` | Version tracking |
-| `deletions.jsonl` | Soft-deleted issues (if present) |
-| `README.md` | Human-readable overview |
-
-Remove everything:
-```bash
-rm -rf .beads
-```
-
-**Warning:** This permanently deletes all issue data. Consider backing up first:
-```bash
-bd export -o ~/beads-backup-$(date +%Y%m%d).jsonl
-```
-
-### 6. Remove Sync Worktree
-
-If you used branch sync features, clean up the worktree:
+If it's pointing at `.bd/hooks` or `.bd-hooks`, unset it:
 
 ```bash
-rm -rf .git/beads-worktrees
+git config --unset core.hooksPath
+rm -rf .bd/hooks .bd-hooks
 ```
 
-### 7. Commit the Removal (Optional)
+(Running `bd init` once on v1.0.3+ auto-cleans this.)
 
-If `.beads/` was tracked in git, commit its removal:
+## Remove global config
 
-```bash
-git add -A
-git commit -m "Remove beads issue tracking"
-git push
-```
-
-## Uninstalling the `bd` Binary
-
-The `bd` command itself is a standalone binary. Remove it based on how you installed:
-
-**If installed via go install:**
-```bash
-rm $(which bd)
-# Or: rm ~/go/bin/bd
-```
-
-**If installed manually:**
-```bash
-# Remove from wherever you placed it
-rm /usr/local/bin/bd
-```
-
-## Verify Complete Removal
-
-Run these checks to confirm Beads is fully removed:
-
-```bash
-# Should show "command not found" or be a different bd
-which bd
-
-# Should not exist
-ls .beads/
-
-# Should not contain beads hooks
-ls .git/hooks/
-
-# Should not have merge driver
-git config --get merge.beads.driver
-
-# No .gitattributes or no beads line
-cat .gitattributes
-```
-
-## Re-installing Later
-
-To set up Beads again in the future:
-
-```bash
-bd init
-```
-
-This will recreate the `.beads/` directory, install hooks, and configure the merge driver.
+bd does not write outside `.bd/` in your project. No global uninstall needed beyond the binary.

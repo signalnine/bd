@@ -19,7 +19,7 @@ bd's core design enables a distributed, Dolt-powered issue tracker that feels li
                                v
 ┌─────────────────────────────────────────────────────────────────┐
 │                      Dolt Database                               │
-│                      (.beads/dolt/)                               │
+│                      (.bd/dolt/)                               │
 │                                                                  │
 │  - Version-controlled SQL database with cell-level merge         │
 │  - Server mode via dolt sql-server (multi-writer capable)        │
@@ -49,7 +49,7 @@ bd's core design enables a distributed, Dolt-powered issue tracker that feels li
 
 **Dolt for distribution:** Native push/pull to Dolt remotes (DoltHub, S3, GCS). No special sync server needed. Issues travel with your code. Offline work just works.
 
-**Export and backup:** `bd export` outputs issue JSONL for data migration and interoperability. Use `bd backup init` / `bd backup sync` to push Dolt-native backups (preserving full commit history) to a filesystem path or DoltHub, and `bd backup restore` to restore from them.
+**Backup:** Use `bd backup init` / `bd backup sync` to push Dolt-native backups (preserving full commit history) to a filesystem path or DoltHub, and `bd backup restore` to restore from them.
 
 ## Write Path
 
@@ -166,10 +166,10 @@ Each workspace can run its own Dolt server for multi-writer access:
 
 **Server mode:**
 - Connects to `dolt sql-server` (multi-writer, high-concurrency)
-- PID file at `.beads/dolt-server.pid`
-- Logs at `.beads/dolt-server.log`
+- PID file at `.bd/dolt-server.pid`
+- Logs at `.bd/dolt-server.log`
 - **Shared server mode** (opt-in): all projects share a single Dolt server at
-  `~/.beads/shared-server/` instead of per-project servers. Enable via
+  `~/.bd/shared-server/` instead of per-project servers. Enable via
   `dolt.shared-server: true` in config.yaml or `BEADS_DOLT_SHARED_SERVER=1`.
 
 **Embedded mode:**
@@ -211,7 +211,7 @@ open ──▶ in_progress ──▶ closed
 
 ### Issue Schema
 
-Each issue in the Dolt database (and in JSONL exports via `bd export`) has the following fields. Fields marked with `(optional)` use `omitempty` and are excluded when empty/zero.
+Each issue in the Dolt database has the following fields. Fields marked with `(optional)` use `omitempty` and are excluded when empty/zero.
 
 **Core Identification:**
 
@@ -282,7 +282,7 @@ Each issue in the Dolt database (and in JSONL exports via `bd export`) has the f
 ## Directory Structure
 
 ```
-.beads/
+.bd/
 ├── dolt/             # Dolt database, sql-server.pid, sql-server.log (gitignored)
 ├── metadata.json     # Backend config (local, gitignored)
 └── config.yaml       # Project config (optional)
@@ -300,61 +300,8 @@ Each issue in the Dolt database (and in JSONL exports via `bd export`) has the f
 | Backup restore | `cmd/bd/backup_restore.go` |
 | Issue bootstrap/migration | `cmd/bd/init.go` |
 
-## Wisps and Molecules
-
-**Molecules** are template work items that define structured workflows. When spawned, they create **wisps** - ephemeral child issues that track execution steps.
-
-> **For full documentation** on the molecular chemistry metaphor (protos, pour, bond, squash, burn), see [MOLECULES.md](MOLECULES.md).
-
-### Wisp Lifecycle
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   bd mol wisp       │───▶│  Wisp Issues    │───▶│  bd mol squash  │
-│ (from template) │    │  (local-only)   │    │  (→ digest)     │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-```
-
-1. **Create:** Create wisps from a molecule template
-2. **Execute:** Agent works through wisp steps (local database only)
-3. **Squash:** Compress wisps into a permanent digest issue
-
-### Why Wisps Don't Sync
-
-Wisps are intentionally **local-only**:
-
-- They exist only in the spawning agent's local database
-- They are **never exported or synced**
-- They cannot resurrect from other clones (they were never there)
-- They are **hard-deleted** when squashed (no tombstones needed)
-
-This design enables:
-
-- **Fast local iteration:** No sync overhead during execution
-- **Clean history:** Only the digest (outcome) enters git
-- **Agent isolation:** Each agent's execution trace is private
-- **Bounded storage:** Wisps don't accumulate across clones
-
-### Wisp vs Regular Issue Deletion
-
-| Aspect | Regular Issues | Wisps |
-|--------|---------------|-------|
-| Synced to remotes | Yes | No |
-| Tombstone on delete | Yes | No |
-| Can resurrect | Yes (without tombstone) | No (never synced) |
-| Deletion method | `CreateTombstone()` | `DeleteIssue()` (hard delete) |
-
-The `bd mol squash` command uses hard delete intentionally - tombstones would be wasted overhead for data that never leaves the local database.
-
-### Future Directions
-
-- **Separate wisp repo:** Keep wisps in a dedicated ephemeral git repo
-- **Digest migration:** Explicit step to promote digests to main repo
-- **Wisp retention:** Option to preserve wisps in local git history
-
 ## Related Documentation
 
-- [MOLECULES.md](MOLECULES.md) - Molecular chemistry metaphor (protos, pour, bond, squash, burn)
 - [INTERNALS.md](INTERNALS.md) - FlushManager, Blocked Cache implementation details
 - [ADVANCED.md](ADVANCED.md) - Advanced features and configuration
 - [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - Recovery procedures and common issues
