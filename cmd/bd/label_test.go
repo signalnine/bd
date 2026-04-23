@@ -171,11 +171,16 @@ func TestLabelCommands(t *testing.T) {
 		h.assertNotHasLabel(issue.ID, "label2")
 	})
 
-	t.Run("remove non-existent label is no-op", func(t *testing.T) {
+	t.Run("remove non-existent label errors (BUG-cr6)", func(t *testing.T) {
 		issue := h.createIssue("Remove Non-Existent Test", types.TypeTask, 1)
 		h.addLabel(issue.ID, "exists")
-		h.removeLabel(issue.ID, "does-not-exist")
+		err := h.s.RemoveLabel(h.ctx, issue.ID, "does-not-exist", "test-user")
+		if err == nil {
+			t.Fatal("expected error removing non-existent label, got nil")
+		}
+		// Existing label is untouched; no spurious removal happens.
 		h.assertLabelCount(issue.ID, 1)
+		h.assertHasLabel(issue.ID, "exists")
 	})
 
 	t.Run("get labels for issue with no labels", func(t *testing.T) {

@@ -3,11 +3,19 @@ package issueops
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/signalnine/bd/internal/types"
 )
+
+// ErrLabelNotFound is returned when RemoveLabelInTx is asked to delete a
+// label that is not present on the issue. Callers that want to tolerate
+// the missing-label case (e.g., bulk cleanups) can check errors.Is against
+// this sentinel; user-facing commands like `bd label remove` should surface
+// it as a non-zero exit.
+var ErrLabelNotFound = errors.New("label not found")
 
 // GetLabelsInTx retrieves all labels for an issue within an existing transaction.
 // Automatically routes to wisp_labels if the ID is an active wisp.
@@ -130,7 +138,8 @@ func AddLabelInTx(ctx context.Context, tx *sql.Tx, labelTable, eventTable, issue
 
 // RemoveLabelInTx removes a label from an issue and records an event within
 // an existing transaction. Automatically routes to wisp tables if the ID is
-// an active wisp.
+// an active wisp. Returns ErrLabelNotFound when no matching label row exists
+// (BUG-cr6: previously silent success with a misleading "label_removed" event).
 //
 //nolint:gosec // G201: table names come from WispTableRouting (hardcoded constants)
 func RemoveLabelInTx(ctx context.Context, tx *sql.Tx, labelTable, eventTable, issueID, label, actor string) error {
@@ -144,8 +153,16 @@ func RemoveLabelInTx(ctx context.Context, tx *sql.Tx, labelTable, eventTable, is
 			eventTable = et
 		}
 	}
-	if _, err := tx.ExecContext(ctx, fmt.Sprintf(`DELETE FROM %s WHERE issue_id = ? AND label = ?`, labelTable), issueID, label); err != nil {
+	res, err := tx.ExecContext(ctx, fmt.Sprintf(`DELETE FROM %s WHERE issue_id = ? AND label = ?`, labelTable), issueID, label)
+	if err != nil {
 		return fmt.Errorf("remove label: %w", err)
+	}
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("remove label: rows affected: %w", err)
+	}
+	if affected == 0 {
+		return fmt.Errorf("%w: %s does not have label %q", ErrLabelNotFound, issueID, label)
 	}
 	comment := "Removed label: " + label
 	if _, err := tx.ExecContext(ctx, fmt.Sprintf(`INSERT INTO %s (issue_id, event_type, actor, comment) VALUES (?, ?, ?, ?)`, eventTable),
