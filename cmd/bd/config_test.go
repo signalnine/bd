@@ -329,9 +329,10 @@ func TestValidateSyncConfig(t *testing.T) {
 		}
 
 		issues := validateSyncConfig(tmpDir)
-		// After JSONL removal, Dolt sync requires federation.remote
-		if len(issues) != 1 {
-			t.Errorf("Expected 1 issue (missing federation.remote) for empty config, got: %v", issues)
+		// federation.remote is not read by bd dolt push/pull/remote (those use the
+		// dolt_remotes SQL table), so an unset value is not a validation issue.
+		if len(issues) != 0 {
+			t.Errorf("Expected 0 issues for empty config, got: %v", issues)
 		}
 	})
 
@@ -357,7 +358,10 @@ federation:
 		}
 	})
 
-	t.Run("dolt-native mode without remote", func(t *testing.T) {
+	t.Run("dolt-native mode without federation.remote is not an error", func(t *testing.T) {
+		// federation.remote is no longer required: bd dolt push/pull read remotes
+		// from the dolt_remotes SQL table (written by 'bd dolt remote add'), not
+		// from this config key. Nothing outside tests reads federation.remote.
 		configContent := `prefix: test
 sync:
   mode: "dolt-native"
@@ -367,15 +371,11 @@ sync:
 		}
 
 		issues := validateSyncConfig(tmpDir)
-		found := false
 		for _, issue := range issues {
 			if strings.Contains(issue, "federation.remote") && strings.Contains(issue, "required") {
-				found = true
+				t.Errorf("federation.remote should not be flagged as required, got: %v", issues)
 				break
 			}
-		}
-		if !found {
-			t.Errorf("Expected issue about federation.remote being required, got: %v", issues)
 		}
 	})
 

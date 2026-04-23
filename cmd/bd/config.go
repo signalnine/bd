@@ -387,9 +387,11 @@ var configValidateCmd = &cobra.Command{
 
 Checks:
   - federation.sovereignty is valid (T1, T2, T3, T4, or empty)
-  - federation.remote is set for Dolt sync
-  - Remote URL format is valid (dolthub://, gs://, s3://, file://)
-  - routing.mode is valid (auto, maintainer, contributor, explicit)
+  - federation.remote, if set, has a valid URL format (http://, https://, git+)
+
+Note: Dolt remote configuration for 'bd dolt push/pull' is managed via
+'bd dolt remote add <name> <url>' and stored in the dolt_remotes SQL
+table, not via the federation.remote config key.
 
 Examples:
   bd config validate
@@ -463,15 +465,12 @@ func validateSyncConfig(repoPath string) []string {
 		issues = append(issues, fmt.Sprintf("federation.sovereignty: %q is invalid (valid values: %s, or empty for no restriction)", federationSov, strings.Join(config.ValidSovereigntyTiers(), ", ")))
 	}
 
-	// Validate federation.remote is set (required for Dolt sync)
-	if federationRemote == "" {
-		issues = append(issues, "federation.remote: required for Dolt sync")
-	}
-
-	// Validate remote URL format
+	// federation.remote is not required: bd dolt push/pull/remote operate on
+	// the SQL dolt_remotes table (managed by 'bd dolt remote add'), not this
+	// config key. If it is set, only validate its format.
 	if federationRemote != "" {
 		if !isValidRemoteURL(federationRemote) {
-			issues = append(issues, fmt.Sprintf("federation.remote: %q is not a valid remote URL (expected dolthub://, gs://, s3://, file://, or standard git URL)", federationRemote))
+			issues = append(issues, fmt.Sprintf("federation.remote: %q is not a valid remote URL (expected http://, https://, or git+ URL)", federationRemote))
 		}
 	}
 
