@@ -180,19 +180,34 @@ func AddDependencyInTx(ctx context.Context, tx *sql.Tx, dep *types.Dependency, a
 	return nil
 }
 
+// ErrDependencyNotFound is returned when RemoveDependencyInTx is asked to
+// delete a dependency that does not exist. Callers that iterate known deps
+// (e.g., cascading delete of an issue's dependencies) may ignore this
+// sentinel; user-facing commands like `bd dep rm` should surface it.
+var ErrDependencyNotFound = errors.New("dependency not found")
+
 // RemoveDependencyInTx removes a dependency between two issues within an
 // existing transaction. Automatically routes to wisp_dependencies if the
-// source issue is an active wisp.
+// source issue is an active wisp. Returns ErrDependencyNotFound when no
+// matching dependency row exists (BUG-42: previously silent success).
 //
 //nolint:gosec // G201: table names come from WispTableRouting (hardcoded constants)
 func RemoveDependencyInTx(ctx context.Context, tx *sql.Tx, issueID, dependsOnID string) error {
 	isWisp := IsActiveWispInTx(ctx, tx, issueID)
 	_, _, _, depTable := WispTableRouting(isWisp)
 
-	if _, err := tx.ExecContext(ctx, fmt.Sprintf(
+	res, err := tx.ExecContext(ctx, fmt.Sprintf(
 		`DELETE FROM %s WHERE issue_id = ? AND depends_on_id = ?`, depTable),
-		issueID, dependsOnID); err != nil {
+		issueID, dependsOnID)
+	if err != nil {
 		return fmt.Errorf("remove dependency: %w", err)
+	}
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("remove dependency: rows affected: %w", err)
+	}
+	if affected == 0 {
+		return fmt.Errorf("%w: %s does not depend on %s", ErrDependencyNotFound, issueID, dependsOnID)
 	}
 	return nil
 }

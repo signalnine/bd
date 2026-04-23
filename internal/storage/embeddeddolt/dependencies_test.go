@@ -282,3 +282,88 @@ func TestAddDependency(t *testing.T) {
 		}
 	})
 }
+
+// TestRemoveDependency covers the RemoveDependency code path. BUG-42:
+// `bd dep rm` on a nonexistent dep used to report success because the DELETE
+// statement silently affected 0 rows. RemoveDependency must return an error
+// when no dependency matches the issue/dependsOn pair.
+func TestRemoveDependency(t *testing.T) {
+	skipUnlessEmbeddedDolt(t)
+
+	t.Run("removes_existing_dep", func(t *testing.T) {
+		te := newTestEnv(t, "re")
+		ctx := t.Context()
+
+		a := &types.Issue{ID: "re-a", Title: "A", Status: types.StatusOpen, Priority: 2, IssueType: types.TypeTask}
+		b := &types.Issue{ID: "re-b", Title: "B", Status: types.StatusOpen, Priority: 2, IssueType: types.TypeTask}
+		if err := te.store.CreateIssue(ctx, a, "tester"); err != nil {
+			t.Fatalf("CreateIssue A: %v", err)
+		}
+		if err := te.store.CreateIssue(ctx, b, "tester"); err != nil {
+			t.Fatalf("CreateIssue B: %v", err)
+		}
+
+		dep := &types.Dependency{IssueID: "re-a", DependsOnID: "re-b", Type: types.DepBlocks}
+		if err := te.store.AddDependency(ctx, dep, "tester"); err != nil {
+			t.Fatalf("AddDependency: %v", err)
+		}
+
+		if err := te.store.RemoveDependency(ctx, "re-a", "re-b", "tester"); err != nil {
+			t.Fatalf("RemoveDependency of existing dep: %v", err)
+		}
+	})
+
+	t.Run("nonexistent_dep_errors", func(t *testing.T) {
+		te := newTestEnv(t, "rx")
+		ctx := t.Context()
+
+		a := &types.Issue{ID: "rx-a", Title: "A", Status: types.StatusOpen, Priority: 2, IssueType: types.TypeTask}
+		b := &types.Issue{ID: "rx-b", Title: "B", Status: types.StatusOpen, Priority: 2, IssueType: types.TypeTask}
+		if err := te.store.CreateIssue(ctx, a, "tester"); err != nil {
+			t.Fatalf("CreateIssue A: %v", err)
+		}
+		if err := te.store.CreateIssue(ctx, b, "tester"); err != nil {
+			t.Fatalf("CreateIssue B: %v", err)
+		}
+
+		// Never added a dep between A and B; removing must error (BUG-42).
+		err := te.store.RemoveDependency(ctx, "rx-a", "rx-b", "tester")
+		if err == nil {
+			t.Fatal("expected error for RemoveDependency on nonexistent dep, got nil")
+		}
+		if !strings.Contains(err.Error(), "not found") {
+			t.Errorf("expected 'not found' error, got: %v", err)
+		}
+	})
+
+	t.Run("double_remove_errors", func(t *testing.T) {
+		te := newTestEnv(t, "dr")
+		ctx := t.Context()
+
+		a := &types.Issue{ID: "dr-a", Title: "A", Status: types.StatusOpen, Priority: 2, IssueType: types.TypeTask}
+		b := &types.Issue{ID: "dr-b", Title: "B", Status: types.StatusOpen, Priority: 2, IssueType: types.TypeTask}
+		if err := te.store.CreateIssue(ctx, a, "tester"); err != nil {
+			t.Fatalf("CreateIssue A: %v", err)
+		}
+		if err := te.store.CreateIssue(ctx, b, "tester"); err != nil {
+			t.Fatalf("CreateIssue B: %v", err)
+		}
+
+		dep := &types.Dependency{IssueID: "dr-a", DependsOnID: "dr-b", Type: types.DepBlocks}
+		if err := te.store.AddDependency(ctx, dep, "tester"); err != nil {
+			t.Fatalf("AddDependency: %v", err)
+		}
+		if err := te.store.RemoveDependency(ctx, "dr-a", "dr-b", "tester"); err != nil {
+			t.Fatalf("first RemoveDependency: %v", err)
+		}
+
+		// Second remove: dep already gone, must error.
+		err := te.store.RemoveDependency(ctx, "dr-a", "dr-b", "tester")
+		if err == nil {
+			t.Fatal("expected error on second RemoveDependency, got nil")
+		}
+		if !strings.Contains(err.Error(), "not found") {
+			t.Errorf("expected 'not found' error, got: %v", err)
+		}
+	})
+}
