@@ -22,7 +22,6 @@ var migrateCmd = &cobra.Command{
 Without subcommand, checks and updates database metadata to current version.
 
 Subcommands:
-  hooks       Plan git hook migration to marker-managed format
   issues      Move issues between repositories
   sync        Set up sync.branch workflow for multi-clone setups
 `,

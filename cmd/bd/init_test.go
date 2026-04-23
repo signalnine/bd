@@ -1751,11 +1751,10 @@ func TestInitDatabaseFlag(t *testing.T) {
 		}
 	})
 
-	t.Run("server_config_in_metadata", func(t *testing.T) {
+	t.Run("DoltModeMetadata", func(t *testing.T) {
 		tmpDir := t.TempDir()
 
-		// Run init with --database
-		cmd := exec.Command(bd, "init", "--database", "test_server_cfg", "--quiet")
+		cmd := exec.Command(bd, "init", "--database", "test_embedded_cfg", "--quiet")
 		cmd.Dir = tmpDir
 		cmd.Env = os.Environ()
 		out, err := cmd.CombinedOutput()
@@ -1763,7 +1762,6 @@ func TestInitDatabaseFlag(t *testing.T) {
 			t.Fatalf("bd init --database failed: %v\n%s", err, out)
 		}
 
-		// Verify metadata.json has both dolt_database and dolt_mode: server
 		bdDir := filepath.Join(tmpDir, ".bd")
 		cfg, err := configfile.Load(bdDir)
 		if err != nil {
@@ -1773,58 +1771,19 @@ func TestInitDatabaseFlag(t *testing.T) {
 			t.Fatal("metadata.json not found")
 		}
 
-		if cfg.DoltDatabase != "test_server_cfg" {
-			t.Errorf("Expected DoltDatabase %q, got %q", "test_server_cfg", cfg.DoltDatabase)
+		if cfg.DoltDatabase != "test_embedded_cfg" {
+			t.Errorf("Expected DoltDatabase %q, got %q", "test_embedded_cfg", cfg.DoltDatabase)
 		}
-		if cfg.DoltMode != configfile.DoltModeServer {
-			t.Errorf("Expected DoltMode %q, got %q", configfile.DoltModeServer, cfg.DoltMode)
+		if cfg.DoltMode != configfile.DoltModeEmbedded {
+			t.Errorf("Expected DoltMode %q, got %q", configfile.DoltModeEmbedded, cfg.DoltMode)
 		}
 		if cfg.Backend != configfile.BackendDolt {
 			t.Errorf("Expected Backend %q, got %q", configfile.BackendDolt, cfg.Backend)
 		}
-	})
-
-	t.Run("shared_server_flag_selects_server_mode", func(t *testing.T) {
-		tmpDir := t.TempDir()
-
-		cmd := exec.Command(bd, "init", "--shared-server", "--prefix", "shared-mode-test")
-		cmd.Dir = tmpDir
-		cmd.Env = os.Environ()
-		out, err := cmd.CombinedOutput()
-		if err != nil {
-			t.Fatalf("bd init --shared-server failed: %v\n%s", err, out)
-		}
-
-		bdDir := filepath.Join(tmpDir, ".bd")
-		cfg, err := configfile.Load(bdDir)
-		if err != nil {
-			t.Fatalf("Failed to load metadata.json: %v", err)
-		}
-		if cfg == nil {
-			t.Fatal("metadata.json not found")
-		}
-
-		if cfg.DoltMode != configfile.DoltModeServer {
-			t.Errorf("Expected DoltMode %q, got %q", configfile.DoltModeServer, cfg.DoltMode)
-		}
-
-		configYAML, err := os.ReadFile(filepath.Join(bdDir, "config.yaml"))
-		if err != nil {
-			t.Fatalf("Failed to read config.yaml: %v", err)
-		}
-		if !strings.Contains(string(configYAML), "dolt.shared-server: true") {
-			t.Fatalf("expected config.yaml to enable shared server, got:\n%s", configYAML)
-		}
 
 		outStr := string(out)
-		if !strings.Contains(outStr, "Shared server mode enabled") {
-			t.Fatalf("expected init output to mention shared server mode, got:\n%s", outStr)
-		}
-		if !strings.Contains(outStr, "Mode: server") {
-			t.Fatalf("expected init output to report server mode, got:\n%s", outStr)
-		}
-		if strings.Contains(outStr, "Mode: embedded") {
-			t.Fatalf("init output should not report embedded mode when --shared-server is set:\n%s", outStr)
+		if !strings.Contains(outStr, "Mode: embedded") {
+			t.Fatalf("expected init output to report embedded mode, got:\n%s", outStr)
 		}
 	})
 

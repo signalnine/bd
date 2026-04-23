@@ -460,23 +460,6 @@ func TestEmbeddedInit(t *testing.T) {
 		}
 	})
 
-	t.Run("server_flags_ignored", func(t *testing.T) {
-		_, bdDir, _ := bdInit(t, bd, "--prefix", "sv",
-			"--server-host", "10.0.0.1", "--server-port", "4444", "--server-user", "alice")
-		cfg, err := configfile.Load(bdDir)
-		if err != nil {
-			t.Fatalf("failed to load metadata.json: %v", err)
-		}
-		if cfg.DoltServerHost != "10.0.0.1" {
-			t.Errorf("DoltServerHost: got %q, want %q", cfg.DoltServerHost, "10.0.0.1")
-		}
-		if cfg.DoltServerPort != 4444 {
-			t.Errorf("DoltServerPort: got %d, want %d", cfg.DoltServerPort, 4444)
-		}
-		if cfg.DoltServerUser != "alice" {
-			t.Errorf("DoltServerUser: got %q, want %q", cfg.DoltServerUser, "alice")
-		}
-	})
 
 	t.Run("metadata_written", func(t *testing.T) {
 		_, bdDir, _ := bdInit(t, bd, "--prefix", "meta")

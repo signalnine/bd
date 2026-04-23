@@ -39,12 +39,6 @@ has already created the database.
 With --stealth: configures per-repository git settings for invisible bd usage:
   • .git/info/exclude to prevent bd files from being committed
   Perfect for personal use without affecting repo collaborators.
-  To set up a specific AI tool, run: bd setup <claude|cursor|aider|...> --stealth
-
-By default, bd uses an embedded Dolt engine (no external server needed).
-Pass --server to use an external dolt sql-server instead. In server mode,
-set connection details with --server-host, --server-port, and --server-user.
-Password should be set via BD_DOLT_PASSWORD environment variable.
 
 Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
   Skips all interactive prompts, using sensible defaults:
@@ -62,15 +56,9 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 		nonInteractiveFlag, _ := cmd.Flags().GetBool("non-interactive")
 		roleFlag, _ := cmd.Flags().GetString("role")
 		fromJSONL, _ := cmd.Flags().GetBool("from-jsonl")
-		// Dolt server connection flags
 		backendFlag, _ := cmd.Flags().GetString("backend")
-		initServerMode, _ := cmd.Flags().GetBool("server")
-		serverHost, _ := cmd.Flags().GetString("server-host")
-		serverPort, _ := cmd.Flags().GetInt("server-port")
-		serverUser, _ := cmd.Flags().GetString("server-user")
 		database, _ := cmd.Flags().GetString("database")
 		destroyToken, _ := cmd.Flags().GetString("destroy-token")
-		sharedServer, _ := cmd.Flags().GetBool("shared-server")
 
 		// Handle --backend flag: "dolt" is the only supported backend.
 		// "sqlite" is accepted for backward compatibility but prints a
@@ -119,10 +107,6 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 
 		// Dolt is the only supported backend
 		backend := configfile.BackendDolt
-
-		// Server mode is no longer supported -- embedded only.
-		_ = initServerMode // unused
-		_ = sharedServer   // unused
 
 		// Initialize config (PersistentPreRun doesn't run for init command)
 		if err := config.Initialize(); err != nil {
@@ -542,21 +526,7 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 					cfg.DoltDatabase = strings.ReplaceAll(prefix, "-", "_")
 				}
 
-				// Persist the connection mode matching this build.
-				if isEmbeddedMode() {
-					cfg.DoltMode = configfile.DoltModeEmbedded
-				} else {
-					cfg.DoltMode = configfile.DoltModeServer
-				}
-				if serverHost != "" {
-					cfg.DoltServerHost = serverHost
-				}
-				if serverPort != 0 {
-					cfg.DoltServerPort = serverPort
-				}
-				if serverUser != "" {
-					cfg.DoltServerUser = serverUser
-				}
+				cfg.DoltMode = configfile.DoltModeEmbedded
 			}
 
 			if err := cfg.Save(bdDir); err != nil {
@@ -878,14 +848,7 @@ func init() {
 
 	// Backend selection (dolt is the only supported backend; sqlite accepted for deprecation notice)
 	initCmd.Flags().String("backend", "", "Storage backend (default: dolt). --backend=sqlite prints deprecation notice.")
-
-	// Dolt server connection flags
-	initCmd.Flags().Bool("server", false, "Use external dolt sql-server instead of embedded engine")
-	initCmd.Flags().String("server-host", "", "Dolt server host (default: 127.0.0.1)")
-	initCmd.Flags().Int("server-port", 0, "Dolt server port (default: 3307)")
-	initCmd.Flags().String("server-user", "", "Dolt server MySQL user (default: root)")
-	initCmd.Flags().String("database", "", "Use existing server database name (overrides prefix-based naming)")
-	initCmd.Flags().Bool("shared-server", false, "Enable shared Dolt server mode (all projects share one server at ~/.bd/shared-server/)")
+	initCmd.Flags().String("database", "", "Explicit database name (overrides prefix-based naming)")
 
 	rootCmd.AddCommand(initCmd)
 }
