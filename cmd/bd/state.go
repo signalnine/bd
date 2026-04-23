@@ -253,6 +253,115 @@ The --reason flag provides context for the event bead (recommended).`,
 	},
 }
 
+// stateRemoveCmd removes a state dimension from an issue and records the
+// removal as an event bead, mirroring how setStateCmd records changes.
+var stateRemoveCmd = &cobra.Command{
+	Use:   "remove <issue-id> <dimension>",
+	Short: "Remove a state dimension (creates event + removes label)",
+	Long: `Atomically remove a state dimension from an issue.
+
+This command:
+1. Removes the dimension:value label
+2. Creates an event bead recording the removal (source of truth)
+
+Errors if the dimension is not currently set on the issue.
+
+Examples:
+  bd state remove agent-abc patrol --reason "Decommissioned"
+  bd state remove agent-abc mode
+
+The --reason flag provides context for the event bead (recommended).`,
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		CheckReadonly("state remove")
+		ctx := rootCtx
+		issueID := args[0]
+		dimension := args[1]
+
+		reason, _ := cmd.Flags().GetString("reason")
+
+		fullID, err := utils.ResolvePartialID(ctx, store, issueID)
+		if err != nil {
+			FatalErrorRespectJSON("resolving %s: %v", issueID, err)
+		}
+
+		labels, err := store.GetLabels(ctx, fullID)
+		if err != nil {
+			FatalErrorRespectJSON("%v", err)
+		}
+
+		prefix := dimension + ":"
+		var oldLabel, oldValue string
+		for _, label := range labels {
+			if strings.HasPrefix(label, prefix) {
+				oldLabel = label
+				oldValue = strings.TrimPrefix(label, prefix)
+				break
+			}
+		}
+		if oldLabel == "" {
+			FatalErrorRespectJSON("no %s state set on %s", dimension, fullID)
+		}
+
+		eventTitle := fmt.Sprintf("State removed: %s", dimension)
+		eventDesc := fmt.Sprintf("Removed %s (was %s)", dimension, oldValue)
+		if reason != "" {
+			eventDesc += "\n\nReason: " + reason
+		}
+
+		childID, err := store.GetNextChildID(ctx, fullID)
+		if err != nil {
+			FatalErrorRespectJSON("generating child ID: %v", err)
+		}
+
+		event := &types.Issue{
+			ID:          childID,
+			Title:       eventTitle,
+			Description: eventDesc,
+			Status:      types.StatusClosed,
+			Priority:    4,
+			IssueType:   types.TypeEvent,
+			CreatedBy:   getActorWithGit(),
+		}
+		if err := store.CreateIssue(ctx, event, actor); err != nil {
+			FatalErrorRespectJSON("creating event: %v", err)
+		}
+
+		dep := &types.Dependency{
+			IssueID:     childID,
+			DependsOnID: fullID,
+			Type:        types.DepParentChild,
+		}
+		if err := store.AddDependency(ctx, dep, actor); err != nil {
+			WarnError("failed to add parent-child dependency: %v", err)
+		}
+
+		if err := store.RemoveLabel(ctx, fullID, oldLabel, actor); err != nil {
+			FatalErrorRespectJSON("removing label %s: %v", oldLabel, err)
+		}
+
+		if isEmbeddedMode() && store != nil {
+			if _, err := store.CommitPending(ctx, actor); err != nil {
+				FatalErrorRespectJSON("failed to commit: %v", err)
+			}
+		}
+
+		if jsonOutput {
+			outputJSON(map[string]interface{}{
+				"issue_id":  fullID,
+				"dimension": dimension,
+				"old_value": oldValue,
+				"event_id":  childID,
+				"removed":   true,
+			})
+			return
+		}
+
+		fmt.Printf("%s Removed %s (was %s) from %s\n", ui.RenderPass("✓"), dimension, oldValue, fullID)
+		fmt.Printf("  Event: %s\n", childID)
+	},
+}
+
 // stateListCmd lists all state dimensions on an issue
 var stateListCmd = &cobra.Command{
 	Use:   "list <issue-id>",
@@ -323,8 +432,12 @@ func init() {
 	// set-state flags
 	setStateCmd.Flags().String("reason", "", "Reason for the state change (recorded in event)")
 
+	// state remove flags
+	stateRemoveCmd.Flags().String("reason", "", "Reason for the removal (recorded in event)")
+
 	// Add subcommands
 	stateCmd.AddCommand(stateListCmd)
+	stateCmd.AddCommand(stateRemoveCmd)
 
 	rootCmd.AddCommand(stateCmd)
 	rootCmd.AddCommand(setStateCmd)

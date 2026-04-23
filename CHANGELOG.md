@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`bd state remove <id> <dimension>`** — Remove a state dimension from an issue and record the removal as an event bead. Supports `--reason` and `--json`. Errors when the dimension is not set. (bd-qas)
+
 ## [1.0.0] - 2026-04-02
 
 ### 1.0 — Stable Release

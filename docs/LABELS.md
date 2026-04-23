@@ -732,12 +732,18 @@ bd state list witness-alpha
 
 # Set state (creates event + updates label atomically)
 bd set-state witness-alpha patrol=muted --reason "Investigating issue"
+
+# Remove a state dimension (creates event + removes label)
+bd state remove witness-alpha patrol --reason "Decommissioned"
 ```
 
 The `set-state` command atomically:
 1. Creates an event bead with the reason (source of truth)
 2. Removes the old dimension label if present
 3. Adds the new dimension:value label (cache)
+
+The `state remove` command is the inverse: it records a removal event and
+strips the dimension label. It errors when the dimension is not currently set.
 
 See [CLI_REFERENCE.md](CLI_REFERENCE.md#state-labels-as-cache) for full command reference.
 
