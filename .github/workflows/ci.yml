@@ -22,6 +22,30 @@ jobs:
       - name: Check all versions match
         run: ./scripts/check-versions.sh
 
+  # Fast check that docs / agent instructions / claude-plugin don't reference
+  # bd subcommands that have been removed.
+  check-doc-flags:
+    name: Check docs for stale command references
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Install ICU4C
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libicu-dev
+
+      - name: Build bd
+        run: go build -o bd ./cmd/bd
+
+      - name: Run check-doc-flags
+        run: ./scripts/check-doc-flags.sh ./bd
+
   # Cross-platform test matrix (Linux/macOS only - Windows uses smoke tests)
   test:
     name: Test (${{ matrix.os }})
