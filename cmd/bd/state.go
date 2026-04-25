@@ -223,7 +223,7 @@ The --reason flag provides context for the event bead (recommended).`,
 		}
 
 		// Embedded mode: flush Dolt commit.
-		if isEmbeddedMode() && store != nil {
+		if store != nil {
 			if _, err := store.CommitPending(ctx, actor); err != nil {
 				FatalErrorRespectJSON("failed to commit: %v", err)
 			}
@@ -340,7 +340,7 @@ The --reason flag provides context for the event bead (recommended).`,
 			FatalErrorRespectJSON("removing label %s: %v", oldLabel, err)
 		}
 
-		if isEmbeddedMode() && store != nil {
+		if store != nil {
 			if _, err := store.CommitPending(ctx, actor); err != nil {
 				FatalErrorRespectJSON("failed to commit: %v", err)
 			}

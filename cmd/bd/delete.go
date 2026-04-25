@@ -217,7 +217,7 @@ Force: Delete and orphan dependents
 		}
 
 		// Embedded mode: flush Dolt commit.
-		if isEmbeddedMode() && store != nil {
+		if store != nil {
 			if _, err := store.CommitPending(ctx, actor); err != nil {
 				FatalError("failed to commit: %v", err)
 			}
@@ -350,7 +350,7 @@ func deleteBatch(_ *cobra.Command, issueIDs []string, force bool, dryRun bool, c
 	updatedCount := updateTextReferencesInIssues(ctx, issueIDs, connectedIssues)
 
 	// Embedded mode: flush Dolt commit.
-	if isEmbeddedMode() && store != nil {
+	if store != nil {
 		if _, err := store.CommitPending(ctx, actor); err != nil {
 			FatalError("failed to commit: %v", err)
 		}
@@ -491,7 +491,7 @@ func deleteBatchFallback(issueIDs []string, force bool, dryRun bool, cascade boo
 	updatedCount := updateTextReferencesInIssues(ctx, issueIDs, connectedIssues)
 
 	// Embedded mode: flush Dolt commit.
-	if isEmbeddedMode() && store != nil {
+	if store != nil {
 		if _, err := store.CommitPending(ctx, getActorWithGit()); err != nil {
 			FatalError("failed to commit: %v", err)
 		}

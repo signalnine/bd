@@ -251,7 +251,7 @@ func handleDoltMetadataUpdate(cfg *configfile.Config, dryRun bool) {
 	}
 
 	// Embedded mode: flush Dolt commit after metadata writes.
-	if isEmbeddedMode() && (versionUpdated || repoIDSet || cloneIDSet) && store != nil {
+	if (versionUpdated || repoIDSet || cloneIDSet) && store != nil {
 		if _, err := store.CommitPending(ctx, "migrate"); err != nil {
 			fmt.Fprintf(os.Stderr, "Warning: failed to commit: %v\n", err)
 		}
@@ -387,7 +387,7 @@ func handleUpdateRepoID(dryRun bool, autoYes bool) {
 	}
 
 	// Embedded mode: flush Dolt commit.
-	if isEmbeddedMode() && store != nil {
+	if store != nil {
 		if _, err := store.CommitPending(rootCtx, "migrate"); err != nil {
 			fmt.Fprintf(os.Stderr, "Warning: failed to commit: %v\n", err)
 		}
@@ -629,7 +629,7 @@ func handleToSeparateBranch(branch string, dryRun bool) {
 	}
 
 	// Embedded mode: flush Dolt commit.
-	if isEmbeddedMode() && !dryRun && store != nil {
+	if !dryRun && store != nil {
 		if _, commitErr := store.CommitPending(rootCtx, "migrate"); commitErr != nil {
 			fmt.Fprintf(os.Stderr, "Warning: failed to commit: %v\n", commitErr)
 		}

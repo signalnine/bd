@@ -1653,8 +1653,8 @@ func TestInitDatabaseFlag(t *testing.T) {
 		if cfg.DoltDatabase != "myapp_production" {
 			t.Errorf("Expected DoltDatabase %q, got %q", "myapp_production", cfg.DoltDatabase)
 		}
-		if cfg.DoltMode != configfile.DoltModeServer {
-			t.Errorf("Expected DoltMode %q, got %q", configfile.DoltModeServer, cfg.DoltMode)
+		if cfg.DoltMode != configfile.DoltModeEmbedded {
+			t.Errorf("Expected DoltMode %q, got %q", configfile.DoltModeEmbedded, cfg.DoltMode)
 		}
 	})
 

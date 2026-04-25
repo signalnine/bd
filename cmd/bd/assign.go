@@ -56,7 +56,7 @@ Examples:
 		}
 
 		// Flush Dolt commit for embedded mode
-		if isEmbeddedMode() && store != nil {
+		if store != nil {
 			if _, err := store.CommitPending(ctx, actor); err != nil {
 				FatalErrorRespectJSON("failed to commit: %v", err)
 			}

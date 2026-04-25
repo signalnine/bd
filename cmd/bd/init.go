@@ -926,44 +926,20 @@ func checkExistingBdDataAt(bdDir string, prefix string) error {
 		// Embedded mode stores databases under `.bd/embeddeddolt/<db>/`.
 		// Treat any present embedded DB as "already initialized" (guard against
 		// accidental re-init / data loss).
-		if isEmbeddedMode() {
-			embeddedRoot := filepath.Join(bdDir, "embeddeddolt")
-			entries, err := os.ReadDir(embeddedRoot)
-			if err != nil {
-				if os.IsNotExist(err) {
-					return nil // No embedded root -> fresh clone, safe to init
-				}
-				return fmt.Errorf("failed to read embedded dolt directory %s: %w", embeddedRoot, err)
+		embeddedRoot := filepath.Join(bdDir, "embeddeddolt")
+		entries, err := os.ReadDir(embeddedRoot)
+		if err != nil {
+			if os.IsNotExist(err) {
+				return nil // No embedded root -> fresh clone, safe to init
 			}
-			for _, entry := range entries {
-				if !entry.IsDir() {
-					continue
-				}
-				if info, statErr := os.Stat(filepath.Join(embeddedRoot, entry.Name(), ".dolt")); statErr == nil && info.IsDir() {
-					location := filepath.Join(embeddedRoot, entry.Name())
-					return fmt.Errorf(`
-%s Found existing Dolt database: %s
-
-This workspace is already initialized.
-
-To use the existing database:
-  Just run bd commands normally (e.g., %s)
-
-If the database is genuinely corrupt and unrecoverable:
-  bd backup init <path> && bd backup sync  # Back up first!
-  bd init --force --prefix %s           # Then reinitialize
-
-Aborting.`, ui.RenderWarn("⚠"), location, ui.RenderAccent("bd list"), prefix)
-				}
-			}
-			return nil
+			return fmt.Errorf("failed to read embedded dolt directory %s: %w", embeddedRoot, err)
 		}
-
-		// Check for existing embedded database
-		embeddedPath := filepath.Join(bdDir, "embeddeddolt")
-		if info, err := os.Stat(embeddedPath); err == nil && info.IsDir() {
-			entries, _ := os.ReadDir(embeddedPath)
-			if len(entries) > 0 {
+		for _, entry := range entries {
+			if !entry.IsDir() {
+				continue
+			}
+			if info, statErr := os.Stat(filepath.Join(embeddedRoot, entry.Name(), ".dolt")); statErr == nil && info.IsDir() {
+				location := filepath.Join(embeddedRoot, entry.Name())
 				return fmt.Errorf(`
 %s Found existing Dolt database: %s
 
@@ -976,12 +952,9 @@ If the database is genuinely corrupt and unrecoverable:
   bd backup init <path> && bd backup sync  # Back up first!
   bd init --force --prefix %s           # Then reinitialize
 
-Aborting.`, ui.RenderWarn("⚠"), embeddedPath, ui.RenderAccent("bd list"), prefix)
+Aborting.`, ui.RenderWarn("⚠"), location, ui.RenderAccent("bd list"), prefix)
 			}
 		}
-		// Backend is Dolt but no dolt directory exists yet — this is a fresh
-		// clone. Any bd.db file is a legacy SQLite artifact, not the active
-		// database. Skip the SQLite checks below and allow init to proceed.
 		return nil
 	}
 

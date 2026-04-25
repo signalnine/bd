@@ -537,12 +537,6 @@ var createCmd = &cobra.Command{
 			FatalError("%v", err)
 		}
 
-		// Track whether any post-create writes occurred. CreateIssue commits
-		// the issue to Dolt internally, but subsequent AddDependency/AddLabel
-		// calls only write to the working set. A follow-up Dolt commit is
-		// needed to persist them (GH#2009).
-		postCreateWrites := false
-
 		// If parent was specified, add parent-child dependency
 		if parentID != "" {
 			dep := &types.Dependency{
@@ -552,8 +546,6 @@ var createCmd = &cobra.Command{
 			}
 			if err := store.AddDependency(ctx, dep, actor); err != nil {
 				WarnError("failed to add parent-child dependency %s -> %s: %v", issue.ID, parentID, err)
-			} else {
-				postCreateWrites = true
 			}
 		}
 
@@ -574,8 +566,6 @@ var createCmd = &cobra.Command{
 		for _, label := range labels {
 			if err := store.AddLabel(ctx, issue.ID, label, actor); err != nil {
 				WarnError("failed to add label %s: %v", label, err)
-			} else {
-				postCreateWrites = true
 			}
 		}
 
@@ -629,8 +619,6 @@ var createCmd = &cobra.Command{
 			}
 			if err := store.AddDependency(ctx, dep, actor); err != nil {
 				WarnError("failed to add dependency %s -> %s: %v", issue.ID, dependsOnID, err)
-			} else {
-				postCreateWrites = true
 			}
 		}
 
@@ -662,21 +650,15 @@ var createCmd = &cobra.Command{
 			}
 			if err := store.AddDependency(ctx, dep, actor); err != nil {
 				WarnError("failed to add waits-for dependency %s -> %s: %v", issue.ID, waitsFor, err)
-			} else {
-				postCreateWrites = true
 			}
 		}
 
-		// Commit to Dolt. In DoltStore mode, CreateIssue commits the issue
-		// row internally, so only post-create metadata (deps, labels) needs
-		// a separate commit. In EmbeddedDoltStore mode, CreateIssue writes
-		// to the working set without a Dolt commit, so we always commit
-		// everything together at the end.
-		if isEmbeddedMode() || postCreateWrites {
-			commitMsg := fmt.Sprintf("bd: create %s", issue.ID)
-			if err := store.Commit(ctx, commitMsg); err != nil && !isDoltNothingToCommit(err) {
-				WarnError("failed to commit: %v", err)
-			}
+		// CreateIssue writes to the working set without a Dolt commit; commit
+		// here so the issue and any post-create metadata (deps, labels) land
+		// in Dolt history together.
+		commitMsg := fmt.Sprintf("bd: create %s", issue.ID)
+		if err := store.Commit(ctx, commitMsg); err != nil && !isDoltNothingToCommit(err) {
+			WarnError("failed to commit: %v", err)
 		}
 
 		// If issue was routed to a different repo, commit pending changes.

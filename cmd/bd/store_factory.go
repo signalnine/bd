@@ -8,11 +8,6 @@ import (
 	"github.com/signalnine/bd/internal/storage/embeddeddolt"
 )
 
-// isEmbeddedMode returns true -- embedded Dolt is the only mode now.
-func isEmbeddedMode() bool {
-	return true
-}
-
 // newDoltStore creates an embedded Dolt storage backend.
 func newDoltStore(ctx context.Context, bdDir, database string, opts ...embeddeddolt.Option) (*embeddeddolt.EmbeddedDoltStore, error) {
 	return embeddeddolt.New(ctx, bdDir, database, "main", opts...)
