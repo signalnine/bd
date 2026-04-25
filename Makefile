@@ -9,7 +9,7 @@ SHELL := $(subst cmd,bin,$(subst git.exe,bash.exe,$(GIT_BASH)))
 endif
 endif
 
-.PHONY: all build test test-full-cgo test-regression test-upgrade test-cross-version test-migration bench bench-quick clean install install-force help check-up-to-date fmt fmt-check
+.PHONY: all build test test-full-cgo bench bench-quick clean install install-force help check-up-to-date fmt fmt-check
 
 # Default target
 all: build
@@ -80,36 +80,6 @@ test:
 test-full-cgo:
 	@echo "Running full CGO-enabled tests..."
 	@./scripts/test-cgo.sh ./...
-
-# Run differential regression tests (baseline v0.49.6 vs current worktree).
-# Downloads baseline binary on first run; cached in ~/Library/Caches/bd-regression/.
-# Override baseline: BD_REGRESSION_BASELINE_BIN=/path/to/bd make test-regression
-test-regression:
-	@echo "Running regression tests (baseline vs candidate)..."
-	go test -tags=regression -timeout=10m -v ./tests/regression/...
-
-# Run upgrade smoke tests (release stability gate).
-# Tests that upgrading from previous release preserves data, role, and mode.
-# Override version: ./scripts/upgrade-smoke-test.sh v0.62.0
-test-upgrade: build
-	@echo "Running upgrade smoke tests..."
-	@CANDIDATE_BIN=./bd ./scripts/upgrade-smoke-test.sh
-
-# Run cross-version smoke tests (last 30 tags → candidate).
-# Creates epic, issues, and dependencies with old versions, upgrades, verifies.
-# Specific versions: ./scripts/cross-version-smoke-test.sh v0.55.0 v0.56.1
-# All from v0.30.0: ./scripts/cross-version-smoke-test.sh --from v0.30.0
-test-cross-version: build
-	@echo "Running cross-version smoke tests..."
-	@CANDIDATE_BIN=./bd ./scripts/cross-version-smoke-test.sh
-
-# Run migration test harness (rich dataset, fidelity checks, recipe discovery).
-# Tests direct and stepping-stone upgrade paths from all storage eras.
-# Direct only: ./scripts/migration-test/run.sh --direct-only
-# Single version: ./scripts/migration-test/run.sh v0.49.6
-test-migration: build
-	@echo "Running migration test harness..."
-	@CANDIDATE_BIN=./bd ./scripts/migration-test/run.sh
 
 # Run performance benchmarks against Dolt storage backend
 # Requires CGO and Dolt; generates CPU profile files
@@ -197,14 +167,10 @@ clean:
 
 # Show help
 help:
-	@echo "Beads Makefile targets:"
+	@echo "bd Makefile targets:"
 	@echo "  make build        - Build the bd binary"
 	@echo "  make test         - Run all tests"
 	@echo "  make test-full-cgo - Run full CGO-enabled test suite"
-	@echo "  make test-regression - Run differential regression tests (baseline vs candidate)"
-	@echo "  make test-upgrade  - Run upgrade smoke tests (release stability gate)"
-	@echo "  make test-cross-version - Run cross-version smoke tests (last 30 tags)"
-	@echo "  make test-migration - Run migration test harness (fidelity checks, recipes)"
 	@echo "  make bench        - Run performance benchmarks (generates CPU profiles)"
 	@echo "  make bench-quick  - Run quick benchmarks (shorter benchtime)"
 	@echo "  make install      - Install bd to ~/.local/bin (with codesign on macOS, includes 'beads' alias)"
