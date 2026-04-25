@@ -2,17 +2,12 @@
 
 Common issues encountered when using bd and how to resolve them.
 
-## Interface-Specific Troubleshooting
+## Quick checks
 
-**MCP tools (local environment):**
-- MCP tools require Dolt server running
-- Check server status: `bd doctor` (CLI)
-- If MCP tools fail, verify Dolt server is running and restart if needed
-
-**CLI (web environment or local):**
-- CLI can use server mode (default) or embedded mode (direct database access)
-- Embedded mode has 3-5 second sync delay
-- Web environment: Install via `npm install -g @beads/cli`
+- `bd version` — confirm the binary you have
+- `bd where` — confirm which `.bd` database is active
+- `bd dolt status` — confirm the Dolt working tree state
+- `bd config validate` — flag inconsistent sync config
 - Web environment: Initialize via `bd init <prefix>` before first use
 
 **Most issues below apply to both interfaces** - the underlying database and server behavior is the same.
@@ -79,9 +74,9 @@ bd show <B-id>
 
 If dependencies still don't persist after updating:
 
-1. **Check Dolt server is running:**
+1. **Check Dolt working tree state:**
    ```bash
-   bd doctor
+   bd dolt status
    ```
 
 2. **Try in server mode:**
@@ -146,8 +141,7 @@ bd show issue-1
 **Option 3: Manual sync trigger**
 ```bash
 bd update issue-1 --claim
-# Trigger sync by exporting/importing
-bd export > /dev/null 2>&1  # Forces sync
+bd dolt commit && bd dolt push
 bd show issue-1
 ```
 
@@ -397,11 +391,11 @@ Before reporting issues, collect this information:
 # 1. Version
 bd version
 
-# 2. Dolt server status
-bd doctor
+# 2. Dolt working tree state
+bd dolt status
 
 # 3. Database location
-echo $PWD/.beads/*.db
+bd where
 ls -la .beads/
 
 # 4. Git status

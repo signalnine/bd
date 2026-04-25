@@ -7,9 +7,6 @@ Slash command for converting [Claude Code](https://docs.anthropic.com/en/docs/cl
 ```bash
 # Install bd
 curl -fsSL https://raw.githubusercontent.com/signalnine/bd/main/scripts/install.sh | bash
-
-# Install hooks (auto-injects workflow context on session start)
-bd setup claude
 ```
 
 ## Installation
@@ -55,9 +52,9 @@ Run `bd ready` to start.
 
 ## Related
 
-- `bd prime` - Workflow context (auto-injected via hooks)
-- `bd setup claude` - Install/manage Claude Code hooks
 - `bd ready` - Find unblocked work
+- `bd create` - Create new issues
+- For richer Claude Code integration, install the bd plugin: `/plugin marketplace add signalnine/bd && /plugin install beads`
 
 ## License
 

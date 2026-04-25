@@ -43,14 +43,6 @@ check_version ".claude-plugin/marketplace.json" \
     "$(jq -r '.plugins[0].version' .claude-plugin/marketplace.json 2>/dev/null)" \
     "Claude marketplace.json"
 
-check_version "npm-package/package.json" \
-    "$(jq -r '.version' npm-package/package.json 2>/dev/null)" \
-    "npm package.json"
-
-# Hook templates are now generated dynamically by cmd/bd/hooks.go using the
-# Version constant from version.go, so no separate file check is needed.
-# (Previously checked cmd/bd/templates/hooks/pre-commit which no longer exists.)
-
 echo ""
 
 if [ $MISMATCH -eq 1 ]; then

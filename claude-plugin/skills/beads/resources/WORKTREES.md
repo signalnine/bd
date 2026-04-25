@@ -64,8 +64,8 @@ bd worktree remove .worktrees/my-feature
 When beads commands behave unexpectedly in a worktree:
 
 ```bash
-bd where              # Shows actual .beads location (follows redirects)
-bd doctor --deep      # Validates graph integrity across all refs
+bd where              # Shows actual .bd location (follows redirects)
+bd dep cycles         # Detect dependency cycles
 ```
 
 ## Protected Branch Workflows

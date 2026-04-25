@@ -69,7 +69,7 @@ into temp repos and produce flaky test behavior.
    - For full CGO validation: `make test-full-cgo`
 2. **Run linter**: `golangci-lint run ./...` (ignore baseline warnings)
 3. **Update docs**: If you changed behavior, update README.md or other docs
-4. **Commit**: With git hooks installed (`bd hooks install`), Dolt changes are auto-committed
+4. **Commit**: standard `git commit`. bd writes to its own Dolt database; sync with `bd dolt commit && bd dolt push`.
 
 ### Commit Message Convention
 
@@ -80,16 +80,9 @@ git commit -m "Fix auth validation bug (bd-abc)"
 git commit -m "Add retry logic for database locks (bd-xyz)"
 ```
 
-This enables `bd doctor` to detect **orphaned issues** - work that was committed but the issue wasn't closed. The doctor check cross-references open issues against git history to find these orphans.
-
 ### Git Workflow
 
-bd uses **Dolt** as its primary database. Changes are committed to Dolt history automatically (one Dolt commit per write command).
-
-**Install git hooks** for automatic sync:
-```bash
-bd hooks install
-```
+bd uses **Dolt** as its primary database. Changes are committed to Dolt history automatically (one Dolt commit per write command). To replicate to a remote, run `bd dolt push`.
 
 ### Git Integration
 
@@ -246,8 +239,7 @@ This installs:
 
 **Minimize cognitive overload.** Every new command, flag, or option adds cognitive burden for users. Before adding anything:
 
-1. **Recovery/fix operations → `bd doctor --fix`**: Don't create separate commands like `bd recover` or `bd repair`. Doctor already detects problems - let `--fix` handle remediation. This keeps all health-related operations in one discoverable place.
-   For git hook marker migration specifically: use `bd migrate hooks --dry-run` to preview operations, and `bd doctor --fix` for the standard apply path.
+1. **Lean toward existing commands over new top-level ones**: Don't create separate commands like `bd recover` or `bd repair`. Either fold the recovery into an existing command or expose it as a flag (e.g. `bd config validate`).
 
 2. **Prefer flags on existing commands**: Before creating a new command, ask: "Can this be a flag on an existing command?" Example: `bd list --stale` instead of `bd stale`.
 

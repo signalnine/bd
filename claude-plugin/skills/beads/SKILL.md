@@ -85,26 +85,15 @@ bd close <id> --reason "Implemented with refresh tokens" --json
 
 **Discover work mid-task:** `bd create "Found bug" -t bug -p 1 --deps discovered-from:<current-id> --json`
 
-## Advanced Features
-
-| Feature | CLI | Resource |
-|---------|-----|----------|
-| Molecules (templates) | `bd mol --help` | [MOLECULES.md](${CLAUDE_SKILL_DIR}/resources/MOLECULES.md) |
-| Chemistry (pour/wisp) | `bd pour`, `bd wisp` | [CHEMISTRY_PATTERNS.md](${CLAUDE_SKILL_DIR}/resources/CHEMISTRY_PATTERNS.md) |
-| Agent beads | `bd agent --help` | [AGENTS.md](${CLAUDE_SKILL_DIR}/resources/AGENTS.md) |
-| Async gates | `bd gate --help` | [ASYNC_GATES.md](${CLAUDE_SKILL_DIR}/resources/ASYNC_GATES.md) |
-| Worktrees | `bd worktree --help` | [WORKTREES.md](${CLAUDE_SKILL_DIR}/resources/WORKTREES.md) |
-
 ## Resources
 
 | Category | Files |
 |----------|-------|
-| **Getting Started** | [BOUNDARIES.md](${CLAUDE_SKILL_DIR}/resources/BOUNDARIES.md), [CLI_REFERENCE.md](${CLAUDE_SKILL_DIR}/resources/CLI_REFERENCE.md), [WORKFLOWS.md](${CLAUDE_SKILL_DIR}/resources/WORKFLOWS.md) |
+| **Getting Started** | [BOUNDARIES.md](${CLAUDE_SKILL_DIR}/resources/BOUNDARIES.md), [WORKFLOWS.md](${CLAUDE_SKILL_DIR}/resources/WORKFLOWS.md) |
 | **Core Concepts** | [DEPENDENCIES.md](${CLAUDE_SKILL_DIR}/resources/DEPENDENCIES.md), [ISSUE_CREATION.md](${CLAUDE_SKILL_DIR}/resources/ISSUE_CREATION.md), [PATTERNS.md](${CLAUDE_SKILL_DIR}/resources/PATTERNS.md) |
 | **Resilience** | [RESUMABILITY.md](${CLAUDE_SKILL_DIR}/resources/RESUMABILITY.md), [TROUBLESHOOTING.md](${CLAUDE_SKILL_DIR}/resources/TROUBLESHOOTING.md) |
-| **Advanced** | [MOLECULES.md](${CLAUDE_SKILL_DIR}/resources/MOLECULES.md), [CHEMISTRY_PATTERNS.md](${CLAUDE_SKILL_DIR}/resources/CHEMISTRY_PATTERNS.md), [AGENTS.md](${CLAUDE_SKILL_DIR}/resources/AGENTS.md), [ASYNC_GATES.md](${CLAUDE_SKILL_DIR}/resources/ASYNC_GATES.md), [WORKTREES.md](${CLAUDE_SKILL_DIR}/resources/WORKTREES.md) |
-| **Reference** | [STATIC_DATA.md](${CLAUDE_SKILL_DIR}/resources/STATIC_DATA.md), [INTEGRATION_PATTERNS.md](${CLAUDE_SKILL_DIR}/resources/INTEGRATION_PATTERNS.md) |
+| **Advanced** | [WORKTREES.md](${CLAUDE_SKILL_DIR}/resources/WORKTREES.md), [STATIC_DATA.md](${CLAUDE_SKILL_DIR}/resources/STATIC_DATA.md), [INTEGRATION_PATTERNS.md](${CLAUDE_SKILL_DIR}/resources/INTEGRATION_PATTERNS.md) |
 
 ## Validation
 
-If `bd --version` reports newer than `0.60.0`, this skill may be stale. Run `bd prime` for current CLI guidance — it auto-updates with each bd release and is the canonical source of truth ([ADR-0001](${CLAUDE_SKILL_DIR}/adr/0001-bd-prime-as-source-of-truth.md)).
+For current CLI guidance, run `bd <command> --help` — that's the canonical source of truth.

@@ -91,23 +91,9 @@ NEXT: Implement rate limiting"
 
 ## Requirements
 
-- [bd CLI](https://github.com/signalnine/bd) installed (`brew install beads`)
-- A git repository (bd requires git for sync)
+- [bd CLI](https://github.com/signalnine/bd) installed (see [INSTALLING.md](https://github.com/signalnine/bd/blob/main/docs/INSTALLING.md))
+- A git repository (bd uses git for sync)
 - Initialized database (`bd init` in project root)
-
-## Version Compatibility
-
-| Version | Features |
-|---------|----------|
-| v0.60.0+ | CLI credential pass-through for Dolt server push/pull |
-| v0.58.0+ | `bd prime --claim`, `bd show --long`, `--stdin` flag |
-| v0.54.0+ | `bd doctor` detects committed runtime/sensitive files, `BD_BACKUP_ENABLED=false` |
-| v0.52.0+ | `bd sync` deprecated (use `bd dolt push`), `--claim` for atomic start-work |
-| v0.47.0+ | Pull-first sync, resolve-conflicts, dry-run create, gate auto-discovery |
-| v0.43.0+ | Full support: agents, gates, worktrees, chemistry patterns |
-| v0.40.0+ | Agent beads, async gates, worktree management |
-| v0.34.0+ | Molecules, wisps, cross-project dependencies |
-| v0.15.0+ | Core: dependencies, notes, status tracking |
 
 ## Contributing
 

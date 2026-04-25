@@ -593,7 +593,7 @@ verify_installation() {
         echo "Get started:"
         echo "  cd your-project"
         echo "  bd init"
-        echo "  bd quickstart"
+        echo "  bd create \"My first issue\""
         echo ""
         return 0
     else

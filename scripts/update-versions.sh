@@ -9,8 +9,7 @@ set -e
 # operations. Use this for local testing or when you want manual control
 # over commits.
 #
-# For full releases with CI gates and verification, use:
-#   bd mol wisp beads-release --var version=X.Y.Z
+# For the full release flow, see docs/RELEASING.md.
 #
 # =============================================================================
 
@@ -26,7 +25,7 @@ if [ $# -ne 1 ]; then
     echo ""
     echo "Example: $0 0.47.1"
     echo ""
-    echo "For full releases, use: bd mol wisp beads-release --var version=X.Y.Z"
+    echo "For the full release flow, see docs/RELEASING.md."
     exit 1
 fi
 
@@ -73,10 +72,6 @@ echo "  • .claude-plugin/*.json"
 update_file "claude-plugin/.claude-plugin/plugin.json" "\"version\": \"$CURRENT_VERSION\"" "\"version\": \"$NEW_VERSION\""
 update_file ".claude-plugin/marketplace.json" "\"version\": \"$CURRENT_VERSION\"" "\"version\": \"$NEW_VERSION\""
 
-# 3. npm package
-echo "  • npm-package/package.json"
-update_file "npm-package/package.json" "\"version\": \"$CURRENT_VERSION\"" "\"version\": \"$NEW_VERSION\""
-
 # 5. README badge
 echo "  • README.md"
 update_file "README.md" "Alpha (v$CURRENT_VERSION)" "Alpha (v$NEW_VERSION)"
@@ -106,5 +101,4 @@ git diff --stat 2>/dev/null || true
 echo ""
 echo "Next steps:"
 echo "  • Update CHANGELOG.md with release notes"
-echo "  • Update cmd/bd/info.go versionChanges"
-echo "  • Or use: bd mol wisp beads-release --var version=$NEW_VERSION"
+echo "  • git tag v$NEW_VERSION && git push origin v$NEW_VERSION (see docs/RELEASING.md)"
