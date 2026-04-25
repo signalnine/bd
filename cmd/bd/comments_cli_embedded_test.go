@@ -13,7 +13,7 @@ import (
 	"testing"
 )
 
-// bdComments runs "bd comments" with the given args and returns stdout.
+// bdComments runs "bd comments <args>" (the listing command) and returns stdout.
 func bdComments(t *testing.T, bd, dir string, args ...string) string {
 	t.Helper()
 	fullArgs := append([]string{"comments"}, args...)
@@ -23,6 +23,20 @@ func bdComments(t *testing.T, bd, dir string, args ...string) string {
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("bd comments %s failed: %v\n%s", strings.Join(args, " "), err, out)
+	}
+	return string(out)
+}
+
+// bdCommentAdd runs "bd comment <args>" (the singular add command) and returns stdout.
+func bdCommentAdd(t *testing.T, bd, dir string, args ...string) string {
+	t.Helper()
+	fullArgs := append([]string{"comment"}, args...)
+	cmd := exec.Command(bd, fullArgs...)
+	cmd.Dir = dir
+	cmd.Env = bdEnv(dir)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("bd comment %s failed: %v\n%s", strings.Join(args, " "), err, out)
 	}
 	return string(out)
 }
@@ -40,7 +54,7 @@ func TestEmbeddedCommentsCLI(t *testing.T) {
 
 	t.Run("comments_add", func(t *testing.T) {
 		issue := bdCreate(t, bd, dir, "Comment target", "--type", "task")
-		out := bdComments(t, bd, dir, "add", issue.ID, "Hello world")
+		out := bdCommentAdd(t, bd, dir, issue.ID, "Hello world")
 		if !strings.Contains(out, "Comment added") {
 			t.Errorf("expected 'Comment added' in output: %s", out)
 		}
@@ -76,7 +90,7 @@ func TestEmbeddedCommentsCLI(t *testing.T) {
 		tmpFile := filepath.Join(t.TempDir(), "comment.txt")
 		os.WriteFile(tmpFile, []byte("Comment from file"), 0644)
 
-		out := bdComments(t, bd, dir, "add", issue.ID, "--file", tmpFile)
+		out := bdCommentAdd(t, bd, dir, issue.ID, "--file", tmpFile)
 		if !strings.Contains(out, "Comment added") {
 			t.Errorf("expected 'Comment added' in output: %s", out)
 		}
@@ -96,8 +110,8 @@ func TestEmbeddedCommentsCLI(t *testing.T) {
 
 	t.Run("comments_list", func(t *testing.T) {
 		issue := bdCreate(t, bd, dir, "List comments", "--type", "task")
-		bdComments(t, bd, dir, "add", issue.ID, "First comment")
-		bdComments(t, bd, dir, "add", issue.ID, "Second comment")
+		bdCommentAdd(t, bd, dir, issue.ID, "First comment")
+		bdCommentAdd(t, bd, dir, issue.ID, "Second comment")
 
 		out := bdComments(t, bd, dir, issue.ID)
 		if !strings.Contains(out, "First comment") {
@@ -110,7 +124,7 @@ func TestEmbeddedCommentsCLI(t *testing.T) {
 
 	t.Run("comments_list_json", func(t *testing.T) {
 		issue := bdCreate(t, bd, dir, "JSON list comments", "--type", "task")
-		bdComments(t, bd, dir, "add", issue.ID, "A comment")
+		bdCommentAdd(t, bd, dir, issue.ID, "A comment")
 
 		cmd := exec.Command(bd, "comments", issue.ID, "--json")
 		cmd.Dir = dir
@@ -141,7 +155,7 @@ func TestEmbeddedCommentsCLI(t *testing.T) {
 
 	t.Run("comments_list_local_time", func(t *testing.T) {
 		issue := bdCreate(t, bd, dir, "Local time comments", "--type", "task")
-		bdComments(t, bd, dir, "add", issue.ID, "Timed comment")
+		bdCommentAdd(t, bd, dir, issue.ID, "Timed comment")
 
 		cmd := exec.Command(bd, "comments", issue.ID, "--local-time")
 		cmd.Dir = dir
@@ -157,7 +171,7 @@ func TestEmbeddedCommentsCLI(t *testing.T) {
 
 	t.Run("comments_add_then_list_round_trip", func(t *testing.T) {
 		issue := bdCreate(t, bd, dir, "Round trip", "--type", "task")
-		bdComments(t, bd, dir, "add", issue.ID, "Round trip comment")
+		bdCommentAdd(t, bd, dir, issue.ID, "Round trip comment")
 
 		cmd := exec.Command(bd, "comments", issue.ID, "--json")
 		cmd.Dir = dir

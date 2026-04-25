@@ -460,7 +460,6 @@ func TestEmbeddedInit(t *testing.T) {
 		}
 	})
 
-
 	t.Run("metadata_written", func(t *testing.T) {
 		_, bdDir, _ := bdInit(t, bd, "--prefix", "meta")
 		if val := readBack(t, bdDir, "meta", "bd_version", true); val == "" {
