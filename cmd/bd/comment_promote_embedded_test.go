@@ -12,7 +12,7 @@ import (
 // bdComment runs "bd comments add" with the given args and returns stdout.
 func bdComment(t *testing.T, bd, dir string, args ...string) string {
 	t.Helper()
-	fullArgs := append([]string{"comments", "add"}, args...)
+	fullArgs := append([]string{"comment"}, args...)
 	cmd := exec.Command(bd, fullArgs...)
 	cmd.Dir = dir
 	cmd.Env = bdEnv(dir)

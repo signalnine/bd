@@ -324,7 +324,7 @@ func TestProtocol_ReopenPreservesDeps(t *testing.T) {
 	b := w.create("--title", "Dep target", "--type", "task", "--priority", "2")
 	w.run("dep", "add", a, b, "--type", "caused-by")
 	w.run("label", "add", a, "important")
-	w.run("comments", "add", a, "Test comment")
+	w.run("comment", a, "Test comment")
 
 	// Close and reopen
 	w.run("close", a)
@@ -2288,7 +2288,7 @@ func TestDiscovery_EmptyCommentAccepted(t *testing.T) {
 	a := w.create("--title", "Comment test", "--type", "task", "--priority", "2")
 
 	// Adding an empty comment should fail
-	_, err := w.tryRun("comments", "add", a, "")
+	_, err := w.tryRun("comment", a, "")
 	if err == nil {
 		data := parseJSON(t, w.run("show", a, "--json"))
 		comments, _ := data[0]["comments"].([]any)
@@ -2378,7 +2378,7 @@ func TestProtocol_CommentSpecialChars(t *testing.T) {
 
 	// Add comment with quotes and special chars
 	specialText := `This has "quotes" and 'single' and <brackets>`
-	w.run("comments", "add", a, specialText)
+	w.run("comment", a, specialText)
 
 	data := parseJSON(t, w.run("show", a, "--json"))
 	comments, _ := data[0]["comments"].([]any)
@@ -2398,8 +2398,8 @@ func TestProtocol_CommentAddAndPreserve(t *testing.T) {
 	w := newCandidateWorkspace(t)
 
 	a := w.create("--title", "Comment test", "--type", "task", "--priority", "2")
-	w.run("comments", "add", a, "First comment")
-	w.run("comments", "add", a, "Second comment")
+	w.run("comment", a, "First comment")
+	w.run("comment", a, "Second comment")
 
 	data := parseJSON(t, w.run("show", a, "--json"))
 	comments, _ := data[0]["comments"].([]any)

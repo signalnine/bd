@@ -14,15 +14,14 @@ var commentCmd = &cobra.Command{
 	Use:     "comment <id> [text...]",
 	GroupID: "issues",
 	Short:   "Add a comment to an issue",
-	Long: `Add a comment to an issue.
-
-Shorthand for 'bd comments add <id> "text"'.
+	Long: `Add a comment to an issue. To list existing comments, use 'bd comments <id>'.
 
 Examples:
   bd comment bd-123 "Working on this now"
   bd comment bd-123 Working on this now
   echo "comment from pipe" | bd comment bd-123 --stdin
-  bd comment bd-123 --file notes.txt`,
+  bd comment bd-123 --file notes.txt
+  bd comment bd-123 "Reviewed by alice" --author alice`,
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		CheckReadonly("comment")
@@ -58,7 +57,10 @@ Examples:
 			FatalErrorRespectJSON("comment text cannot be empty")
 		}
 
-		author := getActorWithGit()
+		author, _ := cmd.Flags().GetString("author")
+		if author == "" {
+			author = getActorWithGit()
+		}
 
 		ctx := rootCtx
 
@@ -108,6 +110,7 @@ Examples:
 func init() {
 	commentCmd.Flags().Bool("stdin", false, "Read comment text from stdin")
 	commentCmd.Flags().String("file", "", "Read comment text from file")
+	commentCmd.Flags().StringP("author", "a", "", "Override author for the comment (default: git user.name or $USER)")
 	commentCmd.MarkFlagsMutuallyExclusive("stdin", "file")
 	commentCmd.ValidArgsFunction = issueIDCompletion
 	rootCmd.AddCommand(commentCmd)

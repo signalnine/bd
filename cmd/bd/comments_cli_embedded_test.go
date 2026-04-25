@@ -48,7 +48,7 @@ func TestEmbeddedCommentsCLI(t *testing.T) {
 
 	t.Run("comments_add_json", func(t *testing.T) {
 		issue := bdCreate(t, bd, dir, "JSON comment", "--type", "task")
-		cmd := exec.Command(bd, "comments", "add", issue.ID, "JSON comment text", "--json")
+		cmd := exec.Command(bd, "comment", issue.ID, "JSON comment text", "--json")
 		cmd.Dir = dir
 		cmd.Env = bdEnv(dir)
 		out, err := cmd.CombinedOutput()
@@ -83,7 +83,7 @@ func TestEmbeddedCommentsCLI(t *testing.T) {
 	})
 
 	t.Run("comments_add_nonexistent_issue", func(t *testing.T) {
-		cmd := exec.Command(bd, "comments", "add", "cc-nonexistent999", "nope")
+		cmd := exec.Command(bd, "comment", "cc-nonexistent999", "nope")
 		cmd.Dir = dir
 		cmd.Env = bdEnv(dir)
 		out, err := cmd.CombinedOutput()
@@ -213,7 +213,7 @@ func TestEmbeddedCommentsCLIConcurrent(t *testing.T) {
 			r := workerResult{worker: worker}
 
 			text := fmt.Sprintf("Comment from worker %d", worker)
-			cmd := exec.Command(bd, "comments", "add", issue.ID, text)
+			cmd := exec.Command(bd, "comment", issue.ID, text)
 			cmd.Dir = dir
 			cmd.Env = bdEnv(dir)
 			out, err := cmd.CombinedOutput()
