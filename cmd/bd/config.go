@@ -77,8 +77,8 @@ var configSetCmd = &cobra.Command{
 			return
 		}
 
-		// bd.role is stored in git config, not SQLite (GH#1531).
-		// bd doctor reads it from git config, so we write there for consistency.
+		// bd.role is stored in git config, not the bd database (GH#1531), so
+		// detection picks it up consistently across worktrees.
 		if key == "bd.role" {
 			validRoles := map[string]bool{"maintainer": true, "contributor": true}
 			if !validRoles[value] {

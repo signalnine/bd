@@ -226,9 +226,9 @@ func autoMigrateOnVersionBump(bdDir string) {
 	}
 
 	// Commit the version metadata update to Dolt (bd-jgxi).
-	// Without an explicit commit, the working set change is lost when the
-	// Dolt server restarts (common for standalone/embedded users). This
-	// ensures bd doctor and subsequent commands see the correct version.
+	// Without an explicit commit, the working set change is lost when Dolt
+	// reopens the database. This ensures subsequent commands see the
+	// correct version.
 	commitMsg := fmt.Sprintf("auto-migrate: update bd_version %s → %s", dbVersion, Version)
 	if err := store.Commit(ctx, commitMsg); err != nil {
 		debug.Logf("auto-migrate: failed to commit version update: %v", err)

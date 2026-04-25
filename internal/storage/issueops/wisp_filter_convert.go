@@ -17,8 +17,7 @@ func WispFilterToIssueFilter(f types.WispFilter) types.IssueFilter {
 		Limit:         f.Limit,
 	}
 	// When no explicit status filter is set and IncludeClosed is false,
-	// exclude closed wisps. This matches the default behavior of
-	// "bd mol wisp list" (which hides closed wisps unless --all is passed).
+	// exclude closed wisps. Callers that want closed wisps must opt in.
 	if !f.IncludeClosed && f.Status == nil {
 		filter.ExcludeStatus = []types.Status{types.StatusClosed}
 	}

@@ -125,8 +125,8 @@ func loadBdEnvFile(bdDir string) {
 }
 
 // loadEnvironment runs the lightweight, always-needed environment setup that
-// must happen before the noDbCommands early return. This ensures commands like
-// "bd doctor --server" pick up per-project Dolt credentials from .bd/.env.
+// must happen before the noDbCommands early return. This ensures every command
+// picks up per-project Dolt credentials from .bd/.env.
 //
 // This function intentionally does NOT do any store initialization, auto-migrate,
 // or telemetry setup — those belong in the store-init phase that runs after the
@@ -317,9 +317,6 @@ func init() {
 	rootCmd.AddGroup(&cobra.Group{ID: "deps", Title: "Dependencies & Structure:"})
 	rootCmd.AddGroup(&cobra.Group{ID: "sync", Title: "Sync & Data:"})
 	rootCmd.AddGroup(&cobra.Group{ID: "setup", Title: "Setup & Configuration:"})
-	// NOTE: Many maintenance commands (clean, cleanup, compact, validate, repair-deps)
-	// should eventually be consolidated into 'bd doctor' and 'bd doctor --fix' to simplify
-	// the user experience. The doctor command can detect issues and offer fixes interactively.
 	rootCmd.AddGroup(&cobra.Group{ID: "maint", Title: "Maintenance:"})
 	rootCmd.AddGroup(&cobra.Group{ID: "advanced", Title: "Integrations & Advanced:"})
 
@@ -438,7 +435,7 @@ var rootCmd = &cobra.Command{
 		}
 
 		// GH#2677: Load .bd/.env before the noDbCommands early return so that
-		// commands like "bd doctor --server" pick up per-project Dolt credentials.
+		// every command picks up per-project Dolt credentials.
 		if !isSelectedNoDBCommand(cmd) {
 			loadEnvironment()
 		}
@@ -592,8 +589,8 @@ var rootCmd = &cobra.Command{
 		// Auto-migrate database on version bump (bd-jgxi).
 		// Runs for ALL commands (including read-only ones) because the migration
 		// opens its own store connection, writes the version metadata, commits it,
-		// and closes BEFORE the main store is opened. This ensures bd doctor and
-		// read-only commands see the correct version after a CLI upgrade.
+		// and closes BEFORE the main store is opened. This ensures read-only
+		// commands see the correct version after a CLI upgrade.
 		bdDir := resolveCommandBdDir(dbPath)
 
 		autoMigrateOnVersionBump(bdDir)

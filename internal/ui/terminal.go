@@ -22,7 +22,7 @@ func IsTerminal() bool {
 func ShouldUseColor() bool {
 	// Git hook context - disable color to prevent termenv OSC 11 terminal
 	// background queries that leak escape sequences to the terminal (GH#1303).
-	// Set by bd hook shim templates before calling 'bd hooks run'.
+	// External tooling that wraps bd from inside a git hook can set this.
 	if os.Getenv("BD_GIT_HOOK") == "1" {
 		return false
 	}

@@ -563,8 +563,7 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 		}
 
 		// Initialize last_import_time metadata to mark the database as synced.
-		// This prevents bd doctor from reporting "No last_import_time recorded in database"
-		// after init completes. Sets the metadata to current time in RFC3339 format.
+		// Sets the metadata to current time in RFC3339 format.
 		// (mybd-9gw: sync divergence fix)
 		if err := store.SetMetadata(ctx, "last_import_time", time.Now().Format(time.RFC3339)); err != nil {
 			fmt.Fprintf(os.Stderr, "Warning: failed to initialize last_import_time: %v\n", err)
@@ -671,8 +670,8 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 			}
 		}
 
-		// Auto-commit Dolt state so bd doctor doesn't warn about uncommitted
-		// changes and users don't need a separate "bd vc commit" step.
+		// Auto-commit Dolt state so users don't need a separate "bd vc commit" step
+		// after init.
 		if err := store.Commit(ctx, "bd init"); err != nil {
 			// Non-fatal: some setups (e.g. no tables yet) may have nothing to commit
 			if !strings.Contains(err.Error(), "nothing to commit") {
@@ -733,7 +732,6 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 
 		// Initialize version tracking: create .local_version file during bd init
 		// instead of deferring it to the first bd command.
-		// This ensures no "Version Tracking" warning from bd doctor after init.
 		if useLocalBd {
 			localVersionPath := filepath.Join(bdDir, ".local_version")
 			if err := writeLocalVersion(localVersionPath, Version); err != nil && !quiet {
@@ -744,8 +742,8 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 
 		// Agents instructions and Claude hooks setup removed (nuclear simplification)
 
-		// Auto-stage and commit bd files so bd doctor doesn't warn about
-		// untracked files or dirty working tree in a clean room setup.
+		// Auto-stage and commit bd files so a fresh init leaves a clean working
+		// tree.
 		// Only runs when not stealth, in a git repo, and using local storage.
 		if !stealth && isGitRepo() && useLocalBd {
 			gitAddCmd := exec.Command("git", "add", ".bd/")

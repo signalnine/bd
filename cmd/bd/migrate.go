@@ -643,8 +643,6 @@ func listMigrations() []string {
 
 // migrateSyncCmd is the "bd migrate sync <branch>" subcommand that
 // configures the separate-branch workflow for multi-clone setups.
-// Previously this was documented but never wired as an actual subcommand,
-// so bd doctor's recommendation to run "bd migrate sync bd-sync" would fail.
 var migrateSyncCmd = &cobra.Command{
 	Use:   "sync <branch>",
 	Short: "Set up sync.branch workflow for multi-clone setups",
