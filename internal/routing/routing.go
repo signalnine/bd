@@ -1,7 +1,6 @@
 package routing
 
 import (
-	"fmt"
 	"net/url"
 	"os"
 	"os/exec"
@@ -30,28 +29,25 @@ const (
 //
 // Detection strategy:
 // 1. Check git config for bd.role setting (preferred source of truth)
-// 2. Fall back to URL heuristic with deprecation warning (graceful degradation)
+// 2. Fall back to URL heuristic (graceful degradation)
 // 3. Default to maintainer for local projects (no remote configured)
-func DetectUserRole(repoPath string) (UserRole, error) {
-	// First check for explicit role in git config (preferred source)
+//
+// The second return value is true when bd.role was explicitly configured.
+// Callers may want to surface a deprecation hint when it's false, but the
+// hint itself does not belong here — printing to stderr from a library
+// pollutes scriptable callers (e.g., --json output).
+func DetectUserRole(repoPath string) (UserRole, bool) {
 	output, err := gitCommandRunner(repoPath, "config", "--get", "bd.role")
 	if err == nil {
 		role := strings.TrimSpace(string(output))
 		if role == string(Maintainer) {
-			return Maintainer, nil
+			return Maintainer, true
 		}
 		if role == string(Contributor) {
-			return Contributor, nil
+			return Contributor, true
 		}
-		// Invalid role value - fall through with warning
 	}
-
-	// Fallback to URL heuristic (deprecated, with warning)
-	// This keeps existing users working while encouraging migration
-	fmt.Fprintln(os.Stderr, "warning: bd.role not configured (GH#2950).")
-	fmt.Fprintln(os.Stderr, "  Fix: git config bd.role maintainer")
-	fmt.Fprintln(os.Stderr, "  Or:  git config bd.role contributor")
-	return detectFromURL(repoPath), nil
+	return detectFromURL(repoPath), false
 }
 
 // detectFromURL uses remote URL patterns to infer user role.

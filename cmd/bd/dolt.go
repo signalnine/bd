@@ -415,11 +415,20 @@ func selectedDoltBdDir() string {
 }
 
 // extractSSHHost extracts the hostname from an SSH URL for connectivity testing.
+// Handles ssh://, git+ssh://, and SCP-like (user@host:path) forms, including
+// bracketed IPv6 literals (e.g. ssh://user@[::1]:22/repo -> "::1").
 func extractSSHHost(url string) string {
 	url = strings.TrimPrefix(url, "git+ssh://")
 	url = strings.TrimPrefix(url, "ssh://")
 	if idx := strings.Index(url, "@"); idx >= 0 {
 		url = url[idx+1:]
+	}
+	// Bracketed IPv6 literal: return what's inside the brackets.
+	if strings.HasPrefix(url, "[") {
+		if end := strings.Index(url, "]"); end > 0 {
+			return url[1:end]
+		}
+		return url
 	}
 	if idx := strings.Index(url, ":"); idx >= 0 && !strings.Contains(url[:idx], "/") {
 		return url[:idx]

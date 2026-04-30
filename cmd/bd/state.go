@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/signalnine/bd/internal/storage"
 	"github.com/signalnine/bd/internal/types"
 	"github.com/signalnine/bd/internal/ui"
 	"github.com/signalnine/bd/internal/utils"
@@ -178,12 +179,14 @@ The --reason flag provides context for the event bead (recommended).`,
 			eventDesc += "\n\nReason: " + reason
 		}
 
-		var eventID string
-		// Get next child ID for the event
+		// Get next child ID for the event. Done outside the transaction;
+		// concurrent set-state on the same parent would surface as a PK
+		// conflict on CreateIssue (loud), not silent inconsistency.
 		childID, err := store.GetNextChildID(ctx, fullID)
 		if err != nil {
 			FatalErrorRespectJSON("generating child ID: %v", err)
 		}
+		eventID := childID
 
 		event := &types.Issue{
 			ID:          childID,
@@ -194,39 +197,32 @@ The --reason flag provides context for the event bead (recommended).`,
 			IssueType:   types.TypeEvent,
 			CreatedBy:   getActorWithGit(),
 		}
-		if err := store.CreateIssue(ctx, event, actor); err != nil {
-			FatalErrorRespectJSON("creating event: %v", err)
-		}
 
-		// Add parent-child dependency
-		dep := &types.Dependency{
-			IssueID:     childID,
-			DependsOnID: fullID,
-			Type:        types.DepParentChild,
-		}
-		if err := store.AddDependency(ctx, dep, actor); err != nil {
-			WarnError("failed to add parent-child dependency: %v", err)
-		}
-
-		eventID = childID
-
-		// 2. Remove old label if exists
-		if oldLabel != "" {
-			if err := store.RemoveLabel(ctx, fullID, oldLabel, actor); err != nil {
-				WarnError("failed to remove old label %s: %v", oldLabel, err)
+		commitMsg := fmt.Sprintf("bd: set-state %s=%s on %s by %s", dimension, newValue, fullID, actor)
+		err = transact(ctx, store, commitMsg, func(tx storage.Transaction) error {
+			if err := tx.CreateIssue(ctx, event, actor); err != nil {
+				return fmt.Errorf("creating event: %w", err)
 			}
-		}
-
-		// 3. Add new label
-		if err := store.AddLabel(ctx, fullID, newLabel, actor); err != nil {
-			FatalErrorRespectJSON("adding label: %v", err)
-		}
-
-		// Embedded mode: flush Dolt commit.
-		if store != nil {
-			if _, err := store.CommitPending(ctx, actor); err != nil {
-				FatalErrorRespectJSON("failed to commit: %v", err)
+			dep := &types.Dependency{
+				IssueID:     childID,
+				DependsOnID: fullID,
+				Type:        types.DepParentChild,
 			}
+			if err := tx.AddDependency(ctx, dep, actor); err != nil {
+				return fmt.Errorf("adding parent-child dependency: %w", err)
+			}
+			if oldLabel != "" {
+				if err := tx.RemoveLabel(ctx, fullID, oldLabel, actor); err != nil {
+					return fmt.Errorf("removing old label %s: %w", oldLabel, err)
+				}
+			}
+			if err := tx.AddLabel(ctx, fullID, newLabel, actor); err != nil {
+				return fmt.Errorf("adding label: %w", err)
+			}
+			return nil
+		})
+		if err != nil {
+			FatalErrorRespectJSON("%v", err)
 		}
 
 		if jsonOutput {
@@ -323,27 +319,27 @@ The --reason flag provides context for the event bead (recommended).`,
 			IssueType:   types.TypeEvent,
 			CreatedBy:   getActorWithGit(),
 		}
-		if err := store.CreateIssue(ctx, event, actor); err != nil {
-			FatalErrorRespectJSON("creating event: %v", err)
-		}
 
-		dep := &types.Dependency{
-			IssueID:     childID,
-			DependsOnID: fullID,
-			Type:        types.DepParentChild,
-		}
-		if err := store.AddDependency(ctx, dep, actor); err != nil {
-			WarnError("failed to add parent-child dependency: %v", err)
-		}
-
-		if err := store.RemoveLabel(ctx, fullID, oldLabel, actor); err != nil {
-			FatalErrorRespectJSON("removing label %s: %v", oldLabel, err)
-		}
-
-		if store != nil {
-			if _, err := store.CommitPending(ctx, actor); err != nil {
-				FatalErrorRespectJSON("failed to commit: %v", err)
+		commitMsg := fmt.Sprintf("bd: state remove %s on %s by %s", dimension, fullID, actor)
+		err = transact(ctx, store, commitMsg, func(tx storage.Transaction) error {
+			if err := tx.CreateIssue(ctx, event, actor); err != nil {
+				return fmt.Errorf("creating event: %w", err)
 			}
+			dep := &types.Dependency{
+				IssueID:     childID,
+				DependsOnID: fullID,
+				Type:        types.DepParentChild,
+			}
+			if err := tx.AddDependency(ctx, dep, actor); err != nil {
+				return fmt.Errorf("adding parent-child dependency: %w", err)
+			}
+			if err := tx.RemoveLabel(ctx, fullID, oldLabel, actor); err != nil {
+				return fmt.Errorf("removing label %s: %w", oldLabel, err)
+			}
+			return nil
+		})
+		if err != nil {
+			FatalErrorRespectJSON("%v", err)
 		}
 
 		if jsonOutput {

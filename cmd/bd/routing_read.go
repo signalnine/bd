@@ -39,10 +39,7 @@ func getRoutingConfigValue(ctx context.Context, store *embeddeddolt.EmbeddedDolt
 // determineAutoRoutedRepoPath returns the repository path that should be used for
 // issue reads when contributor auto-routing is enabled.
 func determineAutoRoutedRepoPath(ctx context.Context, store *embeddeddolt.EmbeddedDoltStore) string {
-	userRole, err := routing.DetectUserRole(".")
-	if err != nil {
-		debug.Logf("Warning: failed to detect user role: %v\n", err)
-	}
+	userRole, _ := routing.DetectUserRole(".")
 
 	// Build routing config with backward compatibility for legacy contributor.* keys.
 	routingMode := getRoutingConfigValue(ctx, store, "routing.mode")

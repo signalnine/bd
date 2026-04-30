@@ -336,9 +336,9 @@ var createCmd = &cobra.Command{
 			repoPath = repoOverride
 		} else {
 			// Auto-routing based on user role
-			userRole, err := routing.DetectUserRole(".")
-			if err != nil {
-				debug.Logf("Warning: failed to detect user role: %v\n", err)
+			userRole, roleConfigured := routing.DetectUserRole(".")
+			if !roleConfigured && !jsonOutput {
+				debug.Logf("hint: bd.role not configured; using URL heuristic. Set with: git config bd.role maintainer\n")
 			}
 
 			// Build routing config with backward compatibility for legacy contributor.* keys.

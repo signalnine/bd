@@ -129,7 +129,14 @@ func AddDependencyInTx(ctx context.Context, tx *sql.Tx, dep *types.Dependency, a
 		}
 		unionQuery := strings.Join(unions, " UNION ALL ")
 
-		var reachable int
+		// cycleDetectionMaxDepth bounds the recursive CTE so a runaway query
+		// can't lock up the engine. A real chain past this is exotic; if we
+		// ever do hit it, we surface an error rather than silently accept a
+		// possibly-cyclic dep.
+		const cycleDetectionMaxDepth = 1000
+
+		var hits int
+		var maxDepth sql.NullInt64
 		//nolint:gosec // G201: unionQuery built from caller-controlled table names
 		if err := tx.QueryRowContext(ctx, fmt.Sprintf(`
 			WITH RECURSIVE reachable AS (
@@ -138,14 +145,20 @@ func AddDependencyInTx(ctx context.Context, tx *sql.Tx, dep *types.Dependency, a
 				SELECT d.depends_on_id, r.depth + 1
 				FROM reachable r
 				JOIN (%s) d ON d.issue_id = r.node
-				WHERE r.depth < 100
+				WHERE r.depth < %d
 			)
-			SELECT COUNT(*) FROM reachable WHERE node = ?
-		`, unionQuery), dep.DependsOnID, dep.IssueID).Scan(&reachable); err != nil {
+			SELECT
+				SUM(CASE WHEN node = ? THEN 1 ELSE 0 END) AS hits,
+				MAX(depth) AS max_depth
+			FROM reachable
+		`, unionQuery, cycleDetectionMaxDepth), dep.DependsOnID, dep.IssueID).Scan(&hits, &maxDepth); err != nil {
 			return fmt.Errorf("failed to check for dependency cycle: %w", err)
 		}
-		if reachable > 0 {
+		if hits > 0 {
 			return fmt.Errorf("adding dependency would create a cycle")
+		}
+		if maxDepth.Valid && maxDepth.Int64 >= cycleDetectionMaxDepth {
+			return fmt.Errorf("dependency graph from %s exceeds %d hops; cycle detection cannot verify safety — refusing to add dependency", dep.DependsOnID, cycleDetectionMaxDepth)
 		}
 	}
 

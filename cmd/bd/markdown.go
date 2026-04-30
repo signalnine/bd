@@ -101,24 +101,20 @@ func processIssueSection(issue *IssueTemplate, section, content string) {
 	}
 }
 
-// validateMarkdownPath validates and cleans a markdown file path to prevent security issues.
-// It checks for directory traversal attempts and ensures the file is a markdown file.
+// validateMarkdownPath cleans a user-supplied markdown file path and verifies
+// it points at a readable .md/.markdown file. There is no traversal check:
+// this is a CLI tool, the user picks the path, and the process already runs
+// with the user's privileges — a "..  not allowed" rule would be theater
+// (and the previous strings.Contains check both let absolute paths through
+// and rejected legitimate names like "notes..final.md").
 func validateMarkdownPath(path string) (string, error) {
-	// Clean the path
 	cleanPath := filepath.Clean(path)
 
-	// Prevent directory traversal
-	if strings.Contains(cleanPath, "..") {
-		return "", fmt.Errorf("invalid file path: directory traversal not allowed")
-	}
-
-	// Ensure it's a markdown file
 	ext := strings.ToLower(filepath.Ext(cleanPath))
 	if ext != ".md" && ext != ".markdown" {
 		return "", fmt.Errorf("invalid file type: only .md and .markdown files are supported")
 	}
 
-	// Check file exists and is not a directory
 	info, err := os.Stat(cleanPath)
 	if err != nil {
 		return "", fmt.Errorf("cannot access file: %w", err)
@@ -264,7 +260,8 @@ func parseMarkdownFile(path string) ([]*IssueTemplate, error) {
 		return nil, err
 	}
 
-	// #nosec G304 -- Path is validated by validateMarkdownPath which prevents traversal
+	// #nosec G304 -- user-supplied CLI argument; opening it under the user's
+	// own privileges is the documented behavior of the markdown import command.
 	file, err := os.Open(cleanPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file: %w", err)

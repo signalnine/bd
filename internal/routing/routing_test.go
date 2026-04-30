@@ -82,9 +82,9 @@ func TestDetermineTargetRepo(t *testing.T) {
 
 func TestDetectUserRole_Fallback(t *testing.T) {
 	// Test fallback behavior when git is not available - local projects default to maintainer
-	role, err := DetectUserRole("/nonexistent/path/that/does/not/exist")
-	if err != nil {
-		t.Fatalf("DetectUserRole() error = %v, want nil", err)
+	role, configured := DetectUserRole("/nonexistent/path/that/does/not/exist")
+	if configured {
+		t.Errorf("DetectUserRole() reported configured=true with no git available")
 	}
 	if role != Maintainer {
 		t.Errorf("DetectUserRole() = %v, want %v (local project fallback)", role, Maintainer)
@@ -140,9 +140,9 @@ func TestDetectUserRole_ConfigOverrideMaintainer(t *testing.T) {
 		stub.verify()
 	})
 
-	role, err := DetectUserRole("")
-	if err != nil {
-		t.Fatalf("DetectUserRole error = %v", err)
+	role, configured := DetectUserRole("")
+	if !configured {
+		t.Fatalf("expected configured=true when bd.role is set")
 	}
 	if role != Maintainer {
 		t.Fatalf("expected %s, got %s", Maintainer, role)
@@ -160,9 +160,9 @@ func TestDetectUserRole_ConfigOverrideContributor(t *testing.T) {
 		stub.verify()
 	})
 
-	role, err := DetectUserRole("/repo")
-	if err != nil {
-		t.Fatalf("DetectUserRole error = %v", err)
+	role, configured := DetectUserRole("/repo")
+	if !configured {
+		t.Fatalf("expected configured=true when bd.role is set")
 	}
 	if role != Contributor {
 		t.Fatalf("expected %s, got %s", Contributor, role)
@@ -182,9 +182,9 @@ func TestDetectUserRole_PushURLMaintainer(t *testing.T) {
 		stub.verify()
 	})
 
-	role, err := DetectUserRole("/repo")
-	if err != nil {
-		t.Fatalf("DetectUserRole error = %v", err)
+	role, configured := DetectUserRole("/repo")
+	if configured {
+		t.Fatalf("expected configured=false when bd.role is unset/invalid")
 	}
 	if role != Maintainer {
 		t.Fatalf("expected %s, got %s", Maintainer, role)
@@ -204,9 +204,9 @@ func TestDetectUserRole_HTTPSCredentialsMaintainer(t *testing.T) {
 		stub.verify()
 	})
 
-	role, err := DetectUserRole("/repo")
-	if err != nil {
-		t.Fatalf("DetectUserRole error = %v", err)
+	role, configured := DetectUserRole("/repo")
+	if configured {
+		t.Fatalf("expected configured=false when bd.role is unset")
 	}
 	if role != Maintainer {
 		t.Fatalf("expected %s, got %s", Maintainer, role)
@@ -227,9 +227,9 @@ func TestDetectUserRole_HTTPSNoCredentialsContributor(t *testing.T) {
 		stub.verify()
 	})
 
-	role, err := DetectUserRole("")
-	if err != nil {
-		t.Fatalf("DetectUserRole error = %v", err)
+	role, configured := DetectUserRole("")
+	if configured {
+		t.Fatalf("expected configured=false when bd.role is unset")
 	}
 	if role != Contributor {
 		t.Fatalf("expected %s, got %s", Contributor, role)
@@ -250,9 +250,9 @@ func TestDetectUserRole_NoRemoteMaintainer(t *testing.T) {
 		stub.verify()
 	})
 
-	role, err := DetectUserRole("/local")
-	if err != nil {
-		t.Fatalf("DetectUserRole error = %v", err)
+	role, configured := DetectUserRole("/local")
+	if configured {
+		t.Fatalf("expected configured=false when bd.role is unset")
 	}
 	if role != Maintainer {
 		t.Fatalf("expected %s for local project with no remote, got %s", Maintainer, role)
@@ -272,9 +272,9 @@ func TestDetectUserRole_ForkWorkflowDefaultsToContributor(t *testing.T) {
 		stub.verify()
 	})
 
-	role, err := DetectUserRole("/repo")
-	if err != nil {
-		t.Fatalf("DetectUserRole error = %v", err)
+	role, configured := DetectUserRole("/repo")
+	if configured {
+		t.Fatalf("expected configured=false when bd.role is unset")
 	}
 	if role != Contributor {
 		t.Fatalf("expected %s, got %s", Contributor, role)
@@ -294,9 +294,9 @@ func TestDetectUserRole_UpstreamSameRepoStillMaintainer(t *testing.T) {
 		stub.verify()
 	})
 
-	role, err := DetectUserRole("/repo")
-	if err != nil {
-		t.Fatalf("DetectUserRole error = %v", err)
+	role, configured := DetectUserRole("/repo")
+	if configured {
+		t.Fatalf("expected configured=false when bd.role is unset")
 	}
 	if role != Maintainer {
 		t.Fatalf("expected %s, got %s", Maintainer, role)
