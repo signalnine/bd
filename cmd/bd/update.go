@@ -467,15 +467,18 @@ create, update, show, or close operation).`,
 			if firstUpdatedID == "" {
 				firstUpdatedID = result.ResolvedID
 			}
-			result.Close()
-		}
 
-		// Embedded mode: flush Dolt commit. DoltStore commits
-		// inline during UpdateIssue so this is only needed for EmbeddedDoltStore.
-		if firstUpdatedID != "" && store != nil {
-			if _, err := store.CommitPending(ctx, actor); err != nil {
+			// Flush Dolt commit on the store the writes went to (bd-288). For
+			// routed stores this must happen before result.Close() releases the
+			// connection. For the local store this is a no-op when nothing is
+			// pending. DoltStore commits inline during UpdateIssue; this matters
+			// for EmbeddedDoltStore.
+			if _, err := issueStore.CommitPending(ctx, actor); err != nil {
+				result.Close()
 				FatalErrorRespectJSON("failed to commit: %v", err)
 			}
+
+			result.Close()
 		}
 
 		// Set last touched after all updates complete

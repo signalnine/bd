@@ -68,9 +68,9 @@ Examples:
 			FatalErrorRespectJSON("updating %s: %v", id, err)
 		}
 
-		// Flush Dolt commit for embedded mode
-		if store != nil {
-			if _, err := store.CommitPending(ctx, actor); err != nil {
+		// Flush Dolt commit on the routed store for embedded mode (bd-288).
+		if issueStore != nil {
+			if _, err := issueStore.CommitPending(ctx, actor); err != nil {
 				FatalErrorRespectJSON("failed to commit: %v", err)
 			}
 		}

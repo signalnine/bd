@@ -437,6 +437,52 @@ func TestEmbeddedClose(t *testing.T) {
 		}
 	})
 
+	t.Run("done_two_issue_ids", func(t *testing.T) {
+		// bd-kqf: 'bd done id1 id2' must close both issues, not treat id2 as
+		// the close reason for id1.
+		issue1 := bdCreate(t, bd, dir, "Done both 1", "--type", "task")
+		issue2 := bdCreate(t, bd, dir, "Done both 2", "--type", "task")
+		cmd := exec.Command(bd, "done", issue1.ID, issue2.ID)
+		cmd.Dir = dir
+		cmd.Env = bdEnv(dir)
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			t.Fatalf("bd done id1 id2 failed: %v\n%s", err, out)
+		}
+		got1 := bdShow(t, bd, dir, issue1.ID)
+		got2 := bdShow(t, bd, dir, issue2.ID)
+		if got1.Status != types.StatusClosed {
+			t.Errorf("issue1: expected closed, got %s", got1.Status)
+		}
+		if got2.Status != types.StatusClosed {
+			t.Errorf("issue2: expected closed (was likely treated as reason), got %s", got2.Status)
+		}
+		if got1.CloseReason == issue2.ID {
+			t.Errorf("issue1 close reason should not be the second ID, got %q", got1.CloseReason)
+		}
+	})
+
+	t.Run("done_explicit_reason_flag_with_two_ids", func(t *testing.T) {
+		// When --reason is given, both positional args are IDs.
+		issue1 := bdCreate(t, bd, dir, "Done flag 1", "--type", "task")
+		issue2 := bdCreate(t, bd, dir, "Done flag 2", "--type", "task")
+		cmd := exec.Command(bd, "done", issue1.ID, issue2.ID, "--reason", "shipped")
+		cmd.Dir = dir
+		cmd.Env = bdEnv(dir)
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			t.Fatalf("bd done id1 id2 --reason failed: %v\n%s", err, out)
+		}
+		got1 := bdShow(t, bd, dir, issue1.ID)
+		got2 := bdShow(t, bd, dir, issue2.ID)
+		if got1.Status != types.StatusClosed || got2.Status != types.StatusClosed {
+			t.Errorf("expected both closed, got %s and %s", got1.Status, got2.Status)
+		}
+		if got1.CloseReason != "shipped" || got2.CloseReason != "shipped" {
+			t.Errorf("expected reason 'shipped' on both, got %q and %q", got1.CloseReason, got2.CloseReason)
+		}
+	})
+
 	// ===== Dolt Commit and Edge Cases =====
 
 	t.Run("close_dolt_commit", func(t *testing.T) {

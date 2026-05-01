@@ -50,10 +50,15 @@ create, update, show, or close operation).`,
 		}
 
 		// Desire-path: "bd done <id> <message>" treats last positional arg as reason
-		// when no reason flag was explicitly provided (hq-pe8ce)
+		// when no reason flag was explicitly provided (hq-pe8ce). bd-kqf: only steal
+		// the last arg when it does not resolve to an issue ID, so 'bd done id1 id2'
+		// closes both issues instead of treating id2 as a reason.
 		if reason == "" && cmd.CalledAs() == "done" && len(args) >= 2 {
-			reason = args[len(args)-1]
-			args = args[:len(args)-1]
+			lastArg := args[len(args)-1]
+			if _, resolveErr := utils.ResolvePartialID(rootCtx, store, lastArg); resolveErr != nil {
+				reason = lastArg
+				args = args[:len(args)-1]
+			}
 		}
 
 		if reason == "" {

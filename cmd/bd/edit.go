@@ -158,8 +158,8 @@ Examples:
 		}
 		editSaved = true
 
-		// Flush Dolt commit.
-		if _, err := store.CommitPending(ctx, actor); err != nil {
+		// Flush Dolt commit on the routed store (bd-288).
+		if _, err := issueStore.CommitPending(ctx, actor); err != nil {
 			FatalErrorRespectJSON("failed to commit: %v", err)
 		}
 
