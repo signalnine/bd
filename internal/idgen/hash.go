@@ -49,10 +49,25 @@ func encodeBase36(data []byte, length int) string {
 	return str
 }
 
+// minHashLength and maxHashLength bound the supported hash output length.
+// Lengths outside this range silently produced low-entropy IDs in earlier
+// versions, so callers passing out-of-range values are clamped here.
+const (
+	minHashLength = 3
+	maxHashLength = 8
+)
+
 // GenerateHashID creates a hash-based ID for an issue.
 // Uses base36 encoding (0-9, a-z) for better information density than hex.
-// The length parameter is expected to be 3-8; other values fall back to a 3-char byte width.
+// The length parameter must be in [3, 8]; values outside this range are
+// clamped to keep entropy consistent with the output length.
 func GenerateHashID(prefix, title, description, creator string, timestamp time.Time, length, nonce int) string {
+	if length < minHashLength {
+		length = minHashLength
+	} else if length > maxHashLength {
+		length = maxHashLength
+	}
+
 	// Combine inputs into a stable content string
 	// Include nonce to handle hash collisions
 	content := fmt.Sprintf("%s|%s|%s|%d|%d", title, description, creator, timestamp.UnixNano(), nonce)
@@ -67,16 +82,10 @@ func GenerateHashID(prefix, title, description, creator string, timestamp time.T
 		numBytes = 2 // 2 bytes = 16 bits ≈ 3.09 base36 chars
 	case 4:
 		numBytes = 3 // 3 bytes = 24 bits ≈ 4.63 base36 chars
-	case 5:
+	case 5, 6:
 		numBytes = 4 // 4 bytes = 32 bits ≈ 6.18 base36 chars
-	case 6:
-		numBytes = 4 // 4 bytes = 32 bits ≈ 6.18 base36 chars
-	case 7:
+	case 7, 8:
 		numBytes = 5 // 5 bytes = 40 bits ≈ 7.73 base36 chars
-	case 8:
-		numBytes = 5 // 5 bytes = 40 bits ≈ 7.73 base36 chars
-	default:
-		numBytes = 3 // default to 3 chars
 	}
 
 	shortHash := encodeBase36(hash[:numBytes], length)

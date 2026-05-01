@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/olebedev/when"
@@ -89,16 +90,19 @@ func isCompactDuration(s string) bool {
 }
 
 // nlpParser is the singleton natural language parser (olebedev/when).
-// Initialized lazily on first use.
-var nlpParser *when.Parser
+// Initialized lazily on first use, guarded by nlpParserOnce.
+var (
+	nlpParser     *when.Parser
+	nlpParserOnce sync.Once
+)
 
 // getNLPParser returns the singleton NLP parser, initializing it if needed.
 func getNLPParser() *when.Parser {
-	if nlpParser == nil {
+	nlpParserOnce.Do(func() {
 		nlpParser = when.New(nil)
 		nlpParser.Add(en.All...)
 		nlpParser.Add(common.All...)
-	}
+	})
 	return nlpParser
 }
 
