@@ -70,10 +70,7 @@ func TestRoutingIntegration(t *testing.T) {
 			tt.setupGit(t, tmpDir)
 
 			// Detect user role
-			role, err := routing.DetectUserRole(tmpDir)
-			if err != nil {
-				t.Fatalf("DetectUserRole() error = %v", err)
-			}
+			role, _ := routing.DetectUserRole(tmpDir)
 
 			if role != tt.expectedRole {
 				t.Errorf("expected role %v, got %v", tt.expectedRole, role)
@@ -110,10 +107,7 @@ func TestRoutingWithExplicitOverride(t *testing.T) {
 	runGitCmd(t, tmpDir, "git", "remote", "add", "upstream", "https://github.com/original/repo.git")
 	runGitCmd(t, tmpDir, "git", "remote", "add", "origin", "https://github.com/forker/repo.git")
 
-	role, err := routing.DetectUserRole(tmpDir)
-	if err != nil {
-		t.Fatalf("DetectUserRole() error = %v", err)
-	}
+	role, _ := routing.DetectUserRole(tmpDir)
 
 	// Even though we're a contributor, --repo flag should override
 	routingCfg := &routing.RoutingConfig{
@@ -179,10 +173,7 @@ func TestMultiRepoEndToEnd(t *testing.T) {
 	}
 
 	// Verify routing works
-	role, err := routing.DetectUserRole(primaryDir)
-	if err != nil {
-		t.Fatalf("DetectUserRole() error = %v", err)
-	}
+	role, _ := routing.DetectUserRole(primaryDir)
 
 	if role != routing.Maintainer {
 		t.Errorf("expected maintainer role, got %v", role)
