@@ -2,7 +2,10 @@
 
 ## Status
 
-Accepted
+Superseded — `bd prime` was removed in the simplification sweep
+(commit 4dceedd4, "phase 3: delete non-core commands"). The skill now
+points agents at `bd ready` for session start and `bd <command> --help`
+for command syntax. See claude-plugin/skills/beads/CLAUDE.md.
 
 ## Context
 

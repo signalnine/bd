@@ -10,38 +10,22 @@ How to use beads with Claude Code.
 
 ## Setup
 
-### Quick Setup
-
-```bash
-bd setup claude
-```
-
-This installs:
-- **SessionStart hook** - Runs `bd prime` on session start
-- **PreCompact hook** - Runs `bd dolt push` before context compaction
-
-### Manual Setup
-
-Add to your Claude Code hooks configuration:
+Add to your Claude Code hooks configuration (`~/.claude/settings.json`):
 
 ```json
 {
   "hooks": {
-    "SessionStart": ["bd prime"],
-    "PreCompact": ["bd dolt push"]
+    "SessionStart": [{"matcher": "", "hooks": [{"type": "command", "command": "bd ready"}]}],
+    "PreCompact":   [{"matcher": "", "hooks": [{"type": "command", "command": "bd dolt push"}]}]
   }
 }
 ```
 
-### Verify Setup
-
-```bash
-bd setup claude --check
-```
+`bd ready` lists unblocked issues so the agent sees what's actionable; `bd dolt push` flushes work to the Dolt remote before the context window compacts.
 
 ## How It Works
 
-1. **Session starts** → `bd prime` injects ~1-2k tokens of context
+1. **Session starts** → `bd ready` lists unblocked work for the agent
 2. **You work** → Use `bd` CLI commands directly
 3. **Session compacts** → `bd dolt push` saves work to Dolt remote
 4. **Session ends** → Changes synced via git
@@ -154,22 +138,19 @@ Adds slash commands:
 
 ### Context not injected
 
-```bash
-# Check hook setup
-bd setup claude --check
+Verify your hook command runs cleanly outside of Claude Code:
 
-# Manually prime
-bd prime
+```bash
+bd ready
+bd dolt push
 ```
+
+If either errors, the hook will silently no-op until the underlying issue is fixed.
 
 ### Changes not syncing
 
 ```bash
-# Force push
 bd dolt push
-
-# Check system health
-bd doctor
 ```
 
 ### Database not found

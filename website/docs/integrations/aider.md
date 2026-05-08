@@ -10,39 +10,26 @@ How to use beads with Aider.
 
 ## Setup
 
-### Quick Setup
-
-```bash
-bd setup aider
-```
-
-This creates/updates `.aider.conf.yml` with beads context.
-
-### Verify Setup
-
-```bash
-bd setup aider --check
-```
-
-## Configuration
-
-The setup adds to `.aider.conf.yml`:
+Create or edit `.aider.conf.yml` in your project:
 
 ```yaml
-# Beads integration — bd prime provides issue context
+# Disable auto-commits so bd can manage issue lifecycle
 auto-commits: false
 ```
+
+Aider doesn't load bd context automatically — pipe `bd ready` or `bd show <id>` into the chat as needed (see Workflow below).
 
 ## Workflow
 
 ### Start Session
 
 ```bash
-# Aider will have access to issues via .aider.conf.yml
+# See what's ready, then start aider
+bd ready
 aider
 
-# Or manually inject context
-bd prime | aider --message-file -
+# Or pipe a specific issue's details into aider as the initial message
+bd show bd-42 --json | aider --message-file -
 ```
 
 ### During Work
@@ -64,7 +51,7 @@ bd dolt push
 
 ## Best Practices
 
-1. **Keep issues visible** - Use `bd prime` to inject issue context
+1. **Keep issues visible** - Pipe `bd ready` or `bd show <id>` into aider when starting
 2. **Push regularly** - Run `bd dolt push` after significant changes
 3. **Use discovered-from** - Track issues found during work
 4. **Document context** - Include descriptions in issues
@@ -95,19 +82,14 @@ bd dolt push
 ```bash
 # Check config exists
 cat .aider.conf.yml
-
-# Regenerate
-bd setup aider
 ```
 
 ### Issues not visible
 
 ```bash
-# Use bd prime to inject issue context
-bd prime | aider --message-file -
-
-# Or check database health
-bd doctor
+# Pipe ready work or a specific issue into aider's first message
+bd ready --json | aider --message-file -
+bd show bd-42 --json | aider --message-file -
 ```
 
 ## See Also

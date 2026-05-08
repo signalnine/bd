@@ -6,21 +6,20 @@ ADRs in `adr/` document key decisions. These are NOT loaded during skill invocat
 
 | ADR | Decision |
 |-----|----------|
-| [ADR-0001](adr/0001-bd-prime-as-source-of-truth.md) | Use `bd prime` as CLI reference source of truth |
+| [ADR-0001](adr/0001-bd-prime-as-source-of-truth.md) | (Superseded) `bd prime` was removed in the simplification sweep. |
 
-## Key Principle: DRY via bd prime
+## Key Principle: DRY via `--help`
 
 **NEVER duplicate CLI documentation in SKILL.md or resources.**
 
-- `bd prime` outputs AI-optimized workflow context
-- `bd <command> --help` provides specific usage
-- Both auto-update with bd releases
+- `bd <command> --help` is the single source of truth for command syntax.
+- Auto-updates with each bd release.
 
 **SKILL.md should only contain:**
 - Decision frameworks (bd vs TodoWrite)
 - Prerequisites (install verification)
 - Resource index (progressive disclosure)
-- Pointers to `bd prime` and `--help`
+- Pointer to `--help`
 
 ## Keeping the Skill Updated
 
@@ -28,23 +27,23 @@ ADRs in `adr/` document key decisions. These are NOT loaded during skill invocat
 
 1. **Check for new features**: `bd --help` for new commands
 2. **Update SKILL.md frontmatter**: `version: "X.Y.Z"`
-3. **Add resources for conceptual features** (agents, gates, chemistry patterns)
-4. **Don't add CLI reference** — that's `bd prime`'s job
+3. **Add resources for conceptual features** (workflow patterns, recovery, etc.)
+4. **Don't add CLI reference** — let `--help` carry it.
 
 ### What belongs in resources:
 
 | Content Type | Belongs in Resources? | Why |
 |--------------|----------------------|-----|
-| Conceptual frameworks | ✅ Yes | bd prime doesn't explain "when to use" |
+| Conceptual frameworks | ✅ Yes | --help doesn't explain "when to use" |
 | Decision trees | ✅ Yes | Cognitive guidance, not CLI reference |
-| Advanced patterns | ✅ Yes | Depth beyond `--help` |
+| Advanced patterns | ✅ Yes | Depth beyond --help |
 | CLI command syntax | ❌ No | Use `bd <cmd> --help` |
-| Workflow checklists | ❌ No | `bd prime` covers this |
+| Workflow checklists | ✅ Yes | Session protocol, recovery flow |
 
 ### Resource update checklist:
 
 ```
-[ ] Check if bd prime now covers this content
+[ ] Check if --help now covers this content
 [ ] If yes, remove from resources (avoid duplication)
 [ ] If no, update resource for new bd version
 [ ] Update version compatibility in README.md
@@ -71,8 +70,8 @@ wc -w claude-plugin/skills/beads/SKILL.md  # Target: 400-600 words
 # Verify links resolve
 # (Manual check: ensure all resource links in SKILL.md exist)
 
-# Verify bd prime still works
-bd prime | head -20
+# Sanity check the canonical session-start command
+bd ready
 ```
 
 ## Attribution

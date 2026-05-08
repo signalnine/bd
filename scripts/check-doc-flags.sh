@@ -40,11 +40,19 @@ DOC_FILES=(
     "$PROJECT_ROOT"/claude-plugin/**/*.md
 )
 
+# website/docs/ is intentionally not scanned: that tree is pervasively stale
+# from the simplification sweep and needs its own dedicated cleanup pass.
+#
+# ADR files are historical decision records that may legitimately mention
+# commands that were later removed or superseded.
+EXCLUDE_PATH_PATTERN='/adr/'
+
 # Commands that were deleted during the bd simplification. Anything in here
 # should never appear in user-facing docs as a live command.
 REMOVED_COMMANDS=(
     "bd hooks"
     "bd doctor"
+    "bd prime"
     "bd quickstart"
     "bd export"
     "bd import"
@@ -65,7 +73,8 @@ REMOVED_COMMANDS=(
 
 for cmd in "${REMOVED_COMMANDS[@]}"; do
     REFS=$(grep -nE "\b${cmd}\b" "${DOC_FILES[@]}" 2>/dev/null \
-        | grep -v 'CHANGELOG\|removed\|was removed\|has been removed\|no longer\|deprecated\|REMOVED\|<= v1.0' \
+        | grep -v "$EXCLUDE_PATH_PATTERN" \
+        | grep -v 'CHANGELOG\|removed\|was removed\|has been removed\|no longer\|deprecated\|REMOVED\|<= v1.0\|Superseded' \
         || true)
     if [ -n "$REFS" ]; then
         echo "FAIL: stale references to removed '$cmd':"

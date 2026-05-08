@@ -1,6 +1,6 @@
 # Agent Instructions
 
-This project uses **bd** (beads) for issue tracking. Run `bd prime` for full workflow context.
+This project uses **bd** (beads) for issue tracking. Start a session with `bd ready` and run `bd <command> --help` for specifics.
 
 ## Quick Reference
 

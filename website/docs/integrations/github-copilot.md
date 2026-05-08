@@ -94,7 +94,7 @@ Optionally add `.github/copilot-instructions.md`:
 ## Issue Tracking
 
 This project uses **bd (beads)** for issue tracking.
-Run `bd prime` for workflow context.
+Start a session with `bd ready` and run `bd <command> --help` for specifics.
 
 Quick reference:
 - `bd ready` - Find unblocked work

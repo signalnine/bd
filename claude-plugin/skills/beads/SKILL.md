@@ -41,7 +41,6 @@ bd --version  # Requires v0.60.0+
 
 ## CLI Reference
 
-**Run `bd prime`** for AI-optimized workflow context (auto-loaded by hooks).
 **Run `bd <command> --help`** for specific command usage.
 
 Essential commands: `bd ready`, `bd create`, `bd show`, `bd update`, `bd close`, `bd dolt push`

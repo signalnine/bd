@@ -547,8 +547,8 @@ Non-interactive mode (--non-interactive or BD_NON_INTERACTIVE=1):
 				// Non-fatal - continue anyway
 			}
 
-			// In stealth mode, persist no-git-ops: true so bd prime
-			// automatically uses stealth session-close protocol (GH#2159)
+			// In stealth mode, persist no-git-ops: true so the agent's
+			// session-close protocol skips git operations (GH#2159).
 			if stealth {
 				if err := config.SaveConfigValue("no-git-ops", true, bdDir); err != nil {
 					fmt.Fprintf(os.Stderr, "Warning: failed to set no-git-ops in config: %v\n", err)
@@ -837,7 +837,7 @@ func init() {
 	initCmd.Flags().Bool("from-jsonl", false, "Import issues from .bd/issues.jsonl instead of git history")
 	initCmd.Flags().String("destroy-token", "", "Explicit confirmation token for destructive re-init in non-interactive mode (format: 'DESTROY-<prefix>')")
 	initCmd.Flags().String("agents-template", "", "Path to custom AGENTS.md template (overrides embedded default)")
-	initCmd.Flags().String("agents-profile", "", "AGENTS.md profile: 'minimal' (default, pointer to bd prime) or 'full' (complete command reference)")
+	initCmd.Flags().String("agents-profile", "", "AGENTS.md profile: 'minimal' (default, pointer to bd ready and --help) or 'full' (complete command reference)")
 	initCmd.Flags().String("agents-file", "", "Custom filename for agent instructions (default: AGENTS.md)")
 
 	// Non-interactive mode for CI/cloud agents
