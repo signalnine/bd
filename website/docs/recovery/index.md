@@ -22,14 +22,17 @@ This section provides step-by-step recovery procedures for common Beads issues. 
 Before diving into specific runbooks, try these quick checks:
 
 ```bash
-# Check Beads status
+# Database overview and statistics
 bd status
 
-# Verify Dolt server is running
-bd doctor
+# Verify the Dolt server / show current commit
+bd dolt show
 
 # Check for blocked issues
 bd blocked
+
+# Detect circular dependencies
+bd dep cycles
 ```
 
 :::tip

@@ -90,10 +90,7 @@ While rare, collisions are handled automatically:
 2. Beads appends disambiguator
 3. Both issues preserved
 
-```bash
-# Check for collisions
-bd info --schema --json | jq '.collision_count'
-```
+Collisions are rare in practice; if you suspect one, look at the disambiguated ID directly with `bd show <full-id>`.
 
 ## Working with IDs
 

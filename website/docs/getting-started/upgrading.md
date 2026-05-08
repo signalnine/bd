@@ -13,11 +13,9 @@ How to upgrade bd and keep your projects in sync.
 ```bash
 # Current version
 bd version
-
-# What's new in recent versions
-bd info --whats-new
-bd info --whats-new --json  # Machine-readable
 ```
+
+For release notes, see the [CHANGELOG](https://github.com/signalnine/bd/blob/main/CHANGELOG.md) on GitHub.
 
 ## Upgrading
 
@@ -68,23 +66,14 @@ sudo mv bd /usr/local/bin/
 
 ## After Upgrading
 
-**Important:** After upgrading, update your hooks:
+**Important:** After upgrading, restart any long-running bd processes:
 
 ```bash
-# 1. Check what changed
-bd info --whats-new
-
-# 2. Update git hooks to match new version
-bd hooks install
-
-# 3. Check for any outdated hooks
-bd info  # Shows warnings if hooks are outdated
-
-# 4. If using Dolt backend, restart the server
+# Restart the Dolt server if you're using one
 bd dolt stop && bd dolt start
 ```
 
-**Why update hooks?** Git hooks are versioned with bd. Outdated hooks may miss new auto-sync features or bug fixes.
+Run `bd version` to confirm the upgrade landed and `bd status` for a database overview.
 
 ## Database Migrations
 
@@ -105,12 +94,6 @@ bd migrate --cleanup --yes
 ```
 
 ## Troubleshooting Upgrades
-
-### Hooks out of date
-
-```bash
-bd hooks install
-```
 
 ### Database schema changed
 

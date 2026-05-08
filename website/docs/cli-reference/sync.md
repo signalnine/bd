@@ -1,12 +1,12 @@
 ---
 id: sync
-title: Sync & Export
+title: Sync & Migration
 sidebar_position: 6
 ---
 
-# Sync & Export Commands
+# Sync & Migration Commands
 
-Commands for synchronizing with Dolt.
+Commands for synchronizing the bd database with a Dolt remote and for managing schema migrations.
 
 ## bd dolt push
 
@@ -52,29 +52,16 @@ bd dolt pull
 - After switching machines
 - Before creating new issues (to avoid duplicates)
 
-## bd export
+## bd backup
 
-Export database to JSONL format (for backup and migration).
+Back up the bd database to a snapshot directory.
 
 ```bash
-bd export [flags]
+bd backup init <path>     # Initialize a backup target
+bd backup sync            # Sync the working database into the backup
 ```
 
-**Flags:**
-```bash
---output, -o    Output file (default: stdout)
---dry-run       Preview without writing
---json          JSON output
-```
-
-**Examples:**
-```bash
-bd export
-bd export -o backup.jsonl
-bd export --dry-run
-```
-
-**When to use:** `bd export` is for backup and data migration, not day-to-day sync. Dolt handles sync natively via `bd dolt push`/`bd dolt pull`.
+Run `bd backup --help` for the full command list and flags.
 
 ## bd migrate
 
@@ -101,31 +88,9 @@ bd migrate
 bd migrate --cleanup --yes
 ```
 
-## bd hooks
-
-Manage git hooks.
-
-```bash
-bd hooks <subcommand> [flags]
-```
-
-**Subcommands:**
-| Command | Description |
-|---------|-------------|
-| `install` | Install git hooks |
-| `uninstall` | Remove git hooks |
-| `status` | Check hook status |
-
-**Examples:**
-```bash
-bd hooks install
-bd hooks status
-bd hooks uninstall
-```
-
 ## Auto-Sync Behavior
 
-### With Dolt Server Mode (Default)
+### With Dolt Server Mode
 
 When the Dolt server is running, sync is handled automatically:
 - Dolt auto-commit tracks changes
@@ -147,33 +112,12 @@ bd dolt push  # Manual push needed
 ## Conflict Resolution
 
 Dolt handles conflict resolution at the database level using its built-in
-merge capabilities. When conflicts arise during `bd dolt pull`, Dolt identifies
-conflicting rows and allows resolution through SQL.
-
-```bash
-# Check for conflicts after pull
-bd doctor --fix
-```
-
-## Deletion Tracking
-
-Deletions are tracked in the Dolt database:
-
-```bash
-# Delete issue
-bd delete bd-42
-
-# View deletions
-bd deleted
-bd deleted --since=30d
-
-# Deletions propagate via Dolt push
-bd dolt push
-```
+merge capabilities. When conflicts arise during `bd dolt pull`, Dolt
+identifies conflicting rows and exposes them through SQL for manual
+resolution.
 
 ## Best Practices
 
 1. **Always push at session end** - `bd dolt push`
 2. **Always pull at session start** - `bd dolt pull`
-3. **Install git hooks** - `bd hooks install`
-4. **Check sync status** - `bd info` shows sync state
+3. **Snapshot regularly** - `bd backup sync` after major changes

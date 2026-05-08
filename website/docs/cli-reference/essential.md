@@ -188,38 +188,16 @@ bd dolt pull [flags]
 bd dolt pull
 ```
 
-## bd info
+## bd status
 
-Show system information.
-
-```bash
-bd info [flags]
-```
-
-**Flags:**
-| Flag | Description |
-|------|-------------|
-| `--whats-new` | Show recent version changes |
-| `--schema` | Show database schema |
-| `--json` | JSON output |
-
-**Examples:**
-```bash
-bd info
-bd info --whats-new
-bd info --json
-```
-
-## bd stats
-
-Show project statistics.
+Show database overview and statistics.
 
 ```bash
-bd stats [flags]
+bd status [flags]
 ```
 
 **Examples:**
 ```bash
-bd stats
-bd stats --json
+bd status
+bd status --json
 ```

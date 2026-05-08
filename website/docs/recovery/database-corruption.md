@@ -18,8 +18,11 @@ This runbook helps you recover from database corruption in Beads.
 ## Diagnosis
 
 ```bash
-# Check database integrity
-bd doctor
+# Database overview and statistics
+bd status
+
+# Detect circular dependencies
+bd dep cycles
 
 # Check Dolt server health
 bd dolt show
@@ -37,29 +40,30 @@ bd dolt stop
 cp -r .beads .beads.backup
 ```
 
-**Step 3:** Preview what doctor would fix
+**Step 3:** Restore from a known-good backup or pull from the Dolt remote
 ```bash
-bd doctor --dry-run
+# If you have a bd backup snapshot
+bd backup restore <path> --force
+
+# Or, if the remote is the source of truth
+rm -rf .beads
+bd dolt pull
 ```
 
-**Step 4:** Rebuild database
+**Step 4:** Verify recovery
 ```bash
-bd doctor --fix
-```
-
-**Step 5:** Verify recovery
-```bash
-bd doctor
+bd status
 bd list
 ```
 
-**Step 6:** Restart the Dolt server
+**Step 5:** Restart the Dolt server
 ```bash
-dolt sql-server
+bd dolt start
 ```
 
 ## Prevention
 
 - Let the Dolt server handle synchronization
 - Use `bd dolt stop` before system shutdown
-- Run `bd doctor` periodically to catch issues early
+- Snapshot the database with `bd backup sync` after major changes
+- Push to the Dolt remote regularly (`bd dolt push`)

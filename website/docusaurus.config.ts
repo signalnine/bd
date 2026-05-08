@@ -148,10 +148,6 @@ const config: Config = {
               label: 'CLI Reference',
               to: '/cli-reference',
             },
-            {
-              label: 'Workflows',
-              to: '/workflows/molecules',
-            },
           ],
         },
         {

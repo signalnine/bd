@@ -74,13 +74,13 @@ Most frequently used:
 | `bd comment add` | Add comment |
 | `bd comment list` | List comments |
 
-### Sync & Export
+### Sync & Migration
 
 | Command | Description |
 |---------|-------------|
 | `bd dolt push` | Push changes to Dolt remote |
 | `bd dolt pull` | Pull changes from Dolt remote |
-| `bd export` | Export data to JSONL |
+| `bd backup` | Snapshot the database |
 | `bd migrate` | Migrate database schema |
 
 ### System
@@ -88,21 +88,10 @@ Most frequently used:
 | Command | Description |
 |---------|-------------|
 | `bd init` | Initialize beads in project |
-| `bd info` | Show system info |
 | `bd version` | Show version |
 | `bd config` | Manage configuration |
-| `bd doctor` | Check system health |
-| `bd hooks` | Manage git hooks |
-
-### Workflows
-
-| Command | Description |
-|---------|-------------|
-| `bd pour` | Instantiate formula as molecule |
-| `bd wisp` | Create ephemeral wisp |
-| `bd mol` | Manage molecules |
-| `bd pin` | Pin work to agent |
-| `bd hook` | Show pinned work |
+| `bd status` | Show database overview and statistics |
+| `bd where` | Show active bd location |
 
 ## Quick Reference
 
@@ -172,8 +161,9 @@ bd dolt push
 # Pull changes from Dolt remote
 bd dolt pull
 
-# Export to file
-bd export -o backup.jsonl
+# Snapshot the database
+bd backup init ./backup
+bd backup sync
 ```
 
 ## See Also

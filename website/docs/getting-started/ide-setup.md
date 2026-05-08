@@ -6,72 +6,79 @@ sidebar_position: 3
 
 # IDE Setup for AI Agents
 
-Configure your IDE for optimal beads integration.
+Configure your IDE for beads integration. There is no setup wizard — every editor has its own native config file, so wire up bd by editing those directly.
 
 ## Claude Code
 
-The recommended approach for Claude Code:
-
-```bash
-# Setup Claude Code integration
-bd setup claude
-```
-
-This installs:
-- **SessionStart hook** - Runs `bd prime` when Claude Code starts
-- **PreCompact hook** - Ensures `bd dolt push` before context compaction
-
-**How it works:**
-1. SessionStart hook runs `bd prime` automatically
-2. `bd prime` injects ~1-2k tokens of workflow context
-3. You use `bd` CLI commands directly
-4. Git hooks auto-sync the database
-
-**Verify installation:**
-```bash
-bd setup claude --check
-```
-
-### Manual Setup
-
-If you prefer manual configuration, add to your Claude Code hooks:
+Add hooks to `~/.claude/settings.json`:
 
 ```json
 {
   "hooks": {
-    "SessionStart": ["bd prime"],
-    "PreCompact": ["bd dolt push"]
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {"type": "command", "command": "bd ready"}
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {"type": "command", "command": "bd dolt push"}
+        ]
+      }
+    ]
   }
 }
 ```
 
+**How it works:**
+
+1. SessionStart runs `bd ready`, surfacing unblocked work to the agent.
+2. PreCompact runs `bd dolt push`, flushing the database to the Dolt remote before the context window compacts.
+3. You use `bd` CLI commands directly during the session.
+
+See [Claude Code Integration](/integrations/claude-code) for the full guide.
+
 ## Cursor IDE
 
-```bash
-# Setup Cursor integration
-bd setup cursor
-```
+Create `.cursor/rules/beads.mdc` with rules that reference bd commands:
 
-This creates `.cursor/rules/beads.mdc` with beads-aware rules.
+```markdown
+---
+description: Beads issue tracker conventions
+---
 
-**Verify:**
-```bash
-bd setup cursor --check
+This project uses **bd** (beads) for issue tracking. Start a session with
+`bd ready` and use `bd <command> --help` for command syntax.
+
+Key commands:
+- `bd ready` -- find unblocked work
+- `bd create "Title" -t task -p 2` -- create an issue
+- `bd update <id> --claim` -- claim work atomically
+- `bd close <id> --reason "..."` -- finish work
+- `bd dolt push` -- push to the Dolt remote at session end
 ```
 
 ## Aider
 
-```bash
-# Setup Aider integration
-bd setup aider
+Create or edit `.aider.conf.yml`:
+
+```yaml
+# Disable auto-commits so bd manages issue lifecycle
+auto-commits: false
 ```
 
-This creates/updates `.aider.conf.yml` with beads context.
+Pipe `bd ready` or `bd show <id>` into aider as the initial message:
 
-**Verify:**
 ```bash
-bd setup aider --check
+bd ready --json | aider --message-file -
 ```
+
+See [Aider Integration](/integrations/aider).
 
 ## GitHub Copilot
 
@@ -94,7 +101,7 @@ Create `.vscode/mcp.json` in your project:
 }
 ```
 
-**For all projects:** Add to VS Code user-level MCP config:
+**For all projects:** add to VS Code user-level MCP config:
 
 | Platform | Path |
 |----------|------|
@@ -119,37 +126,18 @@ Initialize beads and reload VS Code:
 bd init --quiet
 ```
 
-See [GitHub Copilot Integration](/integrations/github-copilot) for detailed setup.
-
-## Context Injection with `bd prime`
-
-All integrations use `bd prime` to inject context:
-
-```bash
-bd prime
-```
-
-This outputs a compact (~1-2k tokens) workflow reference including:
-- Available commands
-- Current project status
-- Workflow patterns
-- Best practices
-
-**Why context efficiency matters:**
-- Compute cost scales with tokens
-- Latency increases with context size
-- Models attend better to smaller, focused contexts
+See [GitHub Copilot Integration](/integrations/github-copilot) for the full guide.
 
 ## MCP Server (Alternative)
 
 For MCP-only environments (Claude Desktop, no shell access):
 
 ```bash
-# Install MCP server
 pip install beads-mcp
 ```
 
 Add to Claude Desktop config:
+
 ```json
 {
   "mcpServers": {
@@ -165,40 +153,15 @@ Add to Claude Desktop config:
 - Higher context overhead (10-50k tokens for tool schemas)
 - Additional latency from MCP protocol
 
-See [MCP Server](/integrations/mcp-server) for detailed configuration.
-
-## Git Hooks
-
-Ensure git hooks are installed for auto-sync:
-
-```bash
-bd hooks install
-```
-
-This installs:
-- **pre-commit** - Validates changes before commit
-- **post-merge** - Imports changes after pull
-- **pre-push** - Ensures sync before push
-
-**Check hook status:**
-```bash
-bd info  # Shows warnings if hooks are outdated
-```
+See [MCP Server](/integrations/mcp-server).
 
 ## Verifying Your Setup
 
-Run a complete health check:
-
 ```bash
-# Check version
 bd version
-
-# Check project health
-bd doctor
-
-# Check hooks
-bd hooks status
-
-# Check editor integration
-bd setup claude --check   # or cursor, aider
+bd status      # Database overview and statistics
+bd ready       # The same command your SessionStart hook runs
+bd dolt push   # The same command your PreCompact hook runs
 ```
+
+If `bd ready` and `bd dolt push` work cleanly from the command line, your hooks will work cleanly too.

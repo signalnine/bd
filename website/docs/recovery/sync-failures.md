@@ -18,8 +18,7 @@ This runbook helps you recover from Dolt sync failures.
 ## Diagnosis
 
 ```bash
-# Check Dolt server health
-bd doctor
+# Inspect Dolt state directly
 bd dolt show
 
 # View Dolt server logs
@@ -40,27 +39,25 @@ ls -la .beads/*.lock
 rm -f .beads/*.lock
 ```
 
-**Step 3:** Back up and preview fixes
+**Step 3:** Back up before any destructive recovery
 ```bash
 cp -r .beads .beads.backup
-bd doctor --dry-run
 ```
 
-**Step 4:** Apply fixes if needed
+**Step 4:** Restart the Dolt server
 ```bash
-bd doctor --fix
+bd dolt start
 ```
 
-**Step 5:** Restart the Dolt server
-```bash
-dolt sql-server
-```
-
-**Step 6:** Verify sync works
+**Step 5:** Verify sync works
 ```bash
 bd dolt push
-bd doctor
+bd dolt show
 ```
+
+If the database itself is corrupted, restore from a snapshot
+(`bd backup restore <path> --force`) or pull fresh from the remote
+(`rm -rf .beads && bd dolt pull`).
 
 ## Common Causes
 
@@ -68,7 +65,7 @@ bd doctor
 |-------|----------|
 | Network timeout | Retry with better connection |
 | Stale lock file | Remove lock after stopping Dolt server |
-| Corrupted state | Back up, then `bd doctor --fix` |
+| Corrupted state | Back up, then `bd backup restore` or fresh `bd dolt pull` |
 | Merge conflicts | See [Merge Conflicts](/recovery/merge-conflicts) |
 
 ## Prevention
@@ -76,3 +73,4 @@ bd doctor
 - Ensure stable network before sync
 - Let sync complete before closing terminal
 - Use `bd dolt stop` before system shutdown
+- Snapshot regularly with `bd backup sync`

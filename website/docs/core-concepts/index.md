@@ -46,7 +46,7 @@ Dolt provides the database backend for beads:
 - Start with `bd dolt start`
 - Handles auto-commit and sync
 - Logs available at `.beads/dolt/sql-server.log`
-- Check health with `bd doctor`
+- Check the database overview with `bd status`
 
 ### Dolt Sync
 

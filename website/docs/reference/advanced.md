@@ -71,11 +71,14 @@ bd restore bd-42 --to-file issue.json
 ## Database Inspection
 
 ```bash
-# Schema info
-bd info --schema --json
+# Database overview
+bd status
 
 # Raw database query (advanced — requires dolt sql-server running)
 bd dolt sql "SELECT * FROM issues LIMIT 5"
+
+# Inspect schema directly via Dolt
+bd dolt sql "DESCRIBE issues"
 ```
 
 ## Custom Tables
@@ -168,8 +171,8 @@ The server manages transaction isolation automatically.
 # Start the Dolt server
 bd dolt start
 
-# Check server health
-bd doctor
+# Inspect the running server / current commit
+bd dolt show
 ```
 
 ### CI/CD Optimization

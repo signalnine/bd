@@ -38,11 +38,10 @@ DOC_FILES=(
     "$PROJECT_ROOT"/docs/**/*.md
     "$PROJECT_ROOT"/integrations/**/*.md
     "$PROJECT_ROOT"/claude-plugin/**/*.md
+    "$PROJECT_ROOT"/website/docs/*.md
+    "$PROJECT_ROOT"/website/docs/**/*.md
 )
 
-# website/docs/ is intentionally not scanned: that tree is pervasively stale
-# from the simplification sweep and needs its own dedicated cleanup pass.
-#
 # ADR files are historical decision records that may legitimately mention
 # commands that were later removed or superseded.
 EXCLUDE_PATH_PATTERN='/adr/'

@@ -315,9 +315,6 @@ After upgrading bd, use `bd migrate` to check for and migrate old database files
 # Inspect migration plan (AI agents)
 bd migrate --inspect --json
 
-# Check schema and config
-bd info --schema --json
-
 # Preview migration changes
 bd migrate --dry-run
 

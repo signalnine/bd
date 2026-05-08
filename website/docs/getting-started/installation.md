@@ -148,21 +148,17 @@ brew install beads
 # 2. Initialize in your project
 cd your-project
 bd init --quiet
-
-# 3. Setup editor integration (choose one)
-bd setup claude   # Claude Code - installs SessionStart/PreCompact hooks
-bd setup cursor   # Cursor IDE - creates .cursor/rules/beads.mdc
-bd setup aider    # Aider - creates .aider.conf.yml
 ```
 
+Then configure your editor by editing its native config file directly — see [IDE Setup](/getting-started/ide-setup) for the per-editor recipes (Claude Code hooks, Cursor rules file, aider config).
+
 **How it works:**
-- Editor hooks/rules inject `bd prime` automatically on session start
-- `bd prime` provides ~1-2k tokens of workflow context
-- You use `bd` CLI commands directly
-- Git hooks (installed by `bd init`) auto-sync the database
+- Your editor's session-start hook runs `bd ready`, surfacing unblocked work
+- A pre-compaction hook runs `bd dolt push` to flush the database before the context window collapses
+- You use `bd` CLI commands directly during the session
 
 **Why this is recommended:**
-- **Context efficient** - ~1-2k tokens vs 10-50k for MCP tool schemas
+- **Context efficient** - tens of tokens vs 10-50k for MCP tool schemas
 - **Lower latency** - Direct CLI calls, no MCP protocol overhead
 - **Universal** - Works with any editor that has shell access
 

@@ -10,20 +10,35 @@ How to use beads with Junie (JetBrains AI Agent).
 
 ## Setup
 
-### Quick Setup
+There is no `bd` setup wizard. Create the two files Junie expects:
 
-```bash
-bd setup junie
+**`.junie/guidelines.md`** — workflow instructions Junie auto-loads each session. A minimal version:
+
+```markdown
+# Beads Workflow
+
+This project uses **bd** (beads) for issue tracking. Start a session with
+`bd ready` and run `bd <command> --help` for command syntax.
+
+Key commands:
+- `bd ready` -- find unblocked work
+- `bd create "Title" -t task -p 2 --json` -- create an issue
+- `bd update <id> --claim --json` -- claim work atomically
+- `bd close <id> --reason "..." --json` -- finish work
+- `bd dolt push` -- push to the Dolt remote at session end
 ```
 
-This creates:
-- **`.junie/guidelines.md`** - Agent instructions for beads workflow
-- **`.junie/mcp/mcp.json`** - MCP server configuration
+**`.junie/mcp/mcp.json`** — MCP server configuration so Junie can call bd's MCP tools:
 
-### Verify Setup
-
-```bash
-bd setup junie --check
+```json
+{
+  "mcpServers": {
+    "beads": {
+      "command": "bd",
+      "args": ["mcp"]
+    }
+  }
+}
 ```
 
 ## How It Works
@@ -167,11 +182,8 @@ bd dolt push
 ### Guidelines not loaded
 
 ```bash
-# Check setup
-bd setup junie --check
-
-# Reinstall if needed
-bd setup junie
+# Confirm the file exists at the path Junie expects
+ls -la .junie/guidelines.md
 ```
 
 ### MCP tools not available
@@ -190,8 +202,8 @@ bd mcp --help
 # Force push
 bd dolt push
 
-# Check system health
-bd doctor
+# Inspect Dolt state
+bd dolt show
 ```
 
 ### Database not found
@@ -204,13 +216,9 @@ bd init --quiet
 ## Removing Integration
 
 ```bash
-bd setup junie --remove
+rm -rf .junie/guidelines.md .junie/mcp/mcp.json
+rmdir .junie/mcp .junie 2>/dev/null  # if empty
 ```
-
-This removes:
-- `.junie/guidelines.md`
-- `.junie/mcp/mcp.json`
-- Empty `.junie/mcp/` and `.junie/` directories
 
 ## See Also
 

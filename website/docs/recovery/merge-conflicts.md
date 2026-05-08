@@ -16,11 +16,11 @@ This runbook helps you resolve merge conflicts that occur during Dolt sync opera
 ## Diagnosis
 
 ```bash
-# Check database health
-bd doctor
+# Database overview
+bd status
 
-# Preview what fixes would be applied
-bd doctor --dry-run
+# Inspect Dolt state directly
+bd dolt show
 ```
 
 ## Solution
@@ -30,20 +30,17 @@ bd doctor --dry-run
 cp -r .beads .beads.backup
 ```
 
-**Step 2:** Check for conflicts
+**Step 2:** Inspect the conflicting working set
 ```bash
-bd doctor
+bd dolt show
 ```
 
-**Step 3:** Fix to reconcile
-```bash
-bd doctor --fix
-```
+**Step 3:** Resolve the conflict in Dolt. Either accept one side wholesale or use Dolt's SQL interface (`dolt sql`) to reconcile rows manually. See the [Dolt conflict resolution docs](https://docs.dolthub.com/concepts/dolt/git/conflicts) for the full procedure.
 
 **Step 4:** Verify state
 ```bash
 bd list
-bd stats
+bd status
 ```
 
 **Step 5:** Push resolved state

@@ -48,7 +48,7 @@ Recovery is straightforward: pull from a Dolt remote with `bd dolt pull`, or res
 - **Multi-writer**: Server mode supports concurrent agents
 - **Native branching**: Dolt branches independent of git branches
 - **Works offline**: All queries run against local database
-- **Portable**: `bd export` produces JSONL for migration and interoperability
+- **Portable**: `bd backup` produces snapshots for archival and migration
 
 ## Data Flow
 
@@ -104,7 +104,7 @@ The Dolt server handles background synchronization and database operations:
 - Logs available at `.beads/dolt/sql-server.log`
 
 :::tip
-Start the Dolt server with `bd dolt start`. Check health with `bd doctor`.
+Start the Dolt server with `bd dolt start`. Check the database overview with `bd status`.
 :::
 
 ### Embedded Mode (No Server)
@@ -157,19 +157,15 @@ bd dolt pull                 # Pull from Dolt remote
 bd dolt start                # Restart server
 ```
 
-:::warning Use `bd doctor --fix` With Care
-Always back up and preview before running `bd doctor --fix`:
-
-1. **Back up first:** `cp -r .beads .beads.backup`
-2. **Preview changes:** `bd doctor --dry-run` — shows what would be fixed without making changes
-3. **Review diagnostics:** `bd doctor` (no flags) — diagnostic only, no changes made
-4. **Then fix:** `bd doctor --fix` — or `bd doctor --fix -i` to confirm each fix individually
-
-**Why caution?** The `--fix` flag may remove dependencies it flags as circular, including valid parent-child relationships. Use `--fix-child-parent` only if you're certain the flagged deps are invalid.
-
-**Other diagnostic tools:**
+:::tip Diagnostic tools
+- `bd status` — database overview and statistics
 - `bd blocked` — check which issues are blocked and why
+- `bd dep cycles` — detect circular dependencies
 - `bd show <issue-id>` — inspect a specific issue's state
+
+If you need to repair a corrupted database, restore from a backup
+(`bd backup restore <path> --force`) or pull from the Dolt remote
+(`bd dolt pull`) rather than mutating in place.
 :::
 
 See [Recovery](/recovery) for specific procedures and [Database Corruption Recovery](/recovery/database-corruption) for Dolt recovery steps.

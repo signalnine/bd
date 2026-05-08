@@ -63,13 +63,10 @@ bd list
 ### Corrupted database
 
 ```bash
-# Check and fix database
-bd doctor --fix
-
-# Or pull from Dolt remote
+# Pull from the Dolt remote (often the fastest fix)
 bd dolt pull
 
-# Or restore from a backup
+# Or restore from a snapshot
 bd backup restore [path] --force
 ```
 
@@ -78,8 +75,8 @@ bd backup restore [path] --force
 ### Server not starting
 
 ```bash
-# Check server health
-bd doctor
+# Inspect Dolt state directly
+bd dolt show
 
 # Check server logs
 cat .beads/dolt/sql-server.log
@@ -106,14 +103,14 @@ bd dolt start
 # Force push to Dolt remote
 bd dolt push
 
-# Check hooks
-bd hooks status
+# Confirm the remote is configured
+bd dolt show
 ```
 
 ### Recovery from backup
 
 ```bash
-# Restore from a Dolt backup
+# Restore from a snapshot
 bd backup restore [path] --force
 
 # Or pull from Dolt remote
@@ -122,33 +119,21 @@ bd dolt pull
 
 ### Merge conflicts
 
-```bash
-# Check for and fix Dolt conflicts
-bd doctor --fix
+Inspect the conflicting working set with `bd dolt show`, resolve via Dolt SQL (`bd dolt sql`), then re-push:
 
-# Re-push
+```bash
+bd dolt show
+bd dolt sql -q "..."  # resolve as needed
 bd dolt push
 ```
 
 ## Git Hook Issues
 
-### Hooks not running
+bd no longer installs git hooks. If you wrote your own hook scripts under `.git/hooks/` to call `bd dolt push` or similar, debug them as you would any other shell script:
 
 ```bash
-# Check if installed
-ls -la .git/hooks/
-
-# Reinstall
-bd hooks install
-```
-
-### Hook errors
-
-```bash
-# Check hook script
+# Inspect and run manually
 cat .git/hooks/pre-commit
-
-# Run manually
 .git/hooks/pre-commit
 ```
 
@@ -210,7 +195,9 @@ cat .beads/dolt/sql-server.log
 ### System info
 
 ```bash
-bd info --json
+bd version
+bd status --json
+bd dolt show
 ```
 
 ### File an issue
@@ -218,7 +205,7 @@ bd info --json
 ```bash
 # Include this info
 bd version
-bd info --json
+bd status --json
 uname -a
 ```
 

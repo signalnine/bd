@@ -82,13 +82,6 @@ dedupe_on_import = false      # Run duplicate detection after import
 | `skip` | Skip orphaned children with warning |
 | `strict` | Fail if parent missing |
 
-### Export
-
-```toml
-[export]
-path = ".beads/issues.jsonl"  # Default export file path (for bd export command)
-```
-
 ### Git
 
 ```toml
@@ -154,5 +147,6 @@ retention_days = 90
 ## Viewing Active Configuration
 
 ```bash
-bd info --json | jq '.config'
+bd config list
+bd config get <key>
 ```

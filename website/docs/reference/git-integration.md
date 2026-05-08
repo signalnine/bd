@@ -27,39 +27,23 @@ Data storage and sync are handled by Dolt (a version-controlled SQL database).
 
 ## Git Hooks
 
-### Installation
+bd no longer installs git hooks for you. If you want pre-commit or pre-push automation, write a regular git hook script under `.git/hooks/` that calls bd directly:
 
 ```bash
-bd hooks install
+# .git/hooks/pre-push
+#!/bin/sh
+bd dolt push
 ```
 
-Installs:
-- **pre-commit** - Triggers Dolt commit
-- **post-merge** - Triggers Dolt sync after pull
-- **pre-push** - Ensures Dolt sync before push
-
-### Status
-
-```bash
-bd hooks status
-```
-
-### Uninstall
-
-```bash
-bd hooks uninstall
-```
+`bd init` will leave any existing hook scripts alone, and on upgrade it removes any legacy bd-managed hooks it had previously installed.
 
 ## Conflict Resolution
 
 Dolt handles merge conflicts at the database level using its built-in
 merge capabilities. When conflicts arise during sync, Dolt identifies
-conflicting rows and allows resolution through SQL.
-
-```bash
-# Check for and fix conflicts
-bd doctor --fix
-```
+conflicting rows and exposes them via SQL — see the [Dolt conflict
+resolution docs](https://docs.dolthub.com/concepts/dolt/git/conflicts)
+or use `bd dolt sql` to inspect and resolve.
 
 ## Protected Branches
 
@@ -115,7 +99,6 @@ bd duplicates --auto-merge
 
 ## Best Practices
 
-1. **Install hooks** - `bd hooks install`
-2. **Push regularly** - `bd dolt push` at session end
-3. **Pull before work** - `bd dolt pull` to get latest issues
-4. **Worktrees use embedded mode automatically**
+1. **Push regularly** - `bd dolt push` at session end
+2. **Pull before work** - `bd dolt pull` to get latest issues
+3. **Worktrees use embedded mode automatically**

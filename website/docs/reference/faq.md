@@ -64,11 +64,14 @@ bd dolt pull
 
 ### How do I handle merge conflicts?
 
-Dolt handles merge conflicts at the database level. If conflicts arise during pull:
+Dolt handles merge conflicts at the database level. If conflicts arise during pull, inspect with `bd dolt show`, resolve via `bd dolt sql`, then push:
 ```bash
-bd doctor --fix
+bd dolt show
+bd dolt sql -q "..."  # resolve as needed
 bd dolt push
 ```
+
+See [Merge Conflicts Recovery](/recovery/merge-conflicts) for the full procedure.
 
 ### Can multiple agents work on the same repo?
 
@@ -115,11 +118,8 @@ Async coordination primitives:
 
 ### How do I integrate with my editor?
 
-```bash
-bd setup claude   # Claude Code
-bd setup cursor   # Cursor
-bd setup aider    # Aider
-```
+There is no setup wizard — wire bd into your editor's native config file.
+See [IDE Setup](/getting-started/ide-setup) for per-editor recipes.
 
 ### Can beads import from GitHub Issues?
 
@@ -130,8 +130,8 @@ Yes — see the [GitHub integration documentation](https://github.com/signalnine
 ### Why is the Dolt server not starting?
 
 ```bash
-# Check server status
-bd doctor
+# Check Dolt status directly
+bd dolt show
 
 # Check server logs
 cat .beads/dolt/sql-server.log
@@ -147,12 +147,12 @@ bd dolt start
 # Force push to Dolt remote
 bd dolt push
 
-# Check hooks
-bd hooks status
+# Confirm remote configuration
+bd dolt show
 ```
 
 ### How do I report a bug?
 
 1. Check existing issues: https://github.com/signalnine/bd/issues
-2. Include: `bd version`, `bd info --json`, reproduction steps
+2. Include: `bd version`, `bd status --json`, reproduction steps
 3. File at: https://github.com/signalnine/bd/issues/new

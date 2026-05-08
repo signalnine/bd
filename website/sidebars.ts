@@ -49,18 +49,6 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: 'Workflows',
-      collapsed: true,
-      items: [
-        'workflows/index',
-        'workflows/molecules',
-        'workflows/formulas',
-        'workflows/gates',
-        'workflows/wisps',
-      ],
-    },
-    {
-      type: 'category',
       label: 'Recovery',
       collapsed: true,
       items: [
