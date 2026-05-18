@@ -382,21 +382,59 @@ install_from_release() {
         install_dir="/usr/local/bin"
     else
         install_dir="$HOME/.local/bin"
-        mkdir -p "$install_dir"
+        if ! mkdir -p "$install_dir"; then
+            log_error "Failed to create install directory: $install_dir"
+            cd - > /dev/null || cd "$HOME"
+            rm -rf "$tmp_dir"
+            return 1
+        fi
+    fi
+
+    if [[ ! -d "$install_dir" ]]; then
+        log_error "Install directory does not exist: $install_dir"
+        cd - > /dev/null || cd "$HOME"
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    # Sanity check that the archive actually produced a 'bd' binary
+    if [[ ! -f bd ]]; then
+        log_error "Archive did not contain a 'bd' binary at the expected path"
+        cd - > /dev/null || cd "$HOME"
+        rm -rf "$tmp_dir"
+        return 1
     fi
 
     # Install binary
     log_info "Installing to $install_dir..."
     if [[ -w "$install_dir" ]]; then
-        mv bd "$install_dir/"
+        if ! mv bd "$install_dir/"; then
+            log_error "Failed to move bd to $install_dir/"
+            cd - > /dev/null || cd "$HOME"
+            rm -rf "$tmp_dir"
+            return 1
+        fi
     else
-        sudo mv bd "$install_dir/"
+        if ! sudo mv bd "$install_dir/"; then
+            log_error "Failed to move bd to $install_dir/ (via sudo)"
+            cd - > /dev/null || cd "$HOME"
+            rm -rf "$tmp_dir"
+            return 1
+        fi
+    fi
+
+    if [[ ! -f "$install_dir/bd" ]]; then
+        log_error "bd binary was not installed at $install_dir/bd"
+        cd - > /dev/null || cd "$HOME"
+        rm -rf "$tmp_dir"
+        return 1
     fi
 
     # Optional local ad-hoc re-sign for macOS (off by default)
     resign_for_macos "$install_dir/bd"
 
     log_success "bd installed to $install_dir/bd"
+    LAST_INSTALL_PATH="$install_dir/bd"
 
     # Check if install_dir is in PATH
     if [[ ":$PATH:" != *":$install_dir:"* ]]; then
@@ -535,14 +573,43 @@ build_from_source() {
                 install_dir="/usr/local/bin"
             else
                 install_dir="$HOME/.local/bin"
-                mkdir -p "$install_dir"
+                if ! mkdir -p "$install_dir"; then
+                    log_error "Failed to create install directory: $install_dir"
+                    cd - > /dev/null || cd "$HOME"
+                    rm -rf "$tmp_dir"
+                    return 1
+                fi
+            fi
+
+            if [[ ! -d "$install_dir" ]]; then
+                log_error "Install directory does not exist: $install_dir"
+                cd - > /dev/null || cd "$HOME"
+                rm -rf "$tmp_dir"
+                return 1
             fi
 
             log_info "Installing to $install_dir..."
             if [[ -w "$install_dir" ]]; then
-                mv bd "$install_dir/"
+                if ! mv bd "$install_dir/"; then
+                    log_error "Failed to move bd to $install_dir/"
+                    cd - > /dev/null || cd "$HOME"
+                    rm -rf "$tmp_dir"
+                    return 1
+                fi
             else
-                sudo mv bd "$install_dir/"
+                if ! sudo mv bd "$install_dir/"; then
+                    log_error "Failed to move bd to $install_dir/ (via sudo)"
+                    cd - > /dev/null || cd "$HOME"
+                    rm -rf "$tmp_dir"
+                    return 1
+                fi
+            fi
+
+            if [[ ! -f "$install_dir/bd" ]]; then
+                log_error "bd binary was not installed at $install_dir/bd"
+                cd - > /dev/null || cd "$HOME"
+                rm -rf "$tmp_dir"
+                return 1
             fi
 
             # Optional local ad-hoc re-sign for macOS (off by default)
