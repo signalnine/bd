@@ -397,9 +397,21 @@ install_from_release() {
         return 1
     fi
 
-    # Sanity check that the archive actually produced a 'bd' binary
-    if [[ ! -f bd ]]; then
-        log_error "Archive did not contain a 'bd' binary at the expected path"
+    # Locate the 'bd' binary inside the extracted archive. Linux archives
+    # are flat (./bd at top level) but macOS archives nest under
+    # ./bd_VERSION_PLATFORM/bd. Find it either way so we don't have to
+    # care which release packaging produced the tarball.
+    local bd_src
+    if [[ -f bd ]]; then
+        bd_src="bd"
+    else
+        # First match wins. -maxdepth 2 keeps us from scanning the world
+        # if something weird ever lands in the archive.
+        bd_src=$(find . -maxdepth 2 -type f -name bd -perm -u+x 2>/dev/null | head -n 1)
+    fi
+
+    if [[ -z "$bd_src" || ! -f "$bd_src" ]]; then
+        log_error "Archive did not contain a 'bd' binary"
         cd - > /dev/null || cd "$HOME"
         rm -rf "$tmp_dir"
         return 1
@@ -408,14 +420,14 @@ install_from_release() {
     # Install binary
     log_info "Installing to $install_dir..."
     if [[ -w "$install_dir" ]]; then
-        if ! mv bd "$install_dir/"; then
+        if ! mv "$bd_src" "$install_dir/bd"; then
             log_error "Failed to move bd to $install_dir/"
             cd - > /dev/null || cd "$HOME"
             rm -rf "$tmp_dir"
             return 1
         fi
     else
-        if ! sudo mv bd "$install_dir/"; then
+        if ! sudo mv "$bd_src" "$install_dir/bd"; then
             log_error "Failed to move bd to $install_dir/ (via sudo)"
             cd - > /dev/null || cd "$HOME"
             rm -rf "$tmp_dir"
