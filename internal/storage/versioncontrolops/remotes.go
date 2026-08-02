@@ -58,10 +58,13 @@ func ForcePush(ctx context.Context, db DBConn, remote, branch string) error {
 	return nil
 }
 
-// Pull pulls changes from the named remote.
-func Pull(ctx context.Context, db DBConn, remote string) error {
-	if _, err := db.ExecContext(ctx, "CALL DOLT_PULL(?)", remote); err != nil {
-		return fmt.Errorf("pull from %s: %w", remote, err)
+// Pull pulls the given branch from the named remote. The branch must be
+// passed explicitly: databases created by `bd init` + `bd dolt remote add`
+// have no branch-upstream config in dolt's repo_state.json, so a
+// remote-only DOLT_PULL fails with "did not specify a branch".
+func Pull(ctx context.Context, db DBConn, remote, branch string) error {
+	if _, err := db.ExecContext(ctx, "CALL DOLT_PULL(?, ?)", remote, branch); err != nil {
+		return fmt.Errorf("pull from %s/%s: %w", remote, branch, err)
 	}
 	return nil
 }
