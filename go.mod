@@ -4,7 +4,7 @@ go 1.25.8
 
 require (
 	charm.land/glamour/v2 v2.0.0
-	charm.land/lipgloss/v2 v2.0.3
+	charm.land/lipgloss/v2 v2.0.4
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/dolthub/driver v1.84.1
 	github.com/go-sql-driver/mysql v1.9.3
