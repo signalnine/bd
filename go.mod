@@ -3,8 +3,8 @@ module github.com/signalnine/bd
 go 1.25.8
 
 require (
-	charm.land/glamour/v2 v2.0.0
-	charm.land/lipgloss/v2 v2.0.3
+	charm.land/glamour/v2 v2.0.1
+	charm.land/lipgloss/v2 v2.0.4
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/dolthub/driver v1.84.1
 	github.com/go-sql-driver/mysql v1.9.3
@@ -13,9 +13,9 @@ require (
 	github.com/spf13/viper v1.21.0
 	github.com/testcontainers/testcontainers-go v0.42.0
 	github.com/testcontainers/testcontainers-go/modules/dolt v0.42.0
-	go.opentelemetry.io/otel v1.43.0
-	go.opentelemetry.io/otel/trace v1.43.0
-	golang.org/x/sync v0.20.0
+	go.opentelemetry.io/otel v1.44.0
+	go.opentelemetry.io/otel/trace v1.44.0
+	golang.org/x/sync v0.21.0
 	golang.org/x/sys v0.46.0
 	golang.org/x/term v0.44.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -28,7 +28,7 @@ require (
 	github.com/moby/moby/client v0.4.0 // indirect
 	github.com/stretchr/testify v1.11.1 // indirect
 	go.opentelemetry.io/otel/exporters/stdout/stdoutmetric v1.42.0 // indirect
-	go.opentelemetry.io/otel/metric v1.43.0 // indirect
+	go.opentelemetry.io/otel/metric v1.44.0 // indirect
 	go.opentelemetry.io/otel/sdk v1.43.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.43.0 // indirect
 )
