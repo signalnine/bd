@@ -321,7 +321,7 @@ func init() {
 var rootCmd = &cobra.Command{
 	Use:   "bd",
 	Short: "bd - Dependency-aware issue tracker",
-	Long:  `Issues A lightweight issue tracker with first-class dependency support.`,
+	Long:  `A lightweight issue tracker with first-class dependency support.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// Handle --version flag on root command
 		if v, _ := cmd.Flags().GetBool("version"); v {
