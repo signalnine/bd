@@ -15,8 +15,11 @@ buildGoModule {
   subPackages = [ "cmd/bd" ];
   doCheck = false;
 
+  # Match release builds (.goreleaser.yml): pure-Go regex, so no ICU4C headers needed
+  tags = [ "gms_pure_go" ];
+
   # Go module dependencies hash - if build fails with hash mismatch, update with the "got:" value
-  vendorHash = "sha256-1BJsEPP5SYZFGCWHLn532IUKlzcGDg5nhrqGWylEHgY=";
+  vendorHash = "sha256-tFdL0qO4and6xtH4bMFhIXyQB4yDKkQ5Y/4U0MiswzA=";
 
   # Relax go.mod version for Nix: nixpkgs Go may lag behind the latest
   # patch release, and GOTOOLCHAIN=auto can't download in the Nix sandbox.

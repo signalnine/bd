@@ -326,7 +326,7 @@ jobs:
         if: steps.nix_help.outcome == 'success'
         run: |
           FIRST_LINE=$(head -n 1 help.txt)
-          EXPECTED="Issues chained together like beads. A lightweight issue tracker with first-class dependency support."
+          EXPECTED="A lightweight issue tracker with first-class dependency support."
           if [ "$FIRST_LINE" != "$EXPECTED" ]; then
             echo "First line of help.txt doesn't match expected output"
             echo "Expected: $EXPECTED"
